@@ -5,6 +5,7 @@
 //  Unit tests for Daggerheart data models.
 //
 
+import Foundation
 import Testing
 @testable import Encounter
 
@@ -97,9 +98,9 @@ struct AdversaryDecodingTests {
 
         let adversary = try JSONDecoder().decode(Adversary.self, from: json)
         #expect(adversary.features.count == 3)
-        #expect(adversary.features[0].featType == .passive)
-        #expect(adversary.features[1].featType == .reaction)
-        #expect(adversary.features[2].featType == .action)
+        #expect(adversary.features[0].featType == FeatureType.passive)
+        #expect(adversary.features[1].featType == FeatureType.reaction)
+        #expect(adversary.features[2].featType == FeatureType.action)
     }
 
     // MARK: AdversaryType round-trip
@@ -152,7 +153,7 @@ struct AdversaryDecodingTests {
 
 // MARK: - EncounterSession
 
-struct EncounterSessionTests {
+@MainActor struct EncounterSessionTests {
 
     private func makeSession() -> EncounterSession {
         EncounterSession(name: "Test Encounter")
@@ -285,6 +286,6 @@ struct EnvironmentModelTests {
         let env = try JSONDecoder().decode(DaggerheartEnvironment.self, from: json)
         #expect(env.id == "arcane-storm")
         #expect(env.features.count == 1)
-        #expect(env.features[0].featType == .passive)
+        #expect(env.features[0].featType == FeatureType.passive)
     }
 }

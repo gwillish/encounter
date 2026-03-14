@@ -21,7 +21,7 @@ import Foundation
 ///
 /// Source: Daggerheart SRD "Using Adversaries" — each type modifies
 /// how the adversary is run at the table.
-public enum AdversaryType: String, Codable, CaseIterable, Sendable {
+nonisolated public enum AdversaryType: String, Codable, CaseIterable, Sendable {
     /// Tough; deliver powerful attacks. Usually have extra HP.
     case bruiser  = "Bruiser"
     /// Groups of identical creatures acting as a single unit.
@@ -42,7 +42,7 @@ public enum AdversaryType: String, Codable, CaseIterable, Sendable {
 // MARK: - AttackRange
 
 /// Distance bands used for attacks and abilities in Daggerheart.
-public enum AttackRange: String, Codable, CaseIterable, Sendable {
+nonisolated public enum AttackRange: String, Codable, CaseIterable, Sendable {
     case veryClose = "Very Close"
     case close     = "Close"
     case far       = "Far"
@@ -56,7 +56,7 @@ public enum AttackRange: String, Codable, CaseIterable, Sendable {
 /// - **Actions** trigger when the adversary has the spotlight.
 /// - **Reactions** trigger regardless of who has the spotlight.
 /// - **Passives** are always in effect.
-public enum FeatureType: String, Codable, CaseIterable, Sendable {
+nonisolated public enum FeatureType: String, Codable, CaseIterable, Sendable {
     case action   = "action"
     case reaction = "reaction"
     case passive  = "passive"
@@ -65,7 +65,7 @@ public enum FeatureType: String, Codable, CaseIterable, Sendable {
 // MARK: - AdversaryFeature
 
 /// A single named feature (action, reaction, or passive) on an adversary or environment.
-public struct AdversaryFeature: Codable, Identifiable, Sendable, Equatable {
+nonisolated public struct AdversaryFeature: Codable, Identifiable, Sendable, Equatable {
     // `id` uses name because feature names are unique within a given adversary.
     public var id: String { name }
 
@@ -102,7 +102,7 @@ public struct AdversaryFeature: Codable, Identifiable, Sendable, Equatable {
 /// into `thresholdMajor` and `thresholdSevere` integers. Both the combined
 /// string key and pre-split `threshold_major` / `threshold_severe` keys
 /// are accepted.
-public struct Adversary: Codable, Identifiable, Sendable, Equatable {
+nonisolated public struct Adversary: Codable, Identifiable, Sendable, Equatable {
 
     // MARK: Identity
     /// URL-safe slug, e.g. `"acid-burrower"`. Used as stable ID for cross-referencing.

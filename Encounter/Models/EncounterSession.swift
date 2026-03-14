@@ -25,7 +25,7 @@ import Observation
 /// Wraps a reference to a catalog ``Adversary`` with runtime mutable state:
 /// current HP, current Stress, defeat status, and an optional individual name
 /// (useful when running multiple copies of the same adversary).
-public struct AdversarySlot: Identifiable, Sendable, Equatable {
+nonisolated public struct AdversarySlot: Identifiable, Sendable, Equatable {
     public let id: UUID
     /// The slug that identifies this adversary in the ``Compendium``.
     public let adversaryID: String
@@ -73,7 +73,7 @@ public struct AdversarySlot: Identifiable, Sendable, Equatable {
 ///
 /// Environments have no HP or Stress — they are tracked only for
 /// their features and activation state.
-public struct EnvironmentSlot: Identifiable, Sendable, Equatable {
+nonisolated public struct EnvironmentSlot: Identifiable, Sendable, Equatable {
     public let id: UUID
     /// The slug identifying this environment in the ``Compendium``.
     public let environmentID: String
@@ -114,7 +114,7 @@ public struct EnvironmentSlot: Identifiable, Sendable, Equatable {
 /// session.add(environment: terrain.forestEdge)
 /// ```
 @Observable
-public final class EncounterSession: Identifiable, Sendable {
+public final class EncounterSession: Identifiable {
 
     // MARK: Identity
     public let id: UUID

@@ -19,7 +19,7 @@ import Observation
 // MARK: - CompendiumError
 
 /// Errors that can occur while loading compendium data.
-public enum CompendiumError: Error, LocalizedError {
+nonisolated public enum CompendiumError: Error, LocalizedError {
     case fileNotFound(String)
     case decodingFailed(String, Error)
 
@@ -48,14 +48,14 @@ public enum CompendiumError: Error, LocalizedError {
 ///     WindowGroup {
 ///         ContentView()
 ///             .environment(compendium)
-///             .task { try? await compendium.load() }
+///             .onAppear { compendium.load() }
 ///     }
 /// }
 /// ```
 ///
 /// ## Loading
 /// Call ``load()`` once during app startup. It decodes both JSON files
-/// asynchronously off the main thread and publishes the results.
+/// from the bundle and publishes the results.
 ///
 /// ## Homebrew
 /// Call ``addAdversary(_:)`` / ``addEnvironment(_:)`` to merge homebrew
@@ -94,23 +94,21 @@ public final class Compendium {
 
     // MARK: - Loading
 
-    /// Load the SRD data from bundle resources asynchronously.
+    /// Load the SRD data from bundle resources.
     ///
     /// Safe to call multiple times; subsequent calls while already loading
     /// are ignored. After a successful load, previous entries are replaced.
-    public func load() async {
+    public func load() {
         guard !isLoading else { return }
         isLoading = true
         loadError = nil
 
         do {
-            async let loadedAdversaries = decodeArray(Adversary.self, fromResource: "adversaries")
-            async let loadedEnvironments = decodeArray(DaggerheartEnvironment.self, fromResource: "environments")
+            let loadedAdversaries = try decodeArray(Adversary.self, fromResource: "adversaries")
+            let loadedEnvironments = try decodeArray(DaggerheartEnvironment.self, fromResource: "environments")
 
-            let (a, e) = try await (loadedAdversaries, loadedEnvironments)
-
-            adversariesByID   = Dictionary(uniqueKeysWithValues: a.map { ($0.id, $0) })
-            environmentsByID  = Dictionary(uniqueKeysWithValues: e.map { ($0.id, $0) })
+            adversariesByID   = Dictionary(uniqueKeysWithValues: loadedAdversaries.map { ($0.id, $0) })
+            environmentsByID  = Dictionary(uniqueKeysWithValues: loadedEnvironments.map { ($0.id, $0) })
         } catch let error as CompendiumError {
             loadError = error
         } catch {
@@ -167,19 +165,17 @@ public final class Compendium {
 
     // MARK: - Private Helpers
 
-    private func decodeArray<T: Decodable>(_ type: T.Type, fromResource name: String) async throws -> [T] {
-        try await Task.detached(priority: .utility) {
-            guard let url = Bundle.main.url(forResource: name, withExtension: "json") else {
-                throw CompendiumError.fileNotFound("\(name).json")
-            }
-            do {
-                let data = try Data(contentsOf: url)
-                return try JSONDecoder().decode([T].self, from: data)
-            } catch let error as CompendiumError {
-                throw error
-            } catch {
-                throw CompendiumError.decodingFailed("\(name).json", error)
-            }
-        }.value
+    private func decodeArray<T: Decodable>(_ type: T.Type, fromResource name: String) throws -> [T] {
+        guard let url = Bundle.main.url(forResource: name, withExtension: "json") else {
+            throw CompendiumError.fileNotFound("\(name).json")
+        }
+        do {
+            let data = try Data(contentsOf: url)
+            return try JSONDecoder().decode([T].self, from: data)
+        } catch let error as CompendiumError {
+            throw error
+        } catch {
+            throw CompendiumError.decodingFailed("\(name).json", error)
+        }
     }
 }
