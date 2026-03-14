@@ -1,0 +1,38 @@
+[
+  {
+    "id": "collapsing-bridge",
+    "name": "Collapsing Bridge",
+    "source": "SRD",
+    "description": "A rope-and-plank bridge over a chasm, rotting and swaying underfoot.",
+    "feats": [
+      {
+        "name": "Unstable Footing",
+        "text": "Any creature that moves more than half their speed on the bridge must make an Agility roll against Difficulty 12 or fall Prone.",
+        "feat_type": "passive"
+      },
+      {
+        "name": "Snap",
+        "text": "When the GM spends 2 Fear, one section of the bridge gives way. Any creature in that section must make an Agility roll against Difficulty 14 or fall into the chasm.",
+        "feat_type": "reaction"
+      }
+    ]
+  },
+  {
+    "id": "arcane-storm",
+    "name": "Arcane Storm",
+    "source": "SRD",
+    "description": "A tempest of wild magic crackling through the air, discharging at random.",
+    "feats": [
+      {
+        "name": "Wild Discharge",
+        "text": "At the start of each round, the GM rolls 1d6. On a 1–2, a random creature within the area takes 1d6 mag damage.",
+        "feat_type": "passive"
+      },
+      {
+        "name": "Surge",
+        "text": "The GM may spend 1 Fear to cause all spellcasting rolls this round to be made with Disadvantage as the storm spikes.",
+        "feat_type": "action"
+      }
+    ]
+  }
+]

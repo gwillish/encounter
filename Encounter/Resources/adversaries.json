@@ -1,0 +1,121 @@
+[
+  {
+    "id": "bone-chewer",
+    "name": "Bone Chewer",
+    "source": "SRD",
+    "tier": 1,
+    "type": "Minion",
+    "description": "A hunched, feral creature with serrated teeth and powerful jaws.",
+    "motives_and_tactics": "Bone Chewers swarm wounded prey, targeting whoever is most vulnerable. They retreat when their numbers drop below half.",
+    "difficulty": 9,
+    "thresholds": "4/7",
+    "hp": 3,
+    "stress": 2,
+    "atk": "+2",
+    "attack": "Bite",
+    "range": "Very Close",
+    "damage": "1d8+1 phy",
+    "feats": [
+      {
+        "name": "Pack Tactics",
+        "text": "This adversary deals +1 damage for each other Bone Chewer within Very Close range of the target.",
+        "feat_type": "passive"
+      }
+    ]
+  },
+  {
+    "id": "ironguard-soldier",
+    "name": "Ironguard Soldier",
+    "source": "SRD",
+    "tier": 1,
+    "type": "Bruiser",
+    "description": "A disciplined mercenary in battered plate armour, veteran of a dozen campaigns.",
+    "motives_and_tactics": "Ironguards form defensive lines and advance methodically, protecting their leader. They fight until ordered to retreat.",
+    "difficulty": 11,
+    "thresholds": "5/10",
+    "hp": 6,
+    "stress": 3,
+    "atk": "+3",
+    "attack": "Longsword",
+    "range": "Very Close",
+    "damage": "1d10+3 phy",
+    "experience": "Military Tactics +2",
+    "feats": [
+      {
+        "name": "Shield Wall",
+        "text": "While adjacent to another Ironguard Soldier, this adversary reduces all incoming damage by 1.",
+        "feat_type": "passive"
+      },
+      {
+        "name": "Rallying Cry",
+        "text": "Once per encounter, this adversary may spend a Fear to grant all allied Ironguard Soldiers within Close range +2 to their next attack roll.",
+        "feat_type": "action"
+      }
+    ]
+  },
+  {
+    "id": "thornwood-archer",
+    "name": "Thornwood Archer",
+    "source": "SRD",
+    "tier": 1,
+    "type": "Ranged",
+    "description": "A lithe scout who moves through underbrush like smoke, loosing arrows from shadows.",
+    "motives_and_tactics": "Thornwood Archers stay at range, repositioning each turn. They target spellcasters and anyone not wearing heavy armour.",
+    "difficulty": 10,
+    "thresholds": "3/6",
+    "hp": 4,
+    "stress": 2,
+    "atk": "+4",
+    "attack": "Shortbow",
+    "range": "Far",
+    "damage": "1d8+2 phy",
+    "feats": [
+      {
+        "name": "Vanish",
+        "text": "When this adversary moves, it may become Hidden until it attacks or takes an action.",
+        "feat_type": "action"
+      },
+      {
+        "name": "Pinning Shot",
+        "text": "On a successful attack, the target's movement is halved until the end of their next turn.",
+        "feat_type": "reaction"
+      }
+    ]
+  },
+  {
+    "id": "warlord-keth",
+    "name": "Warlord Keth",
+    "source": "SRD",
+    "tier": 2,
+    "type": "Leader",
+    "description": "A scarred half-giant general who commands through fear and tactical genius.",
+    "motives_and_tactics": "Keth stays behind her soldiers, directing the battlefield with bellowed commands. She enters melee only when cornered, then fights with terrifying ferocity.",
+    "difficulty": 14,
+    "threshold_major": 9,
+    "threshold_severe": 17,
+    "hp": 12,
+    "stress": 6,
+    "atk": "+5",
+    "attack": "Greataxe",
+    "range": "Very Close",
+    "damage": "2d10+4 phy",
+    "experience": "Military Command +3",
+    "feats": [
+      {
+        "name": "Battlefield Command",
+        "text": "At the start of each round, Keth may grant one allied adversary an additional action this round.",
+        "feat_type": "passive"
+      },
+      {
+        "name": "Crushing Blow",
+        "text": "When Keth hits with an attack, she may spend 2 Fear to deal an additional 1d10 damage and knock the target Prone.",
+        "feat_type": "action"
+      },
+      {
+        "name": "Indomitable",
+        "text": "The first time Keth would be reduced to 0 HP, she instead drops to 1 HP and becomes Enraged, gaining +2 to all attacks until the end of the encounter.",
+        "feat_type": "reaction"
+      }
+    ]
+  }
+]
