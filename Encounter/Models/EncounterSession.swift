@@ -25,6 +25,10 @@ import Observation
 /// Wraps a reference to a catalog ``Adversary`` with runtime mutable state:
 /// current HP, current Stress, defeat status, and an optional individual name
 /// (useful when running multiple copies of the same adversary).
+///
+/// `maxHP` and `maxStress` are snapshotted from the catalog at slot-creation
+/// time so that HP/stress clamping works correctly even if the source adversary
+/// is later edited or removed from the ``Compendium`` (homebrew orphan safety).
 nonisolated public struct AdversarySlot: Identifiable, Sendable, Equatable {
     public let id: UUID
     /// The slug that identifies this adversary in the ``Compendium``.
@@ -32,6 +36,10 @@ nonisolated public struct AdversarySlot: Identifiable, Sendable, Equatable {
     /// Display name override (e.g. "Grimfang" for a named bandit leader).
     /// Falls back to the catalog name when `nil`.
     public var customName: String?
+
+    // MARK: Stat Snapshot (from catalog at creation time)
+    public let maxHP: Int
+    public let maxStress: Int
 
     // MARK: Tracked Stats
     public var currentHP: Int
@@ -45,7 +53,9 @@ nonisolated public struct AdversarySlot: Identifiable, Sendable, Equatable {
         id: UUID = UUID(),
         adversaryID: String,
         customName: String? = nil,
-        currentHP: Int,
+        maxHP: Int,
+        maxStress: Int,
+        currentHP: Int? = nil,
         currentStress: Int = 0,
         isDefeated: Bool = false,
         conditions: Set<Condition> = []
@@ -53,7 +63,9 @@ nonisolated public struct AdversarySlot: Identifiable, Sendable, Equatable {
         self.id = id
         self.adversaryID = adversaryID
         self.customName = customName
-        self.currentHP = currentHP
+        self.maxHP = maxHP
+        self.maxStress = maxStress
+        self.currentHP = currentHP ?? maxHP
         self.currentStress = currentStress
         self.isDefeated = isDefeated
         self.conditions = conditions
@@ -64,8 +76,8 @@ nonisolated public struct AdversarySlot: Identifiable, Sendable, Equatable {
         AdversarySlot(
             adversaryID: adversary.id,
             customName: customName,
-            currentHP: adversary.hp,
-            currentStress: 0
+            maxHP: adversary.hp,
+            maxStress: adversary.stress
         )
     }
 }
@@ -222,18 +234,22 @@ public final class EncounterSession: Identifiable {
         }
     }
 
-    /// Apply stress to an adversary slot, clamping to its maximum.
-    public func applyStress(_ amount: Int, to slotID: UUID, using compendium: Compendium) {
+    /// Apply stress to an adversary slot, clamping to the slot's snapshotted maximum.
+    public func applyStress(_ amount: Int, to slotID: UUID) {
         guard let index = adversarySlots.firstIndex(where: { $0.id == slotID }) else { return }
-        let maxStress = compendium.adversary(id: adversarySlots[index].adversaryID)?.stress ?? Int.max
-        adversarySlots[index].currentStress = min(maxStress, adversarySlots[index].currentStress + amount)
+        adversarySlots[index].currentStress = min(
+            adversarySlots[index].maxStress,
+            adversarySlots[index].currentStress + amount
+        )
     }
 
-    /// Heal an adversary slot, clamping HP to its catalog maximum.
-    public func heal(_ amount: Int, slotID: UUID, using compendium: Compendium) {
+    /// Heal an adversary slot, clamping HP to the slot's snapshotted maximum.
+    public func heal(_ amount: Int, slotID: UUID) {
         guard let index = adversarySlots.firstIndex(where: { $0.id == slotID }) else { return }
-        let maxHP = compendium.adversary(id: adversarySlots[index].adversaryID)?.hp ?? Int.max
-        adversarySlots[index].currentHP = min(maxHP, adversarySlots[index].currentHP + amount)
+        adversarySlots[index].currentHP = min(
+            adversarySlots[index].maxHP,
+            adversarySlots[index].currentHP + amount
+        )
         if adversarySlots[index].currentHP > 0 {
             adversarySlots[index].isDefeated = false
         }

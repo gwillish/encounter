@@ -173,16 +173,14 @@ Full gap detail: `.claude/memory/project_data_model_gaps.md`
 
 ### Medium priority
 
-- [ ] **GAP-5** Homebrew not distinguishable from SRD in `Compendium` — `source` string is
-  informal; need reliable way to list/export/persist homebrew adversaries separately.
+- [x] **GAP-5** Homebrew distinction — `Compendium` now has separate `srdAdversariesByID` / `homebrewAdversariesByID` dicts; `homebrewAdversaries` / `homebrewEnvironments` arrays for filtering; `removeHomebrewAdversary(id:)` / `removeHomebrewEnvironment(id:)` for deletion.
 - [x] **GAP-6** Condition tags — `Condition.swift` added; `Set<Condition>` on both `AdversarySlot` and `PlayerSlot`.
 
 ### Low priority
 
 - [x] **GAP-7** `createdAt`/`modifiedAt` — included in `EncounterDefinition`.
-- [ ] **GAP-8** `Compendium.load()` is synchronous — should be `async throws` for CloudKit consistency.
-- [ ] **GAP-9** `AdversarySlot` holds ID ref only — homebrew edits/deletes can orphan slots;
-  consider embedding a stat snapshot at encounter-build time.
+- [x] **GAP-8** `Compendium.load()` — now `async throws`; decodes on a background task.
+- [x] **GAP-9** `AdversarySlot` stat snapshot — `maxHP` and `maxStress` snapshotted at slot creation; `applyStress` and `heal` no longer need a `Compendium` parameter.
 
 ### Pre-existing
 

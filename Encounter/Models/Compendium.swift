@@ -48,14 +48,14 @@ nonisolated public enum CompendiumError: Error, LocalizedError {
 ///     WindowGroup {
 ///         ContentView()
 ///             .environment(compendium)
-///             .onAppear { compendium.load() }
+///             .task { try? await compendium.load() }
 ///     }
 /// }
 /// ```
 ///
 /// ## Loading
 /// Call ``load()`` once during app startup. It decodes both JSON files
-/// from the bundle and publishes the results.
+/// from the bundle on a background task and publishes the results.
 ///
 /// ## Homebrew
 /// Call ``addAdversary(_:)`` / ``addEnvironment(_:)`` to merge homebrew
@@ -66,11 +66,29 @@ public final class Compendium {
 
     // MARK: Published State
 
-    /// All adversaries, keyed by their `id` slug for O(1) lookup.
-    public private(set) var adversariesByID: [String: Adversary] = [:]
+    /// SRD adversaries loaded from the bundle, keyed by slug.
+    private var srdAdversariesByID: [String: Adversary] = [:]
 
-    /// All environments, keyed by their `id` slug.
-    public private(set) var environmentsByID: [String: DaggerheartEnvironment] = [:]
+    /// Homebrew adversaries added at runtime, keyed by slug.
+    /// Homebrew entries with the same `id` as an SRD entry shadow the SRD version.
+    private var homebrewAdversariesByID: [String: Adversary] = [:]
+
+    /// SRD environments loaded from the bundle, keyed by slug.
+    private var srdEnvironmentsByID: [String: DaggerheartEnvironment] = [:]
+
+    /// Homebrew environments added at runtime, keyed by slug.
+    private var homebrewEnvironmentsByID: [String: DaggerheartEnvironment] = [:]
+
+    /// All adversaries (SRD + homebrew merged), keyed by slug.
+    /// Homebrew entries override SRD entries with the same `id`.
+    public var adversariesByID: [String: Adversary] {
+        srdAdversariesByID.merging(homebrewAdversariesByID) { _, homebrew in homebrew }
+    }
+
+    /// All environments (SRD + homebrew merged), keyed by slug.
+    public var environmentsByID: [String: DaggerheartEnvironment] {
+        srdEnvironmentsByID.merging(homebrewEnvironmentsByID) { _, homebrew in homebrew }
+    }
 
     /// Sorted array of all adversaries (for list views).
     public var adversaries: [Adversary] {
@@ -80,6 +98,16 @@ public final class Compendium {
     /// Sorted array of all environments.
     public var environments: [DaggerheartEnvironment] {
         environmentsByID.values.sorted { $0.name < $1.name }
+    }
+
+    /// Sorted array of homebrew-only adversaries.
+    public var homebrewAdversaries: [Adversary] {
+        homebrewAdversariesByID.values.sorted { $0.name < $1.name }
+    }
+
+    /// Sorted array of homebrew-only environments.
+    public var homebrewEnvironments: [DaggerheartEnvironment] {
+        homebrewEnvironmentsByID.values.sorted { $0.name < $1.name }
     }
 
     /// `true` while JSON loading is in progress.
@@ -96,38 +124,48 @@ public final class Compendium {
 
     /// Load the SRD data from bundle resources.
     ///
-    /// Safe to call multiple times; subsequent calls while already loading
-    /// are ignored. After a successful load, previous entries are replaced.
-    public func load() {
+    /// JSON decoding is performed on a background task; results are published
+    /// back on the main actor. Safe to call multiple times — concurrent calls
+    /// while a load is already in progress are ignored.
+    ///
+    /// Throws a ``CompendiumError`` if a resource is missing or malformed.
+    /// The error is also stored in ``loadError`` for SwiftUI observation.
+    public func load() async throws {
         guard !isLoading else { return }
         isLoading = true
         loadError = nil
 
-        do {
-            let loadedAdversaries = try decodeArray(Adversary.self, fromResource: "adversaries")
-            let loadedEnvironments = try decodeArray(DaggerheartEnvironment.self, fromResource: "environments")
+        defer { isLoading = false }
 
-            adversariesByID   = Dictionary(uniqueKeysWithValues: loadedAdversaries.map { ($0.id, $0) })
-            environmentsByID  = Dictionary(uniqueKeysWithValues: loadedEnvironments.map { ($0.id, $0) })
+        do {
+            let (loadedAdversaries, loadedEnvironments) = try await Task.detached(priority: .userInitiated) { [self] in
+                let a = try self.decodeArray(Adversary.self, fromResource: "adversaries")
+                let e = try self.decodeArray(DaggerheartEnvironment.self, fromResource: "environments")
+                return (a, e)
+            }.value
+
+            srdAdversariesByID  = Dictionary(uniqueKeysWithValues: loadedAdversaries.map  { ($0.id, $0) })
+            srdEnvironmentsByID = Dictionary(uniqueKeysWithValues: loadedEnvironments.map { ($0.id, $0) })
         } catch let error as CompendiumError {
             loadError = error
+            throw error
         } catch {
-            loadError = .decodingFailed("unknown", error)
+            let wrapped = CompendiumError.decodingFailed("unknown", error)
+            loadError = wrapped
+            throw wrapped
         }
-
-        isLoading = false
     }
 
     // MARK: - Lookup
 
-    /// Look up an adversary by its slug ID.
+    /// Look up an adversary by its slug ID. Homebrew shadows SRD for the same ID.
     public func adversary(id: String) -> Adversary? {
-        adversariesByID[id]
+        homebrewAdversariesByID[id] ?? srdAdversariesByID[id]
     }
 
-    /// Look up an environment by its slug ID.
+    /// Look up an environment by its slug ID. Homebrew shadows SRD for the same ID.
     public func environment(id: String) -> DaggerheartEnvironment? {
-        environmentsByID[id]
+        homebrewEnvironmentsByID[id] ?? srdEnvironmentsByID[id]
     }
 
     /// Return all adversaries for a given tier.
@@ -152,20 +190,30 @@ public final class Compendium {
 
     // MARK: - Homebrew
 
-    /// Merge a custom adversary into the compendium.
-    /// If an entry with the same `id` already exists, it is replaced.
+    /// Add or replace a homebrew adversary.
+    /// Homebrew entries shadow SRD entries with the same `id`.
     public func addAdversary(_ adversary: Adversary) {
-        adversariesByID[adversary.id] = adversary
+        homebrewAdversariesByID[adversary.id] = adversary
     }
 
-    /// Merge a custom environment into the compendium.
+    /// Remove a homebrew adversary by slug. No-op if not present.
+    public func removeHomebrewAdversary(id: String) {
+        homebrewAdversariesByID.removeValue(forKey: id)
+    }
+
+    /// Add or replace a homebrew environment.
     public func addEnvironment(_ environment: DaggerheartEnvironment) {
-        environmentsByID[environment.id] = environment
+        homebrewEnvironmentsByID[environment.id] = environment
+    }
+
+    /// Remove a homebrew environment by slug. No-op if not present.
+    public func removeHomebrewEnvironment(id: String) {
+        homebrewEnvironmentsByID.removeValue(forKey: id)
     }
 
     // MARK: - Private Helpers
 
-    private func decodeArray<T: Decodable>(_ type: T.Type, fromResource name: String) throws -> [T] {
+    nonisolated private func decodeArray<T: Decodable>(_ type: T.Type, fromResource name: String) throws -> [T] {
         guard let url = Bundle.main.url(forResource: name, withExtension: "json") else {
             throw CompendiumError.fileNotFound("\(name).json")
         }
