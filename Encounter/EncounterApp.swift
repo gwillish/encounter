@@ -21,11 +21,12 @@ struct EncounterApp: App {
                     let dir = await EncounterStore.defaultDirectory()
                     store.relocate(to: dir)
                     // Both loads are independent — run concurrently.
-                    // Errors are stored in compendium.loadError / store.loadError
-                    // for views to observe; try? here is intentional.
+                    // Errors surface via compendium.loadError / store.loadError
+                    // for views to observe; the thrown error from compendium.load()
+                    // is intentionally not propagated here.
                     async let compendiumLoad: Void = compendium.load()
                     async let storeLoad: Void = store.load()
-                    try? await compendiumLoad
+                    do { try await compendiumLoad } catch {}
                     await storeLoad
                 }
         }

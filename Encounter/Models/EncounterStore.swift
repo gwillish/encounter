@@ -56,8 +56,8 @@ public enum EncounterStoreError: Error, LocalizedError {
 ///         ContentView()
 ///             .environment(store)
 ///             .task {
-///                 async let dir = EncounterStore.defaultDirectory()
-///                 store.relocate(to: await dir)
+///                 let dir = await EncounterStore.defaultDirectory()
+///                 store.relocate(to: dir)
 ///                 await store.load()
 ///             }
 ///     }
@@ -122,7 +122,10 @@ public final class EncounterStore {
 
     /// Reads all `.encounter.json` files from `directory`.
     ///
-    /// Concurrent calls while a load is in progress are ignored.
+    /// If a load is already in progress, this call returns immediately without
+    /// waiting for the existing load to complete and without triggering a second
+    /// load. Callers that need fresh data should await the first load before calling again.
+    ///
     /// Corrupt or unreadable individual files are skipped silently.
     /// Valid definitions are published via ``definitions``, sorted by
     /// `modifiedAt` descending. Directory-level errors are stored in ``loadError``.
@@ -213,6 +216,10 @@ public final class EncounterStore {
     /// The copy is inserted with `createdAt = modifiedAt = .now`, so it sorts
     /// to the top of ``definitions``.
     ///
+    /// - Note: All content fields of ``EncounterDefinition`` must be listed
+    ///   explicitly here. When adding new fields to `EncounterDefinition`,
+    ///   update this method to include them.
+    ///
     /// - Throws: ``EncounterStoreError/notFound(_:)`` if the source ID is unknown.
     public func duplicate(id: UUID) async throws {
         guard let original = definitions.first(where: { $0.id == id }) else {
@@ -245,6 +252,10 @@ public final class EncounterStore {
                     at: url.deletingLastPathComponent(),
                     withIntermediateDirectories: true
                 )
+                // JSONEncoder is allocated per-call because JSONEncoder is not
+                // Sendable in Swift 6 and cannot be safely shared across
+                // Task.detached boundaries. For GM-scale encounter lists this
+                // allocation cost is negligible.
                 let data = try JSONEncoder().encode(definition)
                 try data.write(to: url, options: .atomic)
             }.value
@@ -253,6 +264,8 @@ public final class EncounterStore {
         }
     }
 
+    // Appends then re-sorts the full array. O(n log n), appropriate for
+    // GM-scale encounter lists (tens to low hundreds of items).
     private func insertSorted(_ definition: EncounterDefinition) {
         definitions.append(definition)
         definitions.sort { $0.modifiedAt > $1.modifiedAt }

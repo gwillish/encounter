@@ -1328,16 +1328,11 @@ struct DifficultyBudgetTests {
     // MARK: load
 
     @Test func loadReconstitutesFromFiles() async throws {
-        let dir = FileManager.default.temporaryDirectory
-            .appending(path: UUID().uuidString)
-        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-
+        let store = try makeStore()
         let def = EncounterDefinition(name: "From File")
-        let data = try JSONEncoder().encode(def)
-        let fileURL = dir.appending(path: "\(def.id.uuidString).encounter.json")
-        try data.write(to: fileURL)
-
-        let store = EncounterStore(directory: dir)
+        try JSONEncoder().encode(def).write(
+            to: store.directory.appending(path: "\(def.id.uuidString).encounter.json")
+        )
         await store.load()
         #expect(store.definitions.count == 1)
         #expect(store.definitions[0].name == "From File")
@@ -1345,33 +1340,21 @@ struct DifficultyBudgetTests {
     }
 
     @Test func loadIgnoresNonEncounterFiles() async throws {
-        let dir = FileManager.default.temporaryDirectory
-            .appending(path: UUID().uuidString)
-        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-
-        // Write a non-encounter file that should be skipped
-        try Data("noise".utf8).write(to: dir.appending(path: "readme.txt"))
-
-        let store = EncounterStore(directory: dir)
+        let store = try makeStore()
+        try Data("noise".utf8).write(to: store.directory.appending(path: "readme.txt"))
         await store.load()
         #expect(store.definitions.isEmpty)
     }
 
     @Test func loadIgnoresCorruptFiles() async throws {
-        let dir = FileManager.default.temporaryDirectory
-            .appending(path: UUID().uuidString)
-        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-
-        // Write a valid encounter file alongside a corrupt one
+        let store = try makeStore()
         let def = EncounterDefinition(name: "Good Encounter")
         try JSONEncoder().encode(def).write(
-            to: dir.appending(path: "\(def.id.uuidString).encounter.json")
+            to: store.directory.appending(path: "\(def.id.uuidString).encounter.json")
         )
         try Data("not valid json".utf8).write(
-            to: dir.appending(path: "corrupt.encounter.json")
+            to: store.directory.appending(path: "corrupt.encounter.json")
         )
-
-        let store = EncounterStore(directory: dir)
         await store.load()
         #expect(store.definitions.count == 1)
         #expect(store.definitions[0].name == "Good Encounter")
@@ -1404,15 +1387,48 @@ struct DifficultyBudgetTests {
         try encoder.encode(latest).write(
             to: store.directory.appending(path: "\(latest.id.uuidString).encounter.json")
         )
-        alpha.gmNotes = "touched last" // bump modifiedAt to now
+        alpha.gmNotes = "touched last" // bump modifiedAt via save() stamp
         try await store.save(alpha)
 
         await store.load()
+
+        // Verify specific order: alpha (just saved = most recent),
+        // Gamma (now-10s), Beta (now-60s)
+        #expect(store.definitions.count == 3)
+        #expect(store.definitions[0].name == "Alpha")
+        #expect(store.definitions[0].gmNotes == "touched last")
+        #expect(store.definitions[1].name == "Gamma")
+        #expect(store.definitions[2].name == "Beta")
 
         let dates = store.definitions.map(\.modifiedAt)
         for i in 0..<(dates.count - 1) {
             #expect(dates[i] >= dates[i + 1], "definitions[\(i)] should be >= definitions[\(i+1)]")
         }
+    }
+}
+
+// MARK: - EncounterStoreError
+
+struct EncounterStoreErrorTests {
+
+    @Test func notFoundDescription() {
+        let id = UUID()
+        let error = EncounterStoreError.notFound(id)
+        #expect(error.errorDescription == "No encounter definition found with ID \(id).")
+    }
+
+    @Test func saveFailedDescription() {
+        let id = UUID()
+        let underlying = CocoaError(.fileWriteNoPermission)
+        let error = EncounterStoreError.saveFailed(id, underlying)
+        #expect(error.errorDescription?.hasPrefix("Failed to save encounter \(id):") == true)
+    }
+
+    @Test func deleteFailedDescription() {
+        let id = UUID()
+        let underlying = CocoaError(.fileNoSuchFile)
+        let error = EncounterStoreError.deleteFailed(id, underlying)
+        #expect(error.errorDescription?.hasPrefix("Failed to delete encounter \(id):") == true)
     }
 }
 
