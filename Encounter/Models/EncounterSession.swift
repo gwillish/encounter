@@ -243,7 +243,10 @@ public final class EncounterSession: Identifiable {
 
     /// Apply a condition to an adversary slot.
     /// Per the SRD, the same condition does not stack (Set enforces this).
+    /// `.custom` conditions with an empty or whitespace-only name are silently ignored.
     public func applyCondition(_ condition: Condition, to slotID: UUID) {
+        if case .custom(let name) = condition,
+           name.trimmingCharacters(in: .whitespaces).isEmpty { return }
         guard let index = adversarySlots.firstIndex(where: { $0.id == slotID }) else { return }
         adversarySlots[index].conditions.insert(condition)
     }
@@ -296,7 +299,10 @@ public final class EncounterSession: Identifiable {
     // MARK: - Player Condition Management
 
     /// Apply a condition to a player slot.
+    /// `.custom` conditions with an empty or whitespace-only name are silently ignored.
     public func applyPlayerCondition(_ condition: Condition, to slotID: UUID) {
+        if case .custom(let name) = condition,
+           name.trimmingCharacters(in: .whitespaces).isEmpty { return }
         guard let index = playerSlots.firstIndex(where: { $0.id == slotID }) else { return }
         playerSlots[index].conditions.insert(condition)
     }
@@ -336,15 +342,23 @@ public final class EncounterSession: Identifiable {
         turnOrder = turnOrder.filter { !defeatedIDs.contains($0) }
     }
 
-    /// Set the active spotlight to the next slot in turn order.
+    /// Turn order filtered to non-defeated participants.
+    /// Defeated adversaries are excluded so `advanceTurn` never lands on them mid-round.
+    private var activeTurnOrder: [UUID] {
+        let defeatedIDs = Set(adversarySlots.filter(\.isDefeated).map(\.id))
+        return turnOrder.filter { !defeatedIDs.contains($0) }
+    }
+
+    /// Set the active spotlight to the next slot in turn order, skipping defeated adversaries.
     public func advanceTurn() {
-        guard !turnOrder.isEmpty else { activeSlotID = nil; return }
+        let active = activeTurnOrder
+        guard !active.isEmpty else { activeSlotID = nil; return }
         if let current = activeSlotID,
-           let currentIndex = turnOrder.firstIndex(of: current),
-           currentIndex + 1 < turnOrder.count {
-            activeSlotID = turnOrder[currentIndex + 1]
+           let currentIndex = active.firstIndex(of: current),
+           currentIndex + 1 < active.count {
+            activeSlotID = active[currentIndex + 1]
         } else {
-            activeSlotID = turnOrder.first
+            activeSlotID = active.first
         }
     }
 

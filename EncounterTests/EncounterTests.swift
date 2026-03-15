@@ -353,6 +353,24 @@ struct ConditionTests {
         #expect(session.adversarySlots[0].conditions.count == 1)
     }
 
+    @Test func emptyCustomConditionOnAdversaryIsRejected() {
+        let session = makeSession()
+        session.add(adversary: makeSoldier())
+        let slotID = session.adversarySlots[0].id
+
+        session.applyCondition(.custom(""), to: slotID)
+        #expect(session.adversarySlots[0].conditions.isEmpty)
+    }
+
+    @Test func whitespaceCustomConditionOnAdversaryIsRejected() {
+        let session = makeSession()
+        session.add(adversary: makeSoldier())
+        let slotID = session.adversarySlots[0].id
+
+        session.applyCondition(.custom("   "), to: slotID)
+        #expect(session.adversarySlots[0].conditions.isEmpty)
+    }
+
     @Test func customConditionOnAdversarySlot() {
         let session = makeSession()
         session.add(adversary: makeSoldier())
@@ -363,6 +381,45 @@ struct ConditionTests {
     }
 
     // MARK: Turn Order
+
+    @Test func advanceTurnSkipsDefeatedAdversary() {
+        let session = makeSession()
+        session.add(adversary: makeSoldier())
+        session.add(adversary: makeSoldier())
+
+        let firstID  = session.turnOrder[0]
+        let secondID = session.turnOrder[1]
+
+        // Defeat first adversary mid-round before taking a turn
+        session.applyDamage(999, to: firstID)
+
+        // First advanceTurn should skip the defeated slot
+        session.advanceTurn()
+        #expect(session.activeSlotID == secondID)
+    }
+
+    @Test func advanceTurnSkipsDefeatedMidRound() {
+        let session = makeSession()
+        session.add(adversary: makeSoldier())
+        session.add(adversary: makeSoldier())
+        session.add(adversary: makeSoldier())
+
+        let firstID  = session.turnOrder[0]
+        let secondID = session.turnOrder[1]
+        let thirdID  = session.turnOrder[2]
+
+        // Advance to second slot
+        session.advanceTurn()
+        session.advanceTurn()
+        #expect(session.activeSlotID == secondID)
+
+        // Defeat the third slot mid-round
+        session.applyDamage(999, to: thirdID)
+
+        // Next advance should skip defeated third and wrap back to first
+        session.advanceTurn()
+        #expect(session.activeSlotID == firstID)
+    }
 
     @Test func advanceTurnCyclesSlots() {
         let session = makeSession()
@@ -576,6 +633,15 @@ struct PlayerSlotTests {
         #expect(session.playerSlots[0].currentArmorSlots == 0)
     }
 
+    @Test func emptyCustomConditionOnPlayerIsRejected() {
+        let session = makeSession()
+        session.addPlayer(makePlayer())
+        let slotID = session.playerSlots[0].id
+
+        session.applyPlayerCondition(.custom(""), to: slotID)
+        #expect(session.playerSlots[0].conditions.isEmpty)
+    }
+
     @Test func applyConditionToPlayerSlot() {
         let session = makeSession()
         session.addPlayer(makePlayer())
@@ -647,6 +713,42 @@ struct EncounterDefinitionTests {
         #expect(definition.createdAt >= before)
         #expect(definition.createdAt <= after)
         #expect(definition.modifiedAt >= before)
+    }
+
+    @Test func mutatingNameUpdatesModifiedAt() async throws {
+        var definition = EncounterDefinition(name: "Original")
+        let before = definition.modifiedAt
+        try await Task.sleep(for: .milliseconds(10))
+        definition.name = "Updated"
+        #expect(definition.modifiedAt > before)
+    }
+
+    @Test func mutatingAdversaryIDsUpdatesModifiedAt() async throws {
+        var definition = EncounterDefinition(name: "Test")
+        let before = definition.modifiedAt
+        try await Task.sleep(for: .milliseconds(10))
+        definition.adversaryIDs = ["ironguard-soldier"]
+        #expect(definition.modifiedAt > before)
+    }
+
+    @Test func mutatingGMNotesUpdatesModifiedAt() async throws {
+        var definition = EncounterDefinition(name: "Test")
+        let before = definition.modifiedAt
+        try await Task.sleep(for: .milliseconds(10))
+        definition.gmNotes = "Remember the trap."
+        #expect(definition.modifiedAt > before)
+    }
+
+    @Test func decodingDoesNotResetModifiedAt() throws {
+        var definition = EncounterDefinition(
+            name: "Test",
+            modifiedAt: Date(timeIntervalSince1970: 1_000_000)
+        )
+        definition.adversaryIDs = [] // trigger didSet after init
+        let data = try JSONEncoder().encode(definition)
+        let decoded = try JSONDecoder().decode(EncounterDefinition.self, from: data)
+        // Decoded modifiedAt should be the encoded value, not .now
+        #expect(decoded.modifiedAt == definition.modifiedAt)
     }
 
     @Test func playerConfigCodableRoundTrip() throws {
