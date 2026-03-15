@@ -1,6 +1,6 @@
 # Encounter — Claude Code Context
 
-Daggerheart encounter prep and run app for iOS, macOS, and visionOS.
+Daggerheart encounter prep and run app for iOS and macOS, targeting game masters who need to set up and track encounters at the table.
 Built with SwiftUI, targeting Xcode 26.3 / Swift 6.
 
 ---
@@ -87,6 +87,18 @@ WindowGroup {
 @Environment(Compendium.self) var compendium
 @State private var session = EncounterSession(name: "New Encounter")
 ```
+
+---
+
+## Daggerheart Game Reference
+
+**Index:** [`daggerheart-resources/INDEX.md`](daggerheart-resources/INDEX.md)
+
+The `daggerheart-resources/` directory is **read-only** reference material:
+- `daggerheart-resources/daggerheart-srd/` — Markdown SRD (full rules + per-entity files for adversaries, classes, abilities, weapons, etc.)
+- PDFs: full SRD, expanded adversary compendium (v1.5), errata, homebrew kit
+
+Consult the index when you need to understand game mechanics, verify field meanings, or look up content while implementing app features.
 
 ---
 

@@ -32,3 +32,6 @@ DerivedData/
 
 # Test results
 TestResults.xcresult
+
+# Project resources
+daggerheart-resources/
