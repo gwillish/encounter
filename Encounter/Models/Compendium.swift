@@ -66,11 +66,29 @@ public final class Compendium {
 
     // MARK: Published State
 
-    /// All adversaries, keyed by their `id` slug for O(1) lookup.
-    public private(set) var adversariesByID: [String: Adversary] = [:]
+    /// SRD adversaries loaded from the bundle, keyed by slug.
+    private var srdAdversariesByID: [String: Adversary] = [:]
 
-    /// All environments, keyed by their `id` slug.
-    public private(set) var environmentsByID: [String: DaggerheartEnvironment] = [:]
+    /// Homebrew adversaries added at runtime, keyed by slug.
+    /// Homebrew entries with the same `id` as an SRD entry shadow the SRD version.
+    private var homebrewAdversariesByID: [String: Adversary] = [:]
+
+    /// SRD environments loaded from the bundle, keyed by slug.
+    private var srdEnvironmentsByID: [String: DaggerheartEnvironment] = [:]
+
+    /// Homebrew environments added at runtime, keyed by slug.
+    private var homebrewEnvironmentsByID: [String: DaggerheartEnvironment] = [:]
+
+    /// All adversaries (SRD + homebrew merged), keyed by slug.
+    /// Homebrew entries override SRD entries with the same `id`.
+    public var adversariesByID: [String: Adversary] {
+        srdAdversariesByID.merging(homebrewAdversariesByID) { _, homebrew in homebrew }
+    }
+
+    /// All environments (SRD + homebrew merged), keyed by slug.
+    public var environmentsByID: [String: DaggerheartEnvironment] {
+        srdEnvironmentsByID.merging(homebrewEnvironmentsByID) { _, homebrew in homebrew }
+    }
 
     /// Sorted array of all adversaries (for list views).
     public var adversaries: [Adversary] {
@@ -80,6 +98,16 @@ public final class Compendium {
     /// Sorted array of all environments.
     public var environments: [DaggerheartEnvironment] {
         environmentsByID.values.sorted { $0.name < $1.name }
+    }
+
+    /// Sorted array of homebrew-only adversaries.
+    public var homebrewAdversaries: [Adversary] {
+        homebrewAdversariesByID.values.sorted { $0.name < $1.name }
+    }
+
+    /// Sorted array of homebrew-only environments.
+    public var homebrewEnvironments: [DaggerheartEnvironment] {
+        homebrewEnvironmentsByID.values.sorted { $0.name < $1.name }
     }
 
     /// `true` while JSON loading is in progress.
@@ -116,8 +144,8 @@ public final class Compendium {
                 return (a, e)
             }.value
 
-            adversariesByID  = Dictionary(uniqueKeysWithValues: loadedAdversaries.map  { ($0.id, $0) })
-            environmentsByID = Dictionary(uniqueKeysWithValues: loadedEnvironments.map { ($0.id, $0) })
+            srdAdversariesByID  = Dictionary(uniqueKeysWithValues: loadedAdversaries.map  { ($0.id, $0) })
+            srdEnvironmentsByID = Dictionary(uniqueKeysWithValues: loadedEnvironments.map { ($0.id, $0) })
         } catch let error as CompendiumError {
             loadError = error
             throw error
@@ -130,14 +158,14 @@ public final class Compendium {
 
     // MARK: - Lookup
 
-    /// Look up an adversary by its slug ID.
+    /// Look up an adversary by its slug ID. Homebrew shadows SRD for the same ID.
     public func adversary(id: String) -> Adversary? {
-        adversariesByID[id]
+        homebrewAdversariesByID[id] ?? srdAdversariesByID[id]
     }
 
-    /// Look up an environment by its slug ID.
+    /// Look up an environment by its slug ID. Homebrew shadows SRD for the same ID.
     public func environment(id: String) -> DaggerheartEnvironment? {
-        environmentsByID[id]
+        homebrewEnvironmentsByID[id] ?? srdEnvironmentsByID[id]
     }
 
     /// Return all adversaries for a given tier.
@@ -162,15 +190,25 @@ public final class Compendium {
 
     // MARK: - Homebrew
 
-    /// Merge a custom adversary into the compendium.
-    /// If an entry with the same `id` already exists, it is replaced.
+    /// Add or replace a homebrew adversary.
+    /// Homebrew entries shadow SRD entries with the same `id`.
     public func addAdversary(_ adversary: Adversary) {
-        adversariesByID[adversary.id] = adversary
+        homebrewAdversariesByID[adversary.id] = adversary
     }
 
-    /// Merge a custom environment into the compendium.
+    /// Remove a homebrew adversary by slug. No-op if not present.
+    public func removeHomebrewAdversary(id: String) {
+        homebrewAdversariesByID.removeValue(forKey: id)
+    }
+
+    /// Add or replace a homebrew environment.
     public func addEnvironment(_ environment: DaggerheartEnvironment) {
-        environmentsByID[environment.id] = environment
+        homebrewEnvironmentsByID[environment.id] = environment
+    }
+
+    /// Remove a homebrew environment by slug. No-op if not present.
+    public func removeHomebrewEnvironment(id: String) {
+        homebrewEnvironmentsByID.removeValue(forKey: id)
     }
 
     // MARK: - Private Helpers

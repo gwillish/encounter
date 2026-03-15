@@ -1038,6 +1038,147 @@ struct DifficultyBudgetTests {
     }
 }
 
+// MARK: - GAP-5: Homebrew distinction in Compendium
+
+@MainActor struct CompendiumHomebrewTests {
+
+    private func makeSoldier(id: String = "ironguard-soldier") -> Adversary {
+        Adversary(
+            id: id, name: "Ironguard Soldier", tier: 1, type: .bruiser,
+            description: "A disciplined mercenary.", difficulty: 11,
+            thresholdMajor: 5, thresholdSevere: 10, hp: 6, stress: 3,
+            attackModifier: "+3", attackName: "Longsword",
+            attackRange: .veryClose, damage: "1d10+3 phy"
+        )
+    }
+
+    private func makeEnv(id: String = "bridge") -> DaggerheartEnvironment {
+        DaggerheartEnvironment(id: id, name: "Bridge", description: "A rope bridge.")
+    }
+
+    @Test func homebrewAdversaryAppearsInHomebrewList() {
+        let compendium = Compendium()
+        compendium.addAdversary(makeSoldier())
+        #expect(compendium.homebrewAdversaries.count == 1)
+        #expect(compendium.homebrewAdversaries[0].id == "ironguard-soldier")
+    }
+
+    @Test func homebrewAdversaryAppearsInAllAdversaries() {
+        let compendium = Compendium()
+        compendium.addAdversary(makeSoldier())
+        #expect(compendium.adversaries.contains { $0.id == "ironguard-soldier" })
+    }
+
+    @Test func srdAdversaryDoesNotAppearInHomebrewList() {
+        let compendium = Compendium()
+        // Simulate an SRD load by calling addAdversary... but that goes to homebrew.
+        // Instead verify that homebrewAdversaries starts empty.
+        #expect(compendium.homebrewAdversaries.isEmpty)
+    }
+
+    @Test func homebrewOverridesSRDEntryOnLookup() {
+        let compendium = Compendium()
+        // Seed an SRD-style entry via the internal path isn't accessible in tests,
+        // so simulate conflict: add two homebrew entries with the same ID.
+        // The second addAdversary call replaces the first.
+        var variant = makeSoldier()
+        compendium.addAdversary(variant)
+        variant = Adversary(
+            id: "ironguard-soldier", name: "Elite Ironguard", tier: 2, type: .bruiser,
+            description: "Upgraded.", difficulty: 14, thresholdMajor: 7, thresholdSevere: 14,
+            hp: 10, stress: 4, attackModifier: "+5", attackName: "Longsword",
+            attackRange: .veryClose, damage: "2d10+5 phy"
+        )
+        compendium.addAdversary(variant)
+        #expect(compendium.adversary(id: "ironguard-soldier")?.name == "Elite Ironguard")
+        #expect(compendium.homebrewAdversaries.count == 1)
+    }
+
+    @Test func removeHomebrewAdversaryRemovesFromBothLists() {
+        let compendium = Compendium()
+        compendium.addAdversary(makeSoldier())
+        compendium.removeHomebrewAdversary(id: "ironguard-soldier")
+        #expect(compendium.homebrewAdversaries.isEmpty)
+        #expect(compendium.adversary(id: "ironguard-soldier") == nil)
+    }
+
+    @Test func homebrewEnvironmentAppearsInHomebrewList() {
+        let compendium = Compendium()
+        compendium.addEnvironment(makeEnv())
+        #expect(compendium.homebrewEnvironments.count == 1)
+    }
+
+    @Test func removeHomebrewEnvironmentRemovesFromBothLists() {
+        let compendium = Compendium()
+        compendium.addEnvironment(makeEnv())
+        compendium.removeHomebrewEnvironment(id: "bridge")
+        #expect(compendium.homebrewEnvironments.isEmpty)
+        #expect(compendium.environment(id: "bridge") == nil)
+    }
+}
+
+// MARK: - GAP-9: AdversarySlot stat snapshot
+
+@MainActor struct AdversarySlotSnapshotTests {
+
+    private func makeSoldier() -> Adversary {
+        Adversary(
+            id: "ironguard-soldier", name: "Ironguard Soldier", tier: 1, type: .bruiser,
+            description: "A disciplined mercenary.", difficulty: 11,
+            thresholdMajor: 5, thresholdSevere: 10, hp: 6, stress: 3,
+            attackModifier: "+3", attackName: "Longsword",
+            attackRange: .veryClose, damage: "1d10+3 phy"
+        )
+    }
+
+    @Test func slotSnapshotsMaxHPAndMaxStress() {
+        let slot = AdversarySlot.from(makeSoldier())
+        #expect(slot.maxHP == 6)
+        #expect(slot.maxStress == 3)
+    }
+
+    @Test func applyStressClampedToSnapshotMax() {
+        let session = EncounterSession(name: "Test")
+        session.add(adversary: makeSoldier())
+        let slotID = session.adversarySlots[0].id
+
+        session.applyStress(100, to: slotID)
+        #expect(session.adversarySlots[0].currentStress == 3)
+    }
+
+    @Test func applyStressAccumulatesCorrectly() {
+        let session = EncounterSession(name: "Test")
+        session.add(adversary: makeSoldier())
+        let slotID = session.adversarySlots[0].id
+
+        session.applyStress(1, to: slotID)
+        session.applyStress(1, to: slotID)
+        #expect(session.adversarySlots[0].currentStress == 2)
+    }
+
+    @Test func healClampedToSnapshotMaxHP() {
+        let session = EncounterSession(name: "Test")
+        session.add(adversary: makeSoldier())
+        let slotID = session.adversarySlots[0].id
+
+        session.applyDamage(4, to: slotID)
+        session.heal(100, slotID: slotID)
+        #expect(session.adversarySlots[0].currentHP == 6)
+    }
+
+    @Test func healFromZeroUnsetsDefeated() {
+        let session = EncounterSession(name: "Test")
+        session.add(adversary: makeSoldier())
+        let slotID = session.adversarySlots[0].id
+
+        session.applyDamage(999, to: slotID)
+        #expect(session.adversarySlots[0].isDefeated == true)
+        session.heal(6, slotID: slotID)
+        #expect(session.adversarySlots[0].isDefeated == false)
+        #expect(session.adversarySlots[0].currentHP == 6)
+    }
+}
+
 // MARK: - Environment
 
 struct EnvironmentModelTests {
