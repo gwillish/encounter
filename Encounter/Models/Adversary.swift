@@ -33,10 +33,16 @@ nonisolated public enum AdversaryType: String, Codable, CaseIterable, Sendable {
     case minion   = "Minion"
     /// Fragile up close; deal high damage at range.
     case ranged   = "Ranged"
+    /// Maneuver and exploit opportunities to ambush.
+    case skulk    = "Skulk"
+    /// Present conversation-based challenges.
+    case social   = "Social"
     /// Designed for one-on-one or climactic encounters.
     case solo     = "Solo"
     /// Catch-all for adversaries without an explicit type label.
     case standard = "Standard"
+    /// Enhance allies and disrupt opponents.
+    case support  = "Support"
 }
 
 // MARK: - AttackRange

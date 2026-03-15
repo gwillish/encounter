@@ -37,6 +37,7 @@ nonisolated public struct AdversarySlot: Identifiable, Sendable, Equatable {
     public var currentHP: Int
     public var currentStress: Int
     public var isDefeated: Bool
+    public var conditions: Set<Condition>
 
     // MARK: - Init
 
@@ -46,7 +47,8 @@ nonisolated public struct AdversarySlot: Identifiable, Sendable, Equatable {
         customName: String? = nil,
         currentHP: Int,
         currentStress: Int = 0,
-        isDefeated: Bool = false
+        isDefeated: Bool = false,
+        conditions: Set<Condition> = []
     ) {
         self.id = id
         self.adversaryID = adversaryID
@@ -54,6 +56,7 @@ nonisolated public struct AdversarySlot: Identifiable, Sendable, Equatable {
         self.currentHP = currentHP
         self.currentStress = currentStress
         self.isDefeated = isDefeated
+        self.conditions = conditions
     }
 
     /// Convenience factory: create a slot pre-populated from a catalog entry.
@@ -122,6 +125,7 @@ public final class EncounterSession: Identifiable {
 
     // MARK: Participants
     public var adversarySlots: [AdversarySlot]
+    public var playerSlots: [PlayerSlot]
     public var environmentSlots: [EnvironmentSlot]
 
     // MARK: Fear & Hope
@@ -151,6 +155,7 @@ public final class EncounterSession: Identifiable {
         id: UUID = UUID(),
         name: String,
         adversarySlots: [AdversarySlot] = [],
+        playerSlots: [PlayerSlot] = [],
         environmentSlots: [EnvironmentSlot] = [],
         fearPool: Int = 0,
         hopePool: Int = 0,
@@ -160,12 +165,13 @@ public final class EncounterSession: Identifiable {
         self.id = id
         self.name = name
         self.adversarySlots = adversarySlots
+        self.playerSlots = playerSlots
         self.environmentSlots = environmentSlots
         self.fearPool = fearPool
         self.hopePool = hopePool
         self.activeSlotID = nil
         self.currentRound = currentRound
-        self.turnOrder = adversarySlots.map(\.id)
+        self.turnOrder = adversarySlots.map(\.id) + playerSlots.map(\.id)
         self.gmNotes = gmNotes
     }
 
@@ -186,6 +192,21 @@ public final class EncounterSession: Identifiable {
     /// Remove an adversary slot by ID.
     public func removeAdversary(id: UUID) {
         adversarySlots.removeAll { $0.id == id }
+        turnOrder.removeAll { $0 == id }
+        if activeSlotID == id { activeSlotID = nil }
+    }
+
+    // MARK: - Player Management
+
+    /// Add a player slot to the encounter.
+    public func addPlayer(_ player: PlayerSlot) {
+        playerSlots.append(player)
+        turnOrder.append(player.id)
+    }
+
+    /// Remove a player slot by ID.
+    public func removePlayer(id: UUID) {
+        playerSlots.removeAll { $0.id == id }
         turnOrder.removeAll { $0 == id }
         if activeSlotID == id { activeSlotID = nil }
     }
@@ -218,6 +239,80 @@ public final class EncounterSession: Identifiable {
         }
     }
 
+    // MARK: - Adversary Condition Management
+
+    /// Apply a condition to an adversary slot.
+    /// Per the SRD, the same condition does not stack (Set enforces this).
+    /// `.custom` conditions with an empty or whitespace-only name are silently ignored.
+    public func applyCondition(_ condition: Condition, to slotID: UUID) {
+        if case .custom(let name) = condition,
+           name.trimmingCharacters(in: .whitespaces).isEmpty { return }
+        guard let index = adversarySlots.firstIndex(where: { $0.id == slotID }) else { return }
+        adversarySlots[index].conditions.insert(condition)
+    }
+
+    /// Remove a condition from an adversary slot.
+    public func removeCondition(_ condition: Condition, from slotID: UUID) {
+        guard let index = adversarySlots.firstIndex(where: { $0.id == slotID }) else { return }
+        adversarySlots[index].conditions.remove(condition)
+    }
+
+    // MARK: - Player HP & Stress Mutations
+
+    /// Apply damage to a player slot, clamping HP to 0.
+    public func applyPlayerDamage(_ amount: Int, to slotID: UUID) {
+        guard let index = playerSlots.firstIndex(where: { $0.id == slotID }) else { return }
+        playerSlots[index].currentHP = max(0, playerSlots[index].currentHP - amount)
+    }
+
+    /// Apply stress to a player slot, clamping to maximum.
+    public func applyPlayerStress(_ amount: Int, to slotID: UUID) {
+        guard let index = playerSlots.firstIndex(where: { $0.id == slotID }) else { return }
+        playerSlots[index].currentStress = min(
+            playerSlots[index].maxStress,
+            playerSlots[index].currentStress + amount
+        )
+    }
+
+    /// Heal a player slot, clamping HP to maximum.
+    public func healPlayer(_ amount: Int, slotID: UUID) {
+        guard let index = playerSlots.firstIndex(where: { $0.id == slotID }) else { return }
+        playerSlots[index].currentHP = min(
+            playerSlots[index].maxHP,
+            playerSlots[index].currentHP + amount
+        )
+    }
+
+    /// Clear stress from a player slot, clamping to 0.
+    public func clearPlayerStress(_ amount: Int, slotID: UUID) {
+        guard let index = playerSlots.firstIndex(where: { $0.id == slotID }) else { return }
+        playerSlots[index].currentStress = max(0, playerSlots[index].currentStress - amount)
+    }
+
+    /// Mark one Armor Slot on a player (used to reduce damage severity).
+    public func markPlayerArmorSlot(_ slotID: UUID) {
+        guard let index = playerSlots.firstIndex(where: { $0.id == slotID }) else { return }
+        guard playerSlots[index].currentArmorSlots > 0 else { return }
+        playerSlots[index].currentArmorSlots -= 1
+    }
+
+    // MARK: - Player Condition Management
+
+    /// Apply a condition to a player slot.
+    /// `.custom` conditions with an empty or whitespace-only name are silently ignored.
+    public func applyPlayerCondition(_ condition: Condition, to slotID: UUID) {
+        if case .custom(let name) = condition,
+           name.trimmingCharacters(in: .whitespaces).isEmpty { return }
+        guard let index = playerSlots.firstIndex(where: { $0.id == slotID }) else { return }
+        playerSlots[index].conditions.insert(condition)
+    }
+
+    /// Remove a condition from a player slot.
+    public func removePlayerCondition(_ condition: Condition, from slotID: UUID) {
+        guard let index = playerSlots.firstIndex(where: { $0.id == slotID }) else { return }
+        playerSlots[index].conditions.remove(condition)
+    }
+
     // MARK: - Fear & Hope
 
     public func incrementFear(by amount: Int = 1) {
@@ -247,15 +342,23 @@ public final class EncounterSession: Identifiable {
         turnOrder = turnOrder.filter { !defeatedIDs.contains($0) }
     }
 
-    /// Set the active spotlight to the next slot in turn order.
+    /// Turn order filtered to non-defeated participants.
+    /// Defeated adversaries are excluded so `advanceTurn` never lands on them mid-round.
+    private var activeTurnOrder: [UUID] {
+        let defeatedIDs = Set(adversarySlots.filter(\.isDefeated).map(\.id))
+        return turnOrder.filter { !defeatedIDs.contains($0) }
+    }
+
+    /// Set the active spotlight to the next slot in turn order, skipping defeated adversaries.
     public func advanceTurn() {
-        guard !turnOrder.isEmpty else { activeSlotID = nil; return }
+        let active = activeTurnOrder
+        guard !active.isEmpty else { activeSlotID = nil; return }
         if let current = activeSlotID,
-           let currentIndex = turnOrder.firstIndex(of: current),
-           currentIndex + 1 < turnOrder.count {
-            activeSlotID = turnOrder[currentIndex + 1]
+           let currentIndex = active.firstIndex(of: current),
+           currentIndex + 1 < active.count {
+            activeSlotID = active[currentIndex + 1]
         } else {
-            activeSlotID = turnOrder.first
+            activeSlotID = active.first
         }
     }
 
@@ -269,5 +372,52 @@ public final class EncounterSession: Identifiable {
     /// `true` when all adversary slots are defeated.
     public var isOver: Bool {
         adversarySlots.allSatisfy(\.isDefeated)
+    }
+
+    // MARK: - Factory
+
+    /// Create a live encounter session from a saved definition.
+    ///
+    /// Resolves adversary and environment IDs through the compendium.
+    /// IDs that do not resolve to a catalog entry are silently skipped
+    /// (this handles orphaned homebrew references gracefully).
+    ///
+    /// - Parameters:
+    ///   - definition: The encounter template to instantiate.
+    ///   - compendium: The catalog used to resolve adversary/environment IDs.
+    /// - Returns: A fresh `EncounterSession` ready for play.
+    public static func start(
+        from definition: EncounterDefinition,
+        using compendium: Compendium
+    ) -> EncounterSession {
+        let adversarySlots: [AdversarySlot] = definition.adversaryIDs.compactMap { id in
+            guard let adversary = compendium.adversary(id: id) else { return nil }
+            return AdversarySlot.from(adversary)
+        }
+
+        let environmentSlots: [EnvironmentSlot] = definition.environmentIDs.compactMap { id in
+            guard compendium.environment(id: id) != nil else { return nil }
+            return EnvironmentSlot(environmentID: id)
+        }
+
+        let playerSlots: [PlayerSlot] = definition.playerConfigs.map { config in
+            PlayerSlot(
+                name: config.name,
+                maxHP: config.maxHP,
+                maxStress: config.maxStress,
+                evasion: config.evasion,
+                thresholdMajor: config.thresholdMajor,
+                thresholdSevere: config.thresholdSevere,
+                armorSlots: config.armorSlots
+            )
+        }
+
+        return EncounterSession(
+            name: definition.name,
+            adversarySlots: adversarySlots,
+            playerSlots: playerSlots,
+            environmentSlots: environmentSlots,
+            gmNotes: definition.gmNotes
+        )
     }
 }
