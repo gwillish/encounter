@@ -24,7 +24,7 @@ import Foundation
 /// This is the `Codable`, value-type counterpart of ``PlayerSlot``.
 /// When an ``EncounterSession`` is started from a definition, each
 /// `PlayerConfig` becomes a ``PlayerSlot`` with fresh runtime state.
-nonisolated public struct PlayerConfig: Codable, Sendable, Equatable, Identifiable {
+nonisolated public struct PlayerConfig: Codable, Sendable, Equatable, Hashable, Identifiable {
     public let id: UUID
     public let name: String
     public let maxHP: Int
@@ -66,7 +66,7 @@ nonisolated public struct PlayerConfig: Codable, Sendable, Equatable, Identifiab
 ///
 /// To run an encounter, create an ``EncounterSession`` from a definition
 /// using ``EncounterSession/start(from:using:)``.
-nonisolated public struct EncounterDefinition: Codable, Sendable, Equatable, Identifiable {
+nonisolated public struct EncounterDefinition: Codable, Sendable, Equatable, Hashable, Identifiable {
     public let id: UUID
     public var name: String { didSet { modifiedAt = .now } }
 
