@@ -166,25 +166,20 @@ Full gap detail: `.claude/memory/project_data_model_gaps.md`
 
 ### High priority — blocking architecture
 
-- [ ] **GAP-1** `EncounterDefinition` type missing — `EncounterSession` conflates prep template
-  with live state. Need `EncounterDefinition` (Codable, saved to library) + `EncounterSession`
-  (transient runtime, created from a definition).
-- [ ] **GAP-2** No `PlayerSlot` type — no player tracking in session at all. Need name, maxHP,
-  currentHP, currentStress; players must participate in turn order.
-- [ ] **GAP-3** No difficulty budget model — no service to compute encounter difficulty rating
-  (trivial → TPK) from adversary list + player count/tier + adversary type weighting.
-- [ ] **GAP-4** `EncounterDefinition` not `Codable` — blocked on GAP-1; required for CloudKit sync.
+- [x] **GAP-1** `EncounterDefinition` type — `EncounterDefinition.swift` added; `EncounterSession.start(from:using:)` factory method bridges the two.
+- [x] **GAP-2** `PlayerSlot` type — `PlayerSlot.swift` added; participates in turn order; full HP/stress/armor/condition tracking in `EncounterSession`.
+- [x] **GAP-3** Difficulty budget model — `DifficultyBudget.swift` added; pure Battle Points namespace per SRD.
+- [x] **GAP-4** `EncounterDefinition` `Codable` — resolved with GAP-1; `PlayerConfig` also fully Codable.
 
 ### Medium priority
 
 - [ ] **GAP-5** Homebrew not distinguishable from SRD in `Compendium` — `source` string is
   informal; need reliable way to list/export/persist homebrew adversaries separately.
-- [ ] **GAP-6** No condition tags on `AdversarySlot` — need `Condition` enum + `Set<Condition>`
-  for quick-tap status badges (Restrained, Prone, Frightened, etc.).
+- [x] **GAP-6** Condition tags — `Condition.swift` added; `Set<Condition>` on both `AdversarySlot` and `PlayerSlot`.
 
 ### Low priority
 
-- [ ] **GAP-7** No `createdAt`/`modifiedAt` on encounter — needed for library sorting (blocked on GAP-1).
+- [x] **GAP-7** `createdAt`/`modifiedAt` — included in `EncounterDefinition`.
 - [ ] **GAP-8** `Compendium.load()` is synchronous — should be `async throws` for CloudKit consistency.
 - [ ] **GAP-9** `AdversarySlot` holds ID ref only — homebrew edits/deletes can orphan slots;
   consider embedding a stat snapshot at encounter-build time.
