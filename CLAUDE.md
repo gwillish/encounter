@@ -162,10 +162,43 @@ Test coverage priorities:
 
 ## Known Gaps / Next Steps
 
+Full gap detail: `.claude/memory/project_data_model_gaps.md`
+
+### High priority — blocking architecture
+
+- [ ] **GAP-1** `EncounterDefinition` type missing — `EncounterSession` conflates prep template
+  with live state. Need `EncounterDefinition` (Codable, saved to library) + `EncounterSession`
+  (transient runtime, created from a definition).
+- [ ] **GAP-2** No `PlayerSlot` type — no player tracking in session at all. Need name, maxHP,
+  currentHP, currentStress; players must participate in turn order.
+- [ ] **GAP-3** No difficulty budget model — no service to compute encounter difficulty rating
+  (trivial → TPK) from adversary list + player count/tier + adversary type weighting.
+- [ ] **GAP-4** `EncounterDefinition` not `Codable` — blocked on GAP-1; required for CloudKit sync.
+
+### Medium priority
+
+- [ ] **GAP-5** Homebrew not distinguishable from SRD in `Compendium` — `source` string is
+  informal; need reliable way to list/export/persist homebrew adversaries separately.
+- [ ] **GAP-6** No condition tags on `AdversarySlot` — need `Condition` enum + `Set<Condition>`
+  for quick-tap status badges (Restrained, Prone, Frightened, etc.).
+
+### Low priority
+
+- [ ] **GAP-7** No `createdAt`/`modifiedAt` on encounter — needed for library sorting (blocked on GAP-1).
+- [ ] **GAP-8** `Compendium.load()` is synchronous — should be `async throws` for CloudKit consistency.
+- [ ] **GAP-9** `AdversarySlot` holds ID ref only — homebrew edits/deletes can orphan slots;
+  consider embedding a stat snapshot at encounter-build time.
+
+### Pre-existing
+
 - [ ] `ContentView.swift` is a stub — needs compendium browser + encounter runner UI
 - [ ] `adversaries.json` / `environments.json` are sample data — replace with full SRD export
-- [ ] No dice rolling logic yet — `damage` strings are stored raw (e.g. `"1d12+2 phy"`)
-- [ ] No persistence layer — `EncounterSession` is in-memory only
-- [ ] Player-facing content (classes, ancestries) not yet modelled
-- [ ] Horde adversary rules (shared HP pool, modified attack) not yet implemented in session
-- [ ] No iCloud sync or handoff between iOS and macOS
+- [ ] No dice rolling logic — `damage` strings are stored raw (e.g. `"1d12+2 phy"`)
+- [ ] Horde adversary rules (shared HP pool, modified attack) not yet implemented
+- [ ] No iCloud sync or Handoff between iOS and macOS
+
+### Future (out of scope for v1)
+
+- [ ] LLM-assisted ad-hoc encounter generation from description
+- [ ] Continuity/Handoff between Mac and iPhone
+- [ ] Player companion app with live status push to GM
