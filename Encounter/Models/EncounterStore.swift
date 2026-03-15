@@ -168,14 +168,20 @@ public final class EncounterStore {
 
     /// Persists an updated definition to disk and refreshes ``definitions``.
     ///
+    /// The store stamps `modifiedAt = .now` before writing, so the sort order
+    /// invariant is maintained regardless of whether the caller has updated
+    /// individual properties through their `didSet` observers.
+    ///
     /// - Throws: ``EncounterStoreError/notFound(_:)`` if the ID is not in
     ///   the current ``definitions``.
     public func save(_ definition: EncounterDefinition) async throws {
         guard definitions.contains(where: { $0.id == definition.id }) else {
             throw EncounterStoreError.notFound(definition.id)
         }
-        try await persist(definition)
-        updateInPlace(definition)
+        var stamped = definition
+        stamped.modifiedAt = .now
+        try await persist(stamped)
+        updateInPlace(stamped)
     }
 
     // MARK: - Delete
@@ -204,6 +210,9 @@ public final class EncounterStore {
     /// `createdAt`, and a `" (Copy)"` suffix on the name. Persists it and
     /// adds it to ``definitions``.
     ///
+    /// The copy is inserted with `createdAt = modifiedAt = .now`, so it sorts
+    /// to the top of ``definitions``.
+    ///
     /// - Throws: ``EncounterStoreError/notFound(_:)`` if the source ID is unknown.
     public func duplicate(id: UUID) async throws {
         guard let original = definitions.first(where: { $0.id == id }) else {
@@ -230,6 +239,12 @@ public final class EncounterStore {
         let url = fileURL(for: definition.id)
         do {
             try await Task.detached(priority: .userInitiated) {
+                // Create directory defensively so persist() works even if
+                // called before load() has had a chance to create it.
+                try FileManager.default.createDirectory(
+                    at: url.deletingLastPathComponent(),
+                    withIntermediateDirectories: true
+                )
                 let data = try JSONEncoder().encode(definition)
                 try data.write(to: url, options: .atomic)
             }.value

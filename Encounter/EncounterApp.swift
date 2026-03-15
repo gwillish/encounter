@@ -18,11 +18,15 @@ struct EncounterApp: App {
                 .environment(compendium)
                 .environment(store)
                 .task {
-                    async let compendiumLoad: Void = compendium.load()
                     let dir = await EncounterStore.defaultDirectory()
                     store.relocate(to: dir)
+                    // Both loads are independent — run concurrently.
+                    // Errors are stored in compendium.loadError / store.loadError
+                    // for views to observe; try? here is intentional.
+                    async let compendiumLoad: Void = compendium.load()
+                    async let storeLoad: Void = store.load()
                     try? await compendiumLoad
-                    await store.load()
+                    await storeLoad
                 }
         }
     }
