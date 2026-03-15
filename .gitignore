@@ -35,3 +35,6 @@ TestResults.xcresult
 
 # Project resources
 daggerheart-resources/
+
+# Claude Code local settings (machine-specific permissions)
+.claude/settings.local.json
