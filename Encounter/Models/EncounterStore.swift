@@ -56,14 +56,14 @@ public enum EncounterStoreError: Error, LocalizedError {
 ///         ContentView()
 ///             .environment(store)
 ///             .task {
-///                 let dir = await EncounterStore.defaultDirectory()
-///                 await store.relocate(to: dir)
+///                 async let dir = EncounterStore.defaultDirectory()
+///                 store.relocate(to: await dir)
 ///                 await store.load()
 ///             }
 ///     }
 /// }
 /// ```
-@Observable
+@Observable @MainActor
 public final class EncounterStore {
 
     // MARK: Public State
@@ -73,6 +73,12 @@ public final class EncounterStore {
 
     /// The directory where `.encounter.json` files are stored.
     public private(set) var directory: URL
+
+    /// `true` while a `load()` is in progress.
+    public private(set) var isLoading = false
+
+    /// Non-nil if the last `load()` failed at the directory level.
+    public private(set) var loadError: (any Error)?
 
     // MARK: - Init
 
@@ -85,14 +91,14 @@ public final class EncounterStore {
     /// Returns the preferred storage directory, using iCloud when available.
     ///
     /// `url(forUbiquityContainerIdentifier:)` may perform file-system operations,
-    /// so this method is `async` and runs on a background task.
-    public static func defaultDirectory() async -> URL {
+    /// so this method runs inside a background task.
+    nonisolated public static func defaultDirectory() async -> URL {
         await Task.detached(priority: .userInitiated) {
             let fm = FileManager.default
             if let ubiquity = fm.url(forUbiquityContainerIdentifier: nil) {
                 let dir = ubiquity
-                    .appendingPathComponent("Documents")
-                    .appendingPathComponent("Encounters")
+                    .appending(path: "Documents")
+                    .appending(path: "Encounters")
                 try? fm.createDirectory(at: dir, withIntermediateDirectories: true)
                 return dir
             }
@@ -100,47 +106,52 @@ public final class EncounterStore {
         }.value
     }
 
-    /// Local Application Support directory. Safe to access synchronously.
+    /// Local Application Support directory. A pure URL — no file I/O performed.
     nonisolated public static var localDirectory: URL {
-        let appSupport = FileManager.default
-            .urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-        let dir = appSupport.appendingPathComponent("Encounters")
-        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-        return dir
+        URL.applicationSupportDirectory.appending(path: "Encounters")
     }
 
-    /// Switches to a new storage directory without reloading.
-    /// Call `load()` afterwards to populate `definitions` from the new location.
-    public func relocate(to newDirectory: URL) async {
+    /// Switches the storage directory and clears `definitions`.
+    /// Call `load()` afterwards to populate from the new location.
+    public func relocate(to newDirectory: URL) {
         directory = newDirectory
+        definitions = []
     }
 
     // MARK: - Load
 
     /// Reads all `.encounter.json` files from `directory`.
     ///
-    /// Corrupt or unreadable files are skipped silently.
+    /// Concurrent calls while a load is in progress are ignored.
+    /// Corrupt or unreadable individual files are skipped silently.
     /// Valid definitions are published via ``definitions``, sorted by
-    /// `modifiedAt` descending.
+    /// `modifiedAt` descending. Directory-level errors are stored in ``loadError``.
     public func load() async {
+        guard !isLoading else { return }
+        isLoading = true
+        loadError = nil
+        defer { isLoading = false }
+
         let dir = directory
-        let loaded = await Task.detached(priority: .userInitiated) {
-            var result: [EncounterDefinition] = []
-            guard let contents = try? FileManager.default.contentsOfDirectory(
-                at: dir, includingPropertiesForKeys: nil
-            ) else { return result }
-
-            let decoder = JSONDecoder()
-            for url in contents where url.lastPathComponent.hasSuffix(".encounter.json") {
-                guard let data = try? Data(contentsOf: url),
-                      let def = try? decoder.decode(EncounterDefinition.self, from: data)
-                else { continue }
-                result.append(def)
-            }
-            return result
-        }.value
-
-        definitions = loaded.sorted { $0.modifiedAt > $1.modifiedAt }
+        do {
+            let loaded = try await Task.detached(priority: .userInitiated) { () throws -> [EncounterDefinition] in
+                let fm = FileManager.default
+                try fm.createDirectory(at: dir, withIntermediateDirectories: true)
+                let contents = try fm.contentsOfDirectory(at: dir, includingPropertiesForKeys: [])
+                let decoder = JSONDecoder()
+                return contents
+                    .filter { $0.lastPathComponent.hasSuffix(".encounter.json") }
+                    .compactMap { url -> EncounterDefinition? in
+                        guard let data = try? Data(contentsOf: url),
+                              let def = try? decoder.decode(EncounterDefinition.self, from: data)
+                        else { return nil }
+                        return def
+                    }
+            }.value
+            definitions = loaded.sorted { $0.modifiedAt > $1.modifiedAt }
+        } catch {
+            loadError = error
+        }
     }
 
     // MARK: - Create
@@ -178,7 +189,9 @@ public final class EncounterStore {
         }
         let url = fileURL(for: id)
         do {
-            try FileManager.default.removeItem(at: url)
+            try await Task.detached(priority: .userInitiated) {
+                try FileManager.default.removeItem(at: url)
+            }.value
         } catch {
             throw EncounterStoreError.deleteFailed(id, error)
         }
@@ -187,8 +200,9 @@ public final class EncounterStore {
 
     // MARK: - Duplicate
 
-    /// Creates an independent copy of an existing definition with a new UUID
-    /// and `createdAt`, persists it, and adds it to ``definitions``.
+    /// Creates an independent copy of an existing definition with a new UUID,
+    /// `createdAt`, and a `" (Copy)"` suffix on the name. Persists it and
+    /// adds it to ``definitions``.
     ///
     /// - Throws: ``EncounterStoreError/notFound(_:)`` if the source ID is unknown.
     public func duplicate(id: UUID) async throws {
@@ -196,7 +210,7 @@ public final class EncounterStore {
             throw EncounterStoreError.notFound(id)
         }
         let copy = EncounterDefinition(
-            name: original.name,
+            name: "\(original.name) (Copy)",
             adversaryIDs: original.adversaryIDs,
             environmentIDs: original.environmentIDs,
             playerConfigs: original.playerConfigs,
@@ -209,14 +223,16 @@ public final class EncounterStore {
     // MARK: - Private Helpers
 
     private func fileURL(for id: UUID) -> URL {
-        directory.appendingPathComponent("\(id.uuidString).encounter.json")
+        directory.appending(path: "\(id.uuidString).encounter.json")
     }
 
     private func persist(_ definition: EncounterDefinition) async throws {
         let url = fileURL(for: definition.id)
         do {
-            let data = try JSONEncoder().encode(definition)
-            try data.write(to: url, options: .atomic)
+            try await Task.detached(priority: .userInitiated) {
+                let data = try JSONEncoder().encode(definition)
+                try data.write(to: url, options: .atomic)
+            }.value
         } catch {
             throw EncounterStoreError.saveFailed(definition.id, error)
         }
@@ -228,11 +244,11 @@ public final class EncounterStore {
     }
 
     private func updateInPlace(_ definition: EncounterDefinition) {
-        if let idx = definitions.firstIndex(where: { $0.id == definition.id }) {
-            definitions[idx] = definition
-        } else {
-            definitions.append(definition)
+        guard let idx = definitions.firstIndex(where: { $0.id == definition.id }) else {
+            assertionFailure("updateInPlace called for unknown id \(definition.id)")
+            return
         }
+        definitions[idx] = definition
         definitions.sort { $0.modifiedAt > $1.modifiedAt }
     }
 }

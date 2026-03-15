@@ -1186,7 +1186,7 @@ struct DifficultyBudgetTests {
     /// Returns a fresh store backed by a unique temp directory.
     private func makeStore() throws -> EncounterStore {
         let dir = FileManager.default.temporaryDirectory
-            .appendingPathComponent(UUID().uuidString)
+            .appending(path: UUID().uuidString)
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         return EncounterStore(directory: dir)
     }
@@ -1259,7 +1259,7 @@ struct DifficultyBudgetTests {
         let store = try makeStore()
         try await store.create(name: "Encounter A")
         try await store.create(name: "Encounter B")
-        let idToDelete = store.definitions.first(where: { $0.name == "Encounter A" })!.id
+        let idToDelete = try #require(store.definitions.first(where: { $0.name == "Encounter A" })).id
 
         try await store.delete(id: idToDelete)
         #expect(store.definitions.count == 1)
@@ -1296,8 +1296,8 @@ struct DifficultyBudgetTests {
         try await store.duplicate(id: def.id)
         #expect(store.definitions.count == 2)
 
-        let copy = store.definitions.first(where: { $0.id != def.id })!
-        #expect(copy.name == "Original")
+        let copy = try #require(store.definitions.first(where: { $0.id != def.id }))
+        #expect(copy.name == "Original (Copy)")
         #expect(copy.gmNotes == "Some notes.")
         #expect(copy.createdAt >= def.createdAt)
     }
@@ -1308,13 +1308,13 @@ struct DifficultyBudgetTests {
         let originalID = store.definitions[0].id
 
         try await store.duplicate(id: originalID)
-        let copyID = store.definitions.first(where: { $0.id != originalID })!.id
+        let copyID = try #require(store.definitions.first(where: { $0.id != originalID })).id
 
-        var copy = store.definitions.first(where: { $0.id == copyID })!
+        var copy = try #require(store.definitions.first(where: { $0.id == copyID }))
         copy.name = "Mutated Copy"
         try await store.save(copy)
 
-        let original = store.definitions.first(where: { $0.id == originalID })!
+        let original = try #require(store.definitions.first(where: { $0.id == originalID }))
         #expect(original.name == "Original")
     }
 
@@ -1329,12 +1329,12 @@ struct DifficultyBudgetTests {
 
     @Test func loadReconstitutesFromFiles() async throws {
         let dir = FileManager.default.temporaryDirectory
-            .appendingPathComponent(UUID().uuidString)
+            .appending(path: UUID().uuidString)
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
 
         let def = EncounterDefinition(name: "From File")
         let data = try JSONEncoder().encode(def)
-        let fileURL = dir.appendingPathComponent("\(def.id.uuidString).encounter.json")
+        let fileURL = dir.appending(path: "\(def.id.uuidString).encounter.json")
         try data.write(to: fileURL)
 
         let store = EncounterStore(directory: dir)
@@ -1346,11 +1346,11 @@ struct DifficultyBudgetTests {
 
     @Test func loadIgnoresNonEncounterFiles() async throws {
         let dir = FileManager.default.temporaryDirectory
-            .appendingPathComponent(UUID().uuidString)
+            .appending(path: UUID().uuidString)
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
 
         // Write a non-encounter file that should be skipped
-        try "noise".data(using: .utf8)!.write(to: dir.appendingPathComponent("readme.txt"))
+        try Data("noise".utf8).write(to: dir.appending(path: "readme.txt"))
 
         let store = EncounterStore(directory: dir)
         await store.load()
@@ -1359,16 +1359,16 @@ struct DifficultyBudgetTests {
 
     @Test func loadIgnoresCorruptFiles() async throws {
         let dir = FileManager.default.temporaryDirectory
-            .appendingPathComponent(UUID().uuidString)
+            .appending(path: UUID().uuidString)
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
 
         // Write a valid encounter file alongside a corrupt one
         let def = EncounterDefinition(name: "Good Encounter")
         try JSONEncoder().encode(def).write(
-            to: dir.appendingPathComponent("\(def.id.uuidString).encounter.json")
+            to: dir.appending(path: "\(def.id.uuidString).encounter.json")
         )
-        try "not valid json".data(using: .utf8)!.write(
-            to: dir.appendingPathComponent("corrupt.encounter.json")
+        try Data("not valid json".utf8).write(
+            to: dir.appending(path: "corrupt.encounter.json")
         )
 
         let store = EncounterStore(directory: dir)
@@ -1399,10 +1399,10 @@ struct DifficultyBudgetTests {
         // Write directly to the store's directory to seed known timestamps
         let encoder = JSONEncoder()
         try encoder.encode(earlier).write(
-            to: store.directory.appendingPathComponent("\(earlier.id.uuidString).encounter.json")
+            to: store.directory.appending(path: "\(earlier.id.uuidString).encounter.json")
         )
         try encoder.encode(latest).write(
-            to: store.directory.appendingPathComponent("\(latest.id.uuidString).encounter.json")
+            to: store.directory.appending(path: "\(latest.id.uuidString).encounter.json")
         )
         alpha.gmNotes = "touched last" // bump modifiedAt to now
         try await store.save(alpha)

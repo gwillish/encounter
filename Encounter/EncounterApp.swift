@@ -18,9 +18,10 @@ struct EncounterApp: App {
                 .environment(compendium)
                 .environment(store)
                 .task {
-                    try? await compendium.load()
+                    async let compendiumLoad: Void = compendium.load()
                     let dir = await EncounterStore.defaultDirectory()
-                    await store.relocate(to: dir)
+                    store.relocate(to: dir)
+                    try? await compendiumLoad
                     await store.load()
                 }
         }
