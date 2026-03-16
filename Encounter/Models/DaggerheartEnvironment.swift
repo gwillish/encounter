@@ -22,7 +22,7 @@ import Foundation
 /// Environments share the same feature schema as adversaries but represent
 /// location hazards, terrain, or interactive elements rather than combatants.
 /// They participate in encounters but are not tracked as HP pools.
-nonisolated public struct DaggerheartEnvironment: Codable, Identifiable, Sendable, Equatable {
+nonisolated public struct DaggerheartEnvironment: Codable, Identifiable, Sendable, Equatable, Hashable {
 
     // MARK: Identity
     /// URL-safe slug, e.g. `"collapsing-cavern"`.
