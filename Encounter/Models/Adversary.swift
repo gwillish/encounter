@@ -71,7 +71,7 @@ nonisolated public enum FeatureType: String, Codable, CaseIterable, Sendable {
 // MARK: - AdversaryFeature
 
 /// A single named feature (action, reaction, or passive) on an adversary or environment.
-nonisolated public struct AdversaryFeature: Codable, Identifiable, Sendable, Equatable {
+nonisolated public struct AdversaryFeature: Codable, Identifiable, Sendable, Equatable, Hashable {
     // `id` uses name because feature names are unique within a given adversary.
     public var id: String { name }
 
@@ -108,7 +108,7 @@ nonisolated public struct AdversaryFeature: Codable, Identifiable, Sendable, Equ
 /// into `thresholdMajor` and `thresholdSevere` integers. Both the combined
 /// string key and pre-split `threshold_major` / `threshold_severe` keys
 /// are accepted.
-nonisolated public struct Adversary: Codable, Identifiable, Sendable, Equatable {
+nonisolated public struct Adversary: Codable, Identifiable, Sendable, Equatable, Hashable {
 
     // MARK: Identity
     /// URL-safe slug, e.g. `"acid-burrower"`. Used as stable ID for cross-referencing.
