@@ -129,7 +129,9 @@ nonisolated public struct EnvironmentSlot: Identifiable, Sendable, Equatable {
 /// session.add(environment: terrain.forestEdge)
 /// ```
 @Observable
-public final class EncounterSession: Identifiable {
+public final class EncounterSession: Identifiable, Hashable {
+    public nonisolated static func == (lhs: EncounterSession, rhs: EncounterSession) -> Bool { lhs.id == rhs.id }
+    public nonisolated func hash(into hasher: inout Hasher) { hasher.combine(id) }
 
     // MARK: Identity
     public let id: UUID
@@ -310,6 +312,15 @@ public final class EncounterSession: Identifiable {
         guard let index = playerSlots.firstIndex(where: { $0.id == slotID }) else { return }
         guard playerSlots[index].currentArmorSlots > 0 else { return }
         playerSlots[index].currentArmorSlots -= 1
+    }
+
+    /// Restore one Armor Slot on a player (undo a mark, or recover via a rest ability).
+    public func restorePlayerArmorSlot(_ slotID: UUID) {
+        guard let index = playerSlots.firstIndex(where: { $0.id == slotID }) else { return }
+        playerSlots[index].currentArmorSlots = min(
+            playerSlots[index].armorSlots,
+            playerSlots[index].currentArmorSlots + 1
+        )
     }
 
     // MARK: - Player Condition Management

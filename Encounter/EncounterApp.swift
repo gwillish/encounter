@@ -11,12 +11,14 @@ import SwiftUI
 struct EncounterApp: App {
     @State private var compendium = Compendium()
     @State private var store = EncounterStore(directory: EncounterStore.localDirectory)
+    @State private var sessionRegistry = SessionRegistry()
 
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .environment(compendium)
                 .environment(store)
+                .environment(sessionRegistry)
                 .task {
                     let dir = await EncounterStore.defaultDirectory()
                     store.relocate(to: dir)
