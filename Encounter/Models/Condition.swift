@@ -33,6 +33,10 @@ nonisolated public enum Condition: Hashable, Sendable, Codable {
     /// A feature-imposed condition with a custom name.
     case custom(String)
 
+    /// The three standard SRD conditions available for toggle in encounter UI.
+    /// `.custom` is omitted because it requires a name parameter.
+    public static let standardConditions: [Condition] = [.hidden, .restrained, .vulnerable]
+
     /// Human-readable display name for UI rendering.
     public var displayName: String {
         switch self {

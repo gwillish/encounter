@@ -116,7 +116,7 @@ struct EncounterBuilderView: View {
             }
         }
         .navigationDestination(item: $runSession) { session in
-            EncounterRunnerView(session: session, definition: draft)
+            EncounterRunnerView(session: session)
         }
     }
 

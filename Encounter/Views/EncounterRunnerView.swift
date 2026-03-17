@@ -15,18 +15,15 @@ import SwiftUI
 
 struct EncounterRunnerView: View {
     let session: EncounterSession
-    let definition: EncounterDefinition
 
     @Environment(Compendium.self) private var compendium
     @State private var expandedSlotID: UUID?
 
     // MARK: - Sorted slots (computed, non-mutating)
-    // Active adversaries preserve original insertion order.
+    // Active adversaries preserve original insertion order (stable sort).
     // Defeated adversaries accumulate at the bottom in defeat order.
     private var sortedAdversarySlots: [AdversarySlot] {
-        let active   = session.adversarySlots.filter { !$0.isDefeated }
-        let defeated = session.adversarySlots.filter {  $0.isDefeated }
-        return active + defeated
+        session.adversarySlots.sorted { !$0.isDefeated && $1.isDefeated }
     }
 
     var body: some View {
@@ -81,7 +78,7 @@ struct EncounterRunnerView: View {
     )
     let session = EncounterSession.start(from: definition, using: compendium)
     return NavigationStack {
-        EncounterRunnerView(session: session, definition: definition)
+        EncounterRunnerView(session: session)
     }
     .environment(compendium)
 }
