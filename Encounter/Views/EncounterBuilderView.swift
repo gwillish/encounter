@@ -6,8 +6,8 @@
 //  Manages a local draft copy of the EncounterDefinition and auto-saves
 //  after every mutation via EncounterStore.
 //
-//  Step 4 seam: Run Encounter button is present but disabled until
-//  EncounterRunnerView is implemented.
+//  Step 4: Run Encounter button creates or resumes a session via SessionRegistry
+//  and pushes EncounterRunnerView.
 //
 
 import SwiftUI
@@ -18,12 +18,14 @@ struct EncounterBuilderView: View {
     @State private var draft: EncounterDefinition
     @Environment(EncounterStore.self) private var store
     @Environment(Compendium.self) private var compendium
+    @Environment(SessionRegistry.self) private var sessionRegistry
 
     @State private var showCompendium = false
     @State private var showAddPlayer = false
     @State private var notesExpanded = false
     @State private var manualAdjustments: Set<DifficultyBudget.Adjustment> = []
     @State private var saveError: String?
+    @State private var runSession: EncounterSession?
 
     init(definition: EncounterDefinition) {
         self.definition = definition
@@ -113,6 +115,9 @@ struct EncounterBuilderView: View {
                 addPlayer(config)
             }
         }
+        .navigationDestination(item: $runSession) { session in
+            EncounterRunnerView(session: session, definition: draft)
+        }
     }
 
     // MARK: - Toolbar
@@ -120,8 +125,14 @@ struct EncounterBuilderView: View {
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
         ToolbarItem(placement: .primaryAction) {
-            Button("Run Encounter") {}
-                .disabled(true)
+            Button("Run Encounter") {
+                runSession = sessionRegistry.session(
+                    for: draft.id,
+                    definition: draft,
+                    compendium: compendium
+                )
+            }
+            .disabled(draft.adversaryIDs.isEmpty)
         }
         ToolbarItem(placement: .primaryAction) {
             Button("Browse Compendium", systemImage: "books.vertical") {
@@ -196,6 +207,7 @@ struct EncounterBuilderView: View {
     }
     .environment(store)
     .environment(compendium)
+    .environment(SessionRegistry())
 }
 
 /// Preview wrapper that creates a definition in the store before showing the builder.
