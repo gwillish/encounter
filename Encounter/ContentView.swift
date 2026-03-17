@@ -16,13 +16,15 @@ struct ContentView: View {
         NavigationSplitView {
             EncounterLibraryView(selection: $selection)
         } detail: {
-            if let id = selection,
-               let definition = store.definitions.first(where: { $0.id == id }) {
-                EncounterBuilderView(definition: definition)
-                    .id(id)
-            } else {
-                Text("Select an encounter")
-                    .foregroundStyle(.secondary)
+            NavigationStack {
+                if let id = selection,
+                   let definition = store.definitions.first(where: { $0.id == id }) {
+                    EncounterBuilderView(definition: definition)
+                        .id(id)
+                } else {
+                    Text("Select an encounter")
+                        .foregroundStyle(.secondary)
+                }
             }
         }
         #else
