@@ -42,7 +42,36 @@ nonisolated public struct DaggerheartEnvironment: Codable, Identifiable, Sendabl
 
     enum CodingKeys: String, CodingKey {
         case id, name, source, description
-        case features = "feats"
+        // SRD JSON uses "feature"; homebrew/export uses "feature" too.
+        case features = "feature"
+    }
+
+    // MARK: - Decodable
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        // name decoded first so it can serve as the id fallback.
+        name        = try c.decode(String.self, forKey: .name)
+        // SRD JSON has no id field; derive a slug from the name.
+        id          = try c.decodeIfPresent(String.self, forKey: .id)
+            ?? name.lowercased()
+                .components(separatedBy: CharacterSet.alphanumerics.inverted)
+                .filter { !$0.isEmpty }
+                .joined(separator: "-")
+        source      = try c.decodeIfPresent(String.self, forKey: .source) ?? "SRD"
+        description = try c.decode(String.self, forKey: .description)
+        features    = try c.decodeIfPresent([AdversaryFeature].self, forKey: .features) ?? []
+    }
+
+    // MARK: - Encodable
+
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(id,          forKey: .id)
+        try c.encode(name,        forKey: .name)
+        try c.encode(source,      forKey: .source)
+        try c.encode(description, forKey: .description)
+        try c.encode(features,    forKey: .features)
     }
 
     // MARK: - Memberwise init (for previews / tests)

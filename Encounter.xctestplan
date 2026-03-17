@@ -26,10 +26,8 @@
       }
     },
     {
-      "parallelizable" : true,
-      "skippedTests" : [
-        "EncounterUITests\/testExample()",
-        "EncounterUITests\/testLaunchPerformance()"
+      "selectedTests" : [
+        "EncounterUITestsLaunchTests\/testLaunch()"
       ],
       "target" : {
         "containerPath" : "container:Encounter.xcodeproj",
