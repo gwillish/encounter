@@ -13,15 +13,14 @@ struct AdversaryRunnerRow: View {
     let slot: AdversarySlot
     let compendium: Compendium
 
-    private var adversary: Adversary? {
-        compendium.adversary(id: slot.adversaryID)
-    }
-
     private var displayName: String {
-        slot.customName ?? adversary?.name ?? "Unknown (\(slot.adversaryID))"
+        let adversary = compendium.adversary(id: slot.adversaryID)
+        return slot.customName ?? adversary?.name ?? "Unknown (\(slot.adversaryID))"
     }
 
     var body: some View {
+        let adversary = compendium.adversary(id: slot.adversaryID)
+
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 6) {
                 Text(displayName)

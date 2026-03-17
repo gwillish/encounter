@@ -20,15 +20,16 @@ struct AdversaryRunnerCard: View {
     let compendium: Compendium
     let onCollapse: () -> Void
 
-    private var adversary: Adversary? {
-        compendium.adversary(id: slot.adversaryID)
-    }
-
     private var displayName: String {
-        slot.customName ?? adversary?.name ?? "Unknown (\(slot.adversaryID))"
+        let adversary = compendium.adversary(id: slot.adversaryID)
+        return slot.customName ?? adversary?.name ?? "Unknown (\(slot.adversaryID))"
     }
 
     var body: some View {
+        let adversary = compendium.adversary(id: slot.adversaryID)
+        let major = adversary.map { "\($0.thresholdMajor)" } ?? "—"
+        let severe = adversary.map { "\($0.thresholdSevere)" } ?? "—"
+
         VStack(alignment: .leading, spacing: 12) {
 
             // Header
@@ -60,21 +61,9 @@ struct AdversaryRunnerCard: View {
 
             // Damage threshold buttons
             HStack(spacing: 8) {
-                thresholdButton(
-                    "Minor",
-                    subtitle: "< \(adversary.map { "\($0.thresholdMajor)" } ?? "—")",
-                    marks: 1
-                )
-                thresholdButton(
-                    "Major",
-                    subtitle: "≥ \(adversary.map { "\($0.thresholdMajor)" } ?? "—")",
-                    marks: 2
-                )
-                thresholdButton(
-                    "Severe",
-                    subtitle: "≥ \(adversary.map { "\($0.thresholdSevere)" } ?? "—")",
-                    marks: 3
-                )
+                thresholdButton("Minor",  subtitle: "< \(major)",  marks: 1)
+                thresholdButton("Major",  subtitle: "≥ \(major)",  marks: 2)
+                thresholdButton("Severe", subtitle: "≥ \(severe)", marks: 3)
             }
 
             // Stress
@@ -121,7 +110,7 @@ struct AdversaryRunnerCard: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
             HStack(spacing: 6) {
-                ForEach([Condition.hidden, .restrained, .vulnerable], id: \.displayName) { condition in
+                ForEach(Condition.standardConditions, id: \.displayName) { condition in
                     let active = slot.conditions.contains(condition)
                     Button(condition.displayName) {
                         if active {
