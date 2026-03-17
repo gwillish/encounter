@@ -108,6 +108,9 @@ struct EncounterBuilderView: View {
                     }
                 )
             }
+            #if os(macOS)
+            .frame(minWidth: 540, minHeight: 480)
+            #endif
             .environment(compendium)
         }
         .sheet(isPresented: $showAddPlayer) {
