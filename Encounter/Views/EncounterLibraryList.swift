@@ -15,6 +15,22 @@ struct EncounterLibraryList: View {
 
     var body: some View {
         List(definitions, selection: $selection) { definition in
+            #if os(macOS)
+            EncounterLibraryRow(definition: definition)
+                .contextMenu {
+                    Button {
+                        onRename(definition)
+                    } label: {
+                        Label("Rename", systemImage: "pencil")
+                    }
+                    Divider()
+                    Button(role: .destructive) {
+                        onDelete(definition)
+                    } label: {
+                        Label("Delete", systemImage: "trash")
+                    }
+                }
+            #else
             NavigationLink(value: definition) {
                 EncounterLibraryRow(definition: definition)
             }
@@ -44,10 +60,13 @@ struct EncounterLibraryList: View {
                     Label("Delete", systemImage: "trash")
                 }
             }
+            #endif
         }
+        #if !os(macOS)
         .navigationDestination(for: EncounterDefinition.self) { definition in
             EncounterBuilderView(definition: definition)
         }
+        #endif
     }
 }
 
