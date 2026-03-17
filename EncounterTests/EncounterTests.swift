@@ -32,7 +32,7 @@ struct AdversaryDecodingTests {
           "attack": "Claws",
           "range": "Very Close",
           "damage": "1d10+2 phy",
-          "feats": []
+          "feature": []
         }
         """.data(using: .utf8)!
 
@@ -60,14 +60,14 @@ struct AdversaryDecodingTests {
           "attack": "Greataxe",
           "range": "Very Close",
           "damage": "2d10+4 phy",
-          "feats": []
+          "feature": []
         }
         """.data(using: .utf8)!
 
         let adversary = try JSONDecoder().decode(Adversary.self, from: json)
         #expect(adversary.thresholdMajor  == 9)
         #expect(adversary.thresholdSevere == 17)
-        #expect(adversary.source          == "Unknown") // optional, defaults
+        #expect(adversary.source          == "SRD") // optional, defaults to "SRD"
     }
 
     // MARK: Feature decoding
@@ -88,7 +88,7 @@ struct AdversaryDecodingTests {
           "attack": "Bite",
           "range": "Very Close",
           "damage": "1d6 phy",
-          "feats": [
+          "feature": [
             { "name": "Pack Tactics", "text": "Deals bonus damage in groups.", "feat_type": "passive" },
             { "name": "Snap",         "text": "Triggers when hit.",            "feat_type": "reaction" },
             { "name": "Lunge",        "text": "Extra attack once per round.",  "feat_type": "action" }
@@ -142,7 +142,7 @@ struct AdversaryDecodingTests {
               "attack": "Strike",
               "range": "Close",
               "damage": "1d6 phy",
-              "feats": []
+              "feature": []
             }
             """.data(using: .utf8)!
 
@@ -173,7 +173,7 @@ struct AdversaryDecodingTests {
           "attack": "Bite",
           "range": "Close",
           "damage": "1d6 phy",
-          "feats": []
+          "feature": []
         }
         """.data(using: .utf8)!
 
@@ -1432,6 +1432,80 @@ struct EncounterStoreErrorTests {
     }
 }
 
+// MARK: - Full SRD JSON Decode Verification
+
+/// Loads the bundled SRD JSON files from the app's Resources directory (adjacent to the source tree)
+/// and verifies that every entry decodes without error.
+struct SRDDecodeTests {
+
+    /// URL to `Encounter/Resources/` relative to this source file.
+    private static var resourcesURL: URL {
+        URL(filePath: #filePath)          // .../EncounterTests/EncounterTests.swift
+            .deletingLastPathComponent()  // .../EncounterTests/
+            .deletingLastPathComponent()  // .../Encounter/  (repo root)
+            .appending(path: "Encounter/Resources")
+    }
+
+    @Test func allSRDAdversariesDecodeWithoutError() throws {
+        let url = Self.resourcesURL.appending(path: "adversaries.json")
+        let data = try Data(contentsOf: url)
+        let adversaries = try JSONDecoder().decode([Adversary].self, from: data)
+        #expect(adversaries.isEmpty == false)
+        // Spot-check: every entry has a non-empty name and valid tier
+        for adversary in adversaries {
+            #expect(!adversary.name.isEmpty, "Adversary id=\(adversary.id) has empty name")
+            #expect((1...4).contains(adversary.tier), "Adversary \(adversary.name) has unexpected tier \(adversary.tier)")
+        }
+    }
+
+    @Test func allSRDEnvironmentsDecodeWithoutError() throws {
+        let url = Self.resourcesURL.appending(path: "environments.json")
+        let data = try Data(contentsOf: url)
+        let environments = try JSONDecoder().decode([DaggerheartEnvironment].self, from: data)
+        #expect(environments.isEmpty == false)
+        for environment in environments {
+            #expect(!environment.name.isEmpty, "Environment id=\(environment.id) has empty name")
+        }
+    }
+
+    @Test func srdAdversaryCountMatchesExpected() throws {
+        let url = Self.resourcesURL.appending(path: "adversaries.json")
+        let data = try Data(contentsOf: url)
+        let adversaries = try JSONDecoder().decode([Adversary].self, from: data)
+        // SRD export from seansbox/daggerheart-srd contains 129 adversaries.
+        #expect(adversaries.count == 129)
+    }
+
+    @Test func srdEnvironmentCountMatchesExpected() throws {
+        let url = Self.resourcesURL.appending(path: "environments.json")
+        let data = try Data(contentsOf: url)
+        let environments = try JSONDecoder().decode([DaggerheartEnvironment].self, from: data)
+        // SRD export from seansbox/daggerheart-srd contains 19 environments.
+        #expect(environments.count == 19)
+    }
+
+    @Test func srdAdversaryIDsAreUnique() throws {
+        let url = Self.resourcesURL.appending(path: "adversaries.json")
+        let data = try Data(contentsOf: url)
+        let adversaries = try JSONDecoder().decode([Adversary].self, from: data)
+        let ids = adversaries.map(\.id)
+        let unique = Set(ids)
+        #expect(unique.count == ids.count, "Duplicate adversary IDs found: \(ids.count - unique.count) duplicates")
+    }
+
+    @Test func srdAdversariesHaveNonEmptyFeatureText() throws {
+        let url = Self.resourcesURL.appending(path: "adversaries.json")
+        let data = try Data(contentsOf: url)
+        let adversaries = try JSONDecoder().decode([Adversary].self, from: data)
+        for adversary in adversaries {
+            for feature in adversary.features {
+                #expect(!feature.name.isEmpty, "\(adversary.name) has a feature with empty name")
+                #expect(!feature.text.isEmpty, "\(adversary.name) feature '\(feature.name)' has empty text")
+            }
+        }
+    }
+}
+
 // MARK: - Environment
 
 struct EnvironmentModelTests {
@@ -1443,7 +1517,7 @@ struct EnvironmentModelTests {
           "name": "Arcane Storm",
           "source": "SRD",
           "description": "A tempest of wild magic.",
-          "feats": [
+          "feature": [
             { "name": "Wild Discharge", "text": "Deals damage at random.", "feat_type": "passive" }
           ]
         }

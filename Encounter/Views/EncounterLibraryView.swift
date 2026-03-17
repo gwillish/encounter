@@ -10,7 +10,7 @@ import SwiftUI
 struct EncounterLibraryView: View {
     @Environment(EncounterStore.self) private var store
 
-    @State private var selection: EncounterDefinition.ID?
+    @Binding var selection: EncounterDefinition.ID?
     @State private var isCreating = false
     @State private var newName = ""
     @State private var isRenaming = false
@@ -23,7 +23,10 @@ struct EncounterLibraryView: View {
 
     var body: some View {
         Group {
-            if store.definitions.isEmpty && !store.isLoading {
+            if store.isLoading {
+                ProgressView()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if store.definitions.isEmpty {
                 EncounterLibraryEmptyState(onCreateTapped: beginCreate)
             } else {
                 EncounterLibraryList(
@@ -146,8 +149,9 @@ struct EncounterLibraryView: View {
 }
 
 #Preview {
+    @Previewable @State var selection: EncounterDefinition.ID? = nil
     NavigationStack {
-        EncounterLibraryView()
+        EncounterLibraryView(selection: $selection)
     }
     .environment(EncounterStore(directory: .temporaryDirectory))
 }

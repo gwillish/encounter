@@ -43,12 +43,29 @@ nonisolated public enum AdversaryType: String, Codable, CaseIterable, Sendable {
     case standard = "Standard"
     /// Enhance allies and disrupt opponents.
     case support  = "Support"
+
+    // SRD JSON encodes horde variants with HP-per-unit notation,
+    // e.g. "Horde (3/HP)". Normalise all to .horde.
+    public init(from decoder: Decoder) throws {
+        let raw = try decoder.singleValueContainer().decode(String.self)
+        if let exact = Self(rawValue: raw) {
+            self = exact
+        } else if raw.hasPrefix("Horde") {
+            self = .horde
+        } else {
+            throw DecodingError.dataCorruptedError(
+                in: try decoder.singleValueContainer(),
+                debugDescription: "Unknown AdversaryType '\(raw)'"
+            )
+        }
+    }
 }
 
 // MARK: - AttackRange
 
 /// Distance bands used for attacks and abilities in Daggerheart.
 nonisolated public enum AttackRange: String, Codable, CaseIterable, Sendable {
+    case melee     = "Melee"
     case veryClose = "Very Close"
     case close     = "Close"
     case far       = "Far"
@@ -66,6 +83,15 @@ nonisolated public enum FeatureType: String, Codable, CaseIterable, Sendable {
     case action   = "action"
     case reaction = "reaction"
     case passive  = "passive"
+
+    /// Infers the feature type from the " - Type" suffix in SRD feature names,
+    /// e.g. "Earth Eruption - Action" → .action. Defaults to .passive.
+    static func inferred(from featureName: String) -> FeatureType {
+        let lower = featureName.lowercased()
+        if lower.hasSuffix("- action") { return .action }
+        if lower.hasSuffix("- reaction") { return .reaction }
+        return .passive
+    }
 }
 
 // MARK: - AdversaryFeature
@@ -79,12 +105,25 @@ nonisolated public struct AdversaryFeature: Codable, Identifiable, Sendable, Equ
     public let text: String
     public let featType: FeatureType
 
-    // Community JSON uses "feat_type"; some sources use "type".
-    // We normalise to featType in Swift.
+    // Community JSON uses "feat_type"; SRD JSON omits it entirely.
+    // When absent, type is inferred from the " - Type" suffix in the feature name.
     enum CodingKeys: String, CodingKey {
         case name
         case text
         case featType = "feat_type"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        name = try c.decode(String.self, forKey: .name)
+        text = try c.decode(String.self, forKey: .text)
+        if let rawType = try c.decodeIfPresent(String.self, forKey: .featType),
+           let parsed = FeatureType(rawValue: rawType) {
+            featType = parsed
+        } else {
+            // SRD JSON omits feat_type; infer from the " - Type" name suffix.
+            featType = FeatureType.inferred(from: name)
+        }
     }
 
     public init(name: String, text: String, featType: FeatureType) {
@@ -169,7 +208,32 @@ nonisolated public struct Adversary: Codable, Identifiable, Sendable, Equatable,
         case attackName         = "attack"
         case attackRange        = "range"
         case damage, experience
-        case features           = "feats"
+        case features           = "feature"
+    }
+
+    // MARK: - Decode Helpers
+
+    /// Derives a URL-safe slug from a display name, e.g. "Acid Burrower" → "acid-burrower".
+    private static func slug(_ name: String) -> String {
+        name.lowercased()
+            .components(separatedBy: CharacterSet.alphanumerics.inverted)
+            .filter { !$0.isEmpty }
+            .joined(separator: "-")
+    }
+
+    /// Decodes a keyed value that the source JSON may encode as either an Int or a numeric String.
+    private static func intOrString<K: CodingKey>(
+        _ container: KeyedDecodingContainer<K>, forKey key: K
+    ) throws -> Int {
+        if let intVal = try? container.decode(Int.self, forKey: key) { return intVal }
+        let str = try container.decode(String.self, forKey: key)
+        guard let intVal = Int(str) else {
+            throw DecodingError.dataCorruptedError(
+                forKey: key, in: container,
+                debugDescription: "Expected Int or numeric String, got '\(str)'"
+            )
+        }
+        return intVal
     }
 
     // MARK: - Decodable
@@ -177,16 +241,18 @@ nonisolated public struct Adversary: Codable, Identifiable, Sendable, Equatable,
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
 
-        id          = try c.decode(String.self,       forKey: .id)
+        // name decoded first so it can serve as the id fallback.
         name        = try c.decode(String.self,       forKey: .name)
-        source      = try c.decodeIfPresent(String.self, forKey: .source) ?? "Unknown"
-        tier        = try c.decode(Int.self,          forKey: .tier)
+        id          = try c.decodeIfPresent(String.self, forKey: .id) ?? Self.slug(name)
+        source      = try c.decodeIfPresent(String.self, forKey: .source) ?? "SRD"
+        // SRD JSON encodes numeric stats as strings; homebrew may use ints.
+        tier        = try Self.intOrString(c, forKey: .tier)
         type        = try c.decode(AdversaryType.self, forKey: .type)
         description = try c.decode(String.self,       forKey: .description)
         motivesAndTactics = try c.decodeIfPresent(String.self, forKey: .motivesAndTactics)
-        difficulty  = try c.decode(Int.self,          forKey: .difficulty)
-        hp          = try c.decode(Int.self,          forKey: .hp)
-        stress      = try c.decode(Int.self,          forKey: .stress)
+        difficulty  = try Self.intOrString(c, forKey: .difficulty)
+        hp          = try Self.intOrString(c, forKey: .hp)
+        stress      = try Self.intOrString(c, forKey: .stress)
         attackModifier = try c.decode(String.self,    forKey: .attackModifier)
         attackName  = try c.decode(String.self,       forKey: .attackName)
         attackRange = try c.decode(AttackRange.self,  forKey: .attackRange)
@@ -200,17 +266,25 @@ nonisolated public struct Adversary: Codable, Identifiable, Sendable, Equatable,
             thresholdMajor  = major
             thresholdSevere = severe
         } else if let raw = try c.decodeIfPresent(String.self, forKey: .thresholds) {
-            let parts = raw
-                .split(separator: "/")
-                .compactMap { Int($0.trimmingCharacters(in: .whitespaces)) }
-            guard parts.count == 2 else {
-                throw DecodingError.dataCorruptedError(
-                    forKey: .thresholds, in: c,
-                    debugDescription: "Expected 'major/severe' integer format, got '\(raw)'"
-                )
+            // SRD minions encode "None" — they have no damage thresholds.
+            // Some adversaries encode a partial value like "4/None" where the
+            // severe threshold is absent. Treat any "None" component as 0.
+            if raw == "None" {
+                thresholdMajor  = 0
+                thresholdSevere = 0
+            } else {
+                let parts = raw
+                    .split(separator: "/")
+                    .map { $0.trimmingCharacters(in: .whitespaces) }
+                guard parts.count == 2 else {
+                    throw DecodingError.dataCorruptedError(
+                        forKey: .thresholds, in: c,
+                        debugDescription: "Expected 'major/severe' format, got '\(raw)'"
+                    )
+                }
+                thresholdMajor  = Int(parts[0]) ?? 0
+                thresholdSevere = Int(parts[1]) ?? 0
             }
-            thresholdMajor  = parts[0]
-            thresholdSevere = parts[1]
         } else {
             throw DecodingError.keyNotFound(
                 CodingKeys.thresholds,
