@@ -17,6 +17,7 @@
 
 import Foundation
 import Observation
+import OSLog
 
 // MARK: - AdversarySlot
 
@@ -128,10 +129,13 @@ nonisolated public struct EnvironmentSlot: Identifiable, Sendable, Equatable {
 /// session.add(adversary: bandits.ironguard)   // second copy
 /// session.add(environment: terrain.forestEdge)
 /// ```
+@MainActor
 @Observable
 public final class EncounterSession: Identifiable, Hashable {
     public nonisolated static func == (lhs: EncounterSession, rhs: EncounterSession) -> Bool { lhs.id == rhs.id }
     public nonisolated func hash(into hasher: inout Hasher) { hasher.combine(id) }
+
+    private let logger = Logger(subsystem: "gwillish.Encounter", category: "EncounterSession")
 
     // MARK: Identity
     public let id: UUID
@@ -229,25 +233,38 @@ public final class EncounterSession: Identifiable, Hashable {
 
     /// Apply damage to an adversary slot, clamping HP to 0.
     public func applyDamage(_ amount: Int, to slotID: UUID) {
-        guard let index = adversarySlots.firstIndex(where: { $0.id == slotID }) else { return }
+        guard let index = adversarySlots.firstIndex(where: { $0.id == slotID }) else {
+            logger.warning("applyDamage: slot \(slotID) not found")
+            return
+        }
         adversarySlots[index].currentHP = max(0, adversarySlots[index].currentHP - amount)
         if adversarySlots[index].currentHP == 0 {
             adversarySlots[index].isDefeated = true
+            logger.info("Slot \(slotID) defeated")
+        } else {
+            logger.debug("Slot \(slotID) took \(amount) damage, HP now \(self.adversarySlots[index].currentHP)")
         }
     }
 
     /// Apply stress to an adversary slot, clamping to the slot's snapshotted maximum.
     public func applyStress(_ amount: Int, to slotID: UUID) {
-        guard let index = adversarySlots.firstIndex(where: { $0.id == slotID }) else { return }
+        guard let index = adversarySlots.firstIndex(where: { $0.id == slotID }) else {
+            logger.warning("applyStress: slot \(slotID) not found")
+            return
+        }
         adversarySlots[index].currentStress = min(
             adversarySlots[index].maxStress,
             adversarySlots[index].currentStress + amount
         )
+        logger.debug("Slot \(slotID) stress now \(self.adversarySlots[index].currentStress)/\(self.adversarySlots[index].maxStress)")
     }
 
     /// Heal an adversary slot, clamping HP to the slot's snapshotted maximum.
     public func heal(_ amount: Int, slotID: UUID) {
-        guard let index = adversarySlots.firstIndex(where: { $0.id == slotID }) else { return }
+        guard let index = adversarySlots.firstIndex(where: { $0.id == slotID }) else {
+            logger.warning("heal: slot \(slotID) not found")
+            return
+        }
         adversarySlots[index].currentHP = min(
             adversarySlots[index].maxHP,
             adversarySlots[index].currentHP + amount
@@ -255,6 +272,7 @@ public final class EncounterSession: Identifiable, Hashable {
         if adversarySlots[index].currentHP > 0 {
             adversarySlots[index].isDefeated = false
         }
+        logger.debug("Slot \(slotID) healed \(amount), HP now \(self.adversarySlots[index].currentHP)/\(self.adversarySlots[index].maxHP)")
     }
 
     // MARK: - Adversary Condition Management
@@ -367,6 +385,7 @@ public final class EncounterSession: Identifiable, Hashable {
         // Defeated adversaries are removed from the turn order for the new round.
         let defeatedIDs = Set(adversarySlots.filter(\.isDefeated).map(\.id))
         turnOrder = turnOrder.filter { !defeatedIDs.contains($0) }
+        logger.info("Advanced to round \(self.currentRound), \(self.turnOrder.count) slots in order")
     }
 
     /// Turn order filtered to non-defeated participants.

@@ -119,17 +119,26 @@ to get the complete adversary list.
 
 ---
 
-## Testing
+## Development Loop
 
-Tests use **Swift Testing** (`import Testing`), not XCTest.
+The primary iteration cycle is running tests from the terminal:
 
 ```bash
-# Run unit tests from CLI (adjust scheme/destination as needed)
 xcodebuild test \
   -scheme Encounter \
   -destination 'platform=macOS' \
   -resultBundlePath TestResults.xcresult
 ```
+
+Run this after every meaningful change. All test output — including `print()` calls and
+`Logger` messages routed to stderr — is visible directly in the terminal. Prefer this
+over the interactive Xcode debugger for CLI-driven iteration.
+
+---
+
+## Testing
+
+Tests use **Swift Testing** (`import Testing`), not XCTest.
 
 Test coverage priorities:
 1. `Adversary` JSON decoding (both threshold formats, all field variants)
