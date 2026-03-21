@@ -15,6 +15,7 @@
 
 import Foundation
 import Observation
+import OSLog
 
 // MARK: - CompendiumError
 
@@ -61,8 +62,11 @@ nonisolated public enum CompendiumError: Error, LocalizedError {
 /// Call ``addAdversary(_:)`` / ``addEnvironment(_:)`` to merge homebrew
 /// entries at runtime. Homebrew entries with the same `id` as an SRD entry
 /// replace the SRD version.
+@MainActor
 @Observable
 public final class Compendium {
+
+    private let logger = Logger(subsystem: "gwillish.Encounter", category: "Compendium")
 
     // MARK: Published State
 
@@ -131,9 +135,13 @@ public final class Compendium {
     /// Throws a ``CompendiumError`` if a resource is missing or malformed.
     /// The error is also stored in ``loadError`` for SwiftUI observation.
     public func load() async throws {
-        guard !isLoading else { return }
+        guard !isLoading else {
+            logger.debug("load() called while already loading — skipped")
+            return
+        }
         isLoading = true
         loadError = nil
+        logger.info("Compendium load started")
 
         defer { isLoading = false }
 
@@ -146,12 +154,15 @@ public final class Compendium {
 
             srdAdversariesByID  = Dictionary(uniqueKeysWithValues: loadedAdversaries.map  { ($0.id, $0) })
             srdEnvironmentsByID = Dictionary(uniqueKeysWithValues: loadedEnvironments.map { ($0.id, $0) })
+            logger.info("Compendium loaded \(loadedAdversaries.count) adversaries, \(loadedEnvironments.count) environments")
         } catch let error as CompendiumError {
             loadError = error
+            logger.error("Compendium load failed: \(error.localizedDescription)")
             throw error
         } catch {
             let wrapped = CompendiumError.decodingFailed("unknown", error)
             loadError = wrapped
+            logger.error("Compendium load failed (unexpected): \(error)")
             throw wrapped
         }
     }
