@@ -45,13 +45,23 @@ struct DifficultyAssessorView: View {
         case 4...:      return .teal
         case 1...:      return .green
         case 0:         return .green
-        case -3 ... -1: return Color(red: 1.0, green: 0.6, blue: 0.0)
+        case -3 ... -1: return .orange
         case -6 ... -4: return .red
         default:        return .red
         }
     }
 
     private var isPulsing: Bool { rating.remaining <= -7 }
+
+    private func toggleBinding(for adj: DifficultyBudget.Adjustment) -> Binding<Bool> {
+        Binding(
+            get: { manualAdjustments.contains(adj) },
+            set: { on in
+                if on { manualAdjustments.insert(adj) }
+                else  { manualAdjustments.remove(adj) }
+            }
+        )
+    }
 
     @State private var animating = false
 
@@ -92,14 +102,8 @@ struct DifficultyAssessorView: View {
                 // Manual GM-discretionary toggles
                 VStack(alignment: .leading, spacing: 2) {
                     ForEach(Self.manualCases, id: \.self) { adj in
-                        Toggle(adj.label, isOn: Binding(
-                            get: { manualAdjustments.contains(adj) },
-                            set: { on in
-                                if on { manualAdjustments.insert(adj) }
-                                else  { manualAdjustments.remove(adj) }
-                            }
-                        ))
-                        .font(.caption)
+                        Toggle(adj.label, isOn: toggleBinding(for: adj))
+                            .font(.caption)
                     }
                 }
             }
@@ -107,6 +111,7 @@ struct DifficultyAssessorView: View {
             .padding(.vertical, 8)
             .background(.regularMaterial)
         }
+        .onAppear { animating = isPulsing }
         .onChange(of: isPulsing) { _, nowPulsing in
             animating = nowPulsing
         }

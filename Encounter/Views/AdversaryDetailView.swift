@@ -26,11 +26,11 @@ struct AdversaryDetailView: View {
             Section {
                 VStack(alignment: .leading, spacing: 6) {
                     HStack(spacing: 6) {
-                        typeBadge
+                        TypeBadgeView(type: adversary.type)
                         Text("Tier \(adversary.tier)")
                             .font(.caption)
                             .foregroundStyle(.secondary)
-                        if adversary.source != "SRD" {
+                        if adversary.source != "srd" {
                             Text(adversary.source)
                                 .font(.caption2)
                                 .foregroundStyle(.white)
@@ -74,7 +74,7 @@ struct AdversaryDetailView: View {
             }
 
             // Features grouped: passives → actions → reactions
-            featureSections(adversary.features)
+            FeatureSectionsView(features: adversary.features)
 
             // Motives & Tactics
             if let motives = adversary.motivesAndTactics {
@@ -100,38 +100,6 @@ struct AdversaryDetailView: View {
         }
     }
 
-    private var typeBadge: some View {
-        Text(adversary.type.rawValue)
-            .font(.caption)
-            .foregroundStyle(.secondary)
-            .padding(.horizontal, 6)
-            .padding(.vertical, 2)
-            .background(.secondary.opacity(0.15))
-            .clipShape(.capsule)
-    }
-
-    @ViewBuilder
-    private func featureSections(_ features: [AdversaryFeature]) -> some View {
-        let passives  = features.filter { $0.featType == .passive }
-        let actions   = features.filter { $0.featType == .action }
-        let reactions = features.filter { $0.featType == .reaction }
-
-        if !passives.isEmpty {
-            Section("Passives") {
-                ForEach(passives) { AdversaryFeatureRow(feature: $0) }
-            }
-        }
-        if !actions.isEmpty {
-            Section("Actions") {
-                ForEach(actions) { AdversaryFeatureRow(feature: $0) }
-            }
-        }
-        if !reactions.isEmpty {
-            Section("Reactions") {
-                ForEach(reactions) { AdversaryFeatureRow(feature: $0) }
-            }
-        }
-    }
 }
 
 #Preview {
