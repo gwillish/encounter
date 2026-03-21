@@ -67,7 +67,7 @@ struct AdversaryDecodingTests {
         let adversary = try JSONDecoder().decode(Adversary.self, from: json)
         #expect(adversary.thresholdMajor  == 9)
         #expect(adversary.thresholdSevere == 17)
-        #expect(adversary.source          == "SRD") // optional, defaults to "SRD"
+        #expect(adversary.source          == "srd") // absent in JSON → default "srd" (lowercased)
     }
 
     // MARK: Feature decoding
