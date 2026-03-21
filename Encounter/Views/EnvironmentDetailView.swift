@@ -24,7 +24,7 @@ struct EnvironmentDetailView: View {
             // Identity
             Section {
                 VStack(alignment: .leading, spacing: 6) {
-                    if environment.source != "SRD" {
+                    if environment.source != "srd" {
                         Text(environment.source)
                             .font(.caption2)
                             .foregroundStyle(.white)
@@ -41,7 +41,7 @@ struct EnvironmentDetailView: View {
             }
 
             // Features grouped: passives → actions → reactions
-            featureSections(environment.features)
+            FeatureSectionsView(features: environment.features)
         }
         .navigationTitle(environment.name)
         #if os(iOS)
@@ -59,28 +59,6 @@ struct EnvironmentDetailView: View {
         }
     }
 
-    @ViewBuilder
-    private func featureSections(_ features: [AdversaryFeature]) -> some View {
-        let passives  = features.filter { $0.featType == .passive }
-        let actions   = features.filter { $0.featType == .action }
-        let reactions = features.filter { $0.featType == .reaction }
-
-        if !passives.isEmpty {
-            Section("Passives") {
-                ForEach(passives) { AdversaryFeatureRow(feature: $0) }
-            }
-        }
-        if !actions.isEmpty {
-            Section("Actions") {
-                ForEach(actions) { AdversaryFeatureRow(feature: $0) }
-            }
-        }
-        if !reactions.isEmpty {
-            Section("Reactions") {
-                ForEach(reactions) { AdversaryFeatureRow(feature: $0) }
-            }
-        }
-    }
 }
 
 #Preview {

@@ -61,7 +61,7 @@ nonisolated public enum DifficultyBudget {
     // MARK: - Rating
 
     /// A snapshot of the encounter's difficulty budget analysis.
-    nonisolated public struct Rating: Sendable, Equatable {
+    nonisolated public struct Rating: Sendable, Equatable, Hashable {
         /// Total Battle Points available (base budget + adjustment).
         public let budget: Int
         /// Total Battle Points spent on the adversary roster.
@@ -90,7 +90,7 @@ nonisolated public enum DifficultyBudget {
     // MARK: - Adjustment Suggestions
 
     /// Predefined budget adjustments from the SRD.
-    nonisolated public enum Adjustment: Sendable, Equatable, CaseIterable {
+    nonisolated public enum Adjustment: Sendable, Equatable, Hashable, CaseIterable {
         /// -1 for an easier or shorter fight.
         case easierFight
         /// -2 if using 2+ Solo adversaries.
@@ -142,7 +142,7 @@ nonisolated public enum DifficultyBudget {
     ) -> Set<Adjustment> {
         var result: Set<Adjustment> = []
 
-        let soloCount = adversaryTypes.filter { $0 == .solo }.count
+        let soloCount = adversaryTypes.count(where: { $0 == .solo })
         if soloCount >= 2 {
             result.insert(.multipleSolos)
         }

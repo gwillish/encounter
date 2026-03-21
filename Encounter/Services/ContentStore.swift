@@ -339,7 +339,7 @@ public final class ContentStore {
         do {
             let adversaries = try await writer.readAdversaries(sourceID: sourceID)
             let environments = try await writer.readEnvironments(sourceID: sourceID)
-            guard !adversaries.isEmpty else { return }
+            guard !adversaries.isEmpty || !environments.isEmpty else { return }
             compendium.replaceSourceContent(
                 sourceID: sourceID,
                 adversaries: adversaries,

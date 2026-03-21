@@ -61,9 +61,9 @@ struct AdversaryRunnerCard: View {
 
             // Damage threshold buttons
             HStack(spacing: 8) {
-                thresholdButton("Minor",  subtitle: "< \(major)",  marks: 1)
-                thresholdButton("Major",  subtitle: "≥ \(major)",  marks: 2)
-                thresholdButton("Severe", subtitle: "≥ \(severe)", marks: 3)
+                ThresholdButton(label: "Minor",  subtitle: "< \(major)",  marks: 1, isDefeated: slot.isDefeated, session: session, slotID: slot.id)
+                ThresholdButton(label: "Major",  subtitle: "≥ \(major)",  marks: 2, isDefeated: slot.isDefeated, session: session, slotID: slot.id)
+                ThresholdButton(label: "Severe", subtitle: "≥ \(severe)", marks: 3, isDefeated: slot.isDefeated, session: session, slotID: slot.id)
             }
 
             // Stress
@@ -74,82 +74,14 @@ struct AdversaryRunnerCard: View {
             .disabled(slot.currentStress >= slot.maxStress || slot.isDefeated)
 
             // Condition toggles
-            conditionsSection
+            AdversaryConditionsSection(slot: slot, session: session)
 
             // Stat reference
             if let adversary {
-                statReferenceSection(adversary)
+                AdversaryStatReference(adversary: adversary)
             }
         }
         .padding(.vertical, 8)
-    }
-
-    @ViewBuilder
-    private func thresholdButton(_ label: String, subtitle: String, marks: Int) -> some View {
-        Button {
-            session.applyDamage(marks, to: slot.id)
-        } label: {
-            VStack(spacing: 2) {
-                Text(label)
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
-                Text(subtitle)
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-            }
-            .frame(maxWidth: .infinity)
-        }
-        .buttonStyle(.bordered)
-        .disabled(slot.isDefeated)
-    }
-
-    @ViewBuilder
-    private var conditionsSection: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("Conditions")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            HStack(spacing: 6) {
-                ForEach(Condition.standardConditions, id: \.displayName) { condition in
-                    let active = slot.conditions.contains(condition)
-                    Button(condition.displayName) {
-                        if active {
-                            session.removeCondition(condition, from: slot.id)
-                        } else {
-                            session.applyCondition(condition, to: slot.id)
-                        }
-                    }
-                    .font(.caption)
-                    .buttonStyle(.bordered)
-                    .tint(active ? .orange : nil)
-                }
-            }
-        }
-    }
-
-    @ViewBuilder
-    private func statReferenceSection(_ adversary: Adversary) -> some View {
-        Divider()
-        VStack(alignment: .leading, spacing: 4) {
-            LabeledContent("Difficulty", value: "\(adversary.difficulty)")
-                .font(.caption)
-            LabeledContent("Thresholds") {
-                Text("\(adversary.thresholdMajor) / \(adversary.thresholdSevere)")
-            }
-            .font(.caption)
-            LabeledContent("Attack") {
-                Text("\(adversary.attackName) \(adversary.attackModifier) · \(adversary.attackRange.rawValue)")
-            }
-            .font(.caption)
-            LabeledContent("Damage", value: adversary.damage)
-                .font(.caption)
-        }
-        if !adversary.features.isEmpty {
-            Divider()
-            ForEach(adversary.features) { feature in
-                AdversaryFeatureRow(feature: feature)
-            }
-        }
     }
 }
 
