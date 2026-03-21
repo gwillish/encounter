@@ -39,46 +39,14 @@ struct ContentSourcesView: View {
                     if !localImports.isEmpty {
                         Section("Local Imports") {
                             ForEach(localImports) { source in
-                                ContentSourceRow(source: source)
-                                    #if os(iOS)
-                                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                                        Button(role: .destructive) {
-                                            beginRemove(source)
-                                        } label: {
-                                            Label("Remove", systemImage: "trash")
-                                        }
-                                    }
-                                    #endif
-                                    .contextMenu {
-                                        Button(role: .destructive) {
-                                            beginRemove(source)
-                                        } label: {
-                                            Label("Remove", systemImage: "trash")
-                                        }
-                                    }
+                                ContentSourceRemovableRow(source: source, onRemove: beginRemove)
                             }
                         }
                     }
                     if !remoteSources.isEmpty {
                         Section("Remote Sources") {
                             ForEach(remoteSources) { source in
-                                ContentSourceRow(source: source)
-                                    #if os(iOS)
-                                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                                        Button(role: .destructive) {
-                                            beginRemove(source)
-                                        } label: {
-                                            Label("Remove", systemImage: "trash")
-                                        }
-                                    }
-                                    #endif
-                                    .contextMenu {
-                                        Button(role: .destructive) {
-                                            beginRemove(source)
-                                        } label: {
-                                            Label("Remove", systemImage: "trash")
-                                        }
-                                    }
+                                ContentSourceRemovableRow(source: source, onRemove: beginRemove)
                             }
                         }
                     }
