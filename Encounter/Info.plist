@@ -52,8 +52,11 @@
         </dict>
     </array>
 
-    <!-- Files are imported (copied into sandbox), not opened in place. See ADR-0016. -->
-    <key>LSSupportsOpeningDocumentsInPlace</key>
-    <false/>
+    <!--
+        LSSupportsOpeningDocumentsInPlace: intentionally omitted.
+        macOS rejects the value NO; omitting the key is the cross-platform way to
+        express "this app does not open documents in place" (files are imported /
+        copied into the sandbox). See ADR-0016.
+    -->
 </dict>
 </plist>

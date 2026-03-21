@@ -15,7 +15,7 @@ struct EnvironmentRow: View {
             HStack {
                 Text(environment.name)
                     .font(.body)
-                if environment.source != "srd" {
+                if environment.isHomebrew {
                     Text(environment.source)
                         .font(.caption2)
                         .foregroundStyle(.white)

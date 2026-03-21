@@ -157,6 +157,8 @@ nonisolated public struct Adversary: Codable, Identifiable, Sendable, Equatable,
     /// Content source tag, always lowercased: `"srd"`, `"homebrew"`, a book name, etc.
     /// Values from external JSON are normalized to lowercase at decode time.
     public let source: String
+    /// `true` if this adversary comes from a non-SRD source (homebrew or a named book).
+    public var isHomebrew: Bool { source != "srd" }
 
     // MARK: Classification
     /// Opposes PCs of the matching tier (1–4).
