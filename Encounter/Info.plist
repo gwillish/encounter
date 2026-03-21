@@ -51,5 +51,9 @@
             <string>Owner</string>
         </dict>
     </array>
+
+    <!-- Files are imported (copied into sandbox), not opened in place. See ADR-0016. -->
+    <key>LSSupportsOpeningDocumentsInPlace</key>
+    <false/>
 </dict>
 </plist>
