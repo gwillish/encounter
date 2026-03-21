@@ -65,6 +65,7 @@ public struct ContentWriter: Sendable {
     ///
     /// - Parameter bundleVersion: Current `CFBundleVersion` from `Bundle.main`.
     /// - Returns: `true` if seeding was performed.
+    @concurrent
     nonisolated public func seedSRDIfNeeded(bundleVersion: String) async throws -> Bool {
         let srdDir   = contentDirectory.appendingPathComponent("srd", isDirectory: true)
         let stampURL = srdDir.appendingPathComponent("bundle_version")
@@ -97,6 +98,7 @@ public struct ContentWriter: Sendable {
     /// Write a source pack's adversaries and environments to disk.
     ///
     /// Creates `sources/<sourceID>/` if it doesn't exist.
+    @concurrent
     nonisolated public func writeSourcePack(
         adversaries: [Adversary],
         environments: [DaggerheartEnvironment],
@@ -114,6 +116,7 @@ public struct ContentWriter: Sendable {
     }
 
     /// Read adversaries for a source pack from disk. Returns `[]` if not yet written.
+    @concurrent
     nonisolated public func readAdversaries(sourceID: String) async throws -> [Adversary] {
         let url = sourcesDirectory.appendingPathComponent("\(sourceID)/adversaries.json")
         guard FileManager.default.fileExists(atPath: url.path) else { return [] }
@@ -125,6 +128,7 @@ public struct ContentWriter: Sendable {
     }
 
     /// Read environments for a source pack from disk. Returns `[]` if not yet written.
+    @concurrent
     nonisolated public func readEnvironments(sourceID: String) async throws -> [DaggerheartEnvironment] {
         let url = sourcesDirectory.appendingPathComponent("\(sourceID)/environments.json")
         guard FileManager.default.fileExists(atPath: url.path) else { return [] }
@@ -136,6 +140,7 @@ public struct ContentWriter: Sendable {
     }
 
     /// Remove a source pack's directory from disk. No-op if not present.
+    @concurrent
     nonisolated public func removeSourcePack(sourceID: String) async throws {
         let dir = sourcesDirectory.appendingPathComponent(sourceID, isDirectory: true)
         guard FileManager.default.fileExists(atPath: dir.path) else { return }
@@ -146,6 +151,7 @@ public struct ContentWriter: Sendable {
     // MARK: - Source index (ContentSource metadata)
 
     /// Persist the source index to `sources/index.json`.
+    @concurrent
     nonisolated public func writeSourceIndex(_ sources: [ContentSource]) async throws {
         try FileManager.default.createDirectory(at: sourcesDirectory, withIntermediateDirectories: true)
         let encoder = JSONEncoder()
@@ -156,6 +162,7 @@ public struct ContentWriter: Sendable {
     }
 
     /// Load the source index from `sources/index.json`. Returns `[]` if not present.
+    @concurrent
     nonisolated public func readSourceIndex() async throws -> [ContentSource] {
         let url = sourcesDirectory.appendingPathComponent("index.json")
         guard FileManager.default.fileExists(atPath: url.path) else { return [] }
@@ -172,12 +179,14 @@ public struct ContentWriter: Sendable {
 
     /// Returns `true` if a subdirectory named `srd` exists under `url`.
     /// Used by `ContentStore.relocate(to:)` to check whether a directory has content.
+    @concurrent
     nonisolated public static func checkSubdirectoryExists(_ url: URL) async -> Bool {
         FileManager.default.fileExists(atPath: url.appendingPathComponent("srd").path)
     }
 
     /// Moves `names` subdirectories from `source` to `destination`, skipping any
     /// that already exist at the destination. Never overwrites.
+    @concurrent
     nonisolated public static func migrateSubdirectories(
         from source: URL,
         to destination: URL,

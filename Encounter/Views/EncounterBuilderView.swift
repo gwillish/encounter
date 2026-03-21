@@ -200,6 +200,8 @@ struct EncounterBuilderView: View {
             guard !Task.isCancelled else { return }
             do {
                 try await store.save(draft)
+            } catch is CancellationError {
+                // Normal — view dismissed or a newer keystroke cancelled this save.
             } catch {
                 saveError = error.localizedDescription
             }

@@ -91,12 +91,14 @@ public final class EncounterStore {
     /// Returns the preferred storage directory, using iCloud when available.
     ///
     /// `url(forUbiquityContainerIdentifier:)` may perform file-system operations.
-    /// Because this is `nonisolated async`, awaiting it from a `@MainActor` context
-    /// automatically runs the body on the cooperative thread pool.
+    /// Marked `@concurrent` so the body runs on the cooperative thread pool even
+    /// when called from a `@MainActor` context (required in Swift 6.2+).
+    @concurrent
     nonisolated public static func defaultDirectory() async -> URL {
         await resolveDefaultDirectory()
     }
 
+    @concurrent
     nonisolated private static func resolveDefaultDirectory() async -> URL {
         let fm = FileManager.default
         if let ubiquity = fm.url(forUbiquityContainerIdentifier: nil) {
@@ -109,6 +111,7 @@ public final class EncounterStore {
         return Self.localDirectory
     }
 
+    @concurrent
     nonisolated private static func readAllEncounters(from dir: URL) async throws -> [EncounterDefinition] {
         let fm = FileManager.default
         try fm.createDirectory(at: dir, withIntermediateDirectories: true)
@@ -124,6 +127,7 @@ public final class EncounterStore {
             }
     }
 
+    @concurrent
     nonisolated private static func writeEncounter(_ definition: EncounterDefinition, to url: URL) async throws {
         // Create directory defensively so persist() works even if
         // called before load() has had a chance to create it.
@@ -137,6 +141,7 @@ public final class EncounterStore {
         try data.write(to: url, options: .atomic)
     }
 
+    @concurrent
     nonisolated private static func deleteEncounter(at url: URL) async throws {
         try FileManager.default.removeItem(at: url)
     }

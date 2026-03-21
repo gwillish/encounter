@@ -33,7 +33,8 @@ struct PipTrack: View {
                         .accessibilityHidden(true)
                 }
             }
-            .accessibilityLabel(maximum > 0 ? Text("\(current) of \(maximum)") : Text(""))
+            .accessibilityLabel(Text("\(current) of \(maximum)"))
+            .accessibilityHidden(maximum == 0)
         }
     }
 

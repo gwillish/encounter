@@ -50,6 +50,7 @@ public struct ContentFetcher: Sendable {
     /// `.notModified` when the server confirms the cached copy is current.
     ///
     /// - Throws: ``ContentStoreError/networkError(sourceID:underlying:)`` on transport failure.
+    @concurrent
     nonisolated public func fetch(source: ContentSource) async throws -> Outcome {
         guard let remoteURL = source.url else {
             // Local imports have no URL — callers should guard on isLocalImport before calling.
@@ -84,6 +85,7 @@ public struct ContentFetcher: Sendable {
     /// Decode raw `.dhpack` bytes into adversaries and environments.
     ///
     /// - Throws: ``ContentStoreError/decodingFailed(sourceID:underlying:)`` on decode error.
+    @concurrent
     nonisolated public func decode(data: Data, sourceID: String) async throws -> DHPackContent {
         do {
             return try JSONDecoder().decode(DHPackContent.self, from: data)
@@ -96,6 +98,7 @@ public struct ContentFetcher: Sendable {
     ///
     /// Used by `ContentStore.importPack(from:)` to read a security-scoped file
     /// off the cooperative thread pool rather than blocking the main actor.
+    @concurrent
     nonisolated public static func readData(from url: URL) async throws -> Data {
         try Data(contentsOf: url)
     }
