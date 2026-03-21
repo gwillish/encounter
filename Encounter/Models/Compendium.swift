@@ -73,25 +73,42 @@ public final class Compendium {
     /// SRD adversaries loaded from the bundle, keyed by slug.
     private var srdAdversariesByID: [String: Adversary] = [:]
 
+    /// Community source packs, keyed by source ID then by adversary slug.
+    /// Allows packs to be added and removed independently without a full rebuild.
+    private var sourcesAdversariesByID: [String: [String: Adversary]] = [:]
+
     /// Homebrew adversaries added at runtime, keyed by slug.
-    /// Homebrew entries with the same `id` as an SRD entry shadow the SRD version.
+    /// Homebrew entries with the same `id` as any source or SRD entry take priority.
     private var homebrewAdversariesByID: [String: Adversary] = [:]
 
     /// SRD environments loaded from the bundle, keyed by slug.
     private var srdEnvironmentsByID: [String: DaggerheartEnvironment] = [:]
 
+    /// Community source pack environments, keyed by source ID then by environment slug.
+    private var sourcesEnvironmentsByID: [String: [String: DaggerheartEnvironment]] = [:]
+
     /// Homebrew environments added at runtime, keyed by slug.
     private var homebrewEnvironmentsByID: [String: DaggerheartEnvironment] = [:]
 
-    /// All adversaries (SRD + homebrew merged), keyed by slug.
-    /// Homebrew entries override SRD entries with the same `id`.
+    /// All adversaries merged in priority order: homebrew → sources → srd.
+    /// Within sources, higher-priority packs should be inserted last to win conflicts.
     public var adversariesByID: [String: Adversary] {
-        srdAdversariesByID.merging(homebrewAdversariesByID) { _, homebrew in homebrew }
+        var merged = srdAdversariesByID
+        for packAdversaries in sourcesAdversariesByID.values {
+            merged.merge(packAdversaries) { _, source in source }
+        }
+        merged.merge(homebrewAdversariesByID) { _, homebrew in homebrew }
+        return merged
     }
 
-    /// All environments (SRD + homebrew merged), keyed by slug.
+    /// All environments merged in priority order: homebrew → sources → srd.
     public var environmentsByID: [String: DaggerheartEnvironment] {
-        srdEnvironmentsByID.merging(homebrewEnvironmentsByID) { _, homebrew in homebrew }
+        var merged = srdEnvironmentsByID
+        for packEnvironments in sourcesEnvironmentsByID.values {
+            merged.merge(packEnvironments) { _, source in source }
+        }
+        merged.merge(homebrewEnvironmentsByID) { _, homebrew in homebrew }
+        return merged
     }
 
     /// Sorted array of all adversaries (for list views).
@@ -190,19 +207,55 @@ public final class Compendium {
     }
 
     /// Full-text search across adversary names and descriptions.
+    /// Uses `localizedStandardContains` for diacritic- and case-insensitive matching.
     public func searchAdversaries(query: String) -> [Adversary] {
         guard !query.isEmpty else { return adversaries }
-        let lower = query.lowercased()
         return adversaries.filter {
-            $0.name.lowercased().contains(lower) ||
-            $0.description.lowercased().contains(lower)
+            $0.name.localizedStandardContains(query) ||
+            $0.description.localizedStandardContains(query)
         }
+    }
+
+    // MARK: - SRD Reload
+
+    /// Replace the SRD adversary and environment dictionaries.
+    ///
+    /// Called by `ContentStore` after downloading a new SRD content pack.
+    /// The swap is atomic from the observation system's perspective.
+    public func replaceSRDContent(adversaries: [Adversary], environments: [DaggerheartEnvironment]) {
+        srdAdversariesByID  = Dictionary(uniqueKeysWithValues: adversaries.map  { ($0.id, $0) })
+        srdEnvironmentsByID = Dictionary(uniqueKeysWithValues: environments.map { ($0.id, $0) })
+        logger.info("Compendium SRD content replaced: \(adversaries.count) adversaries, \(environments.count) environments")
+    }
+
+    // MARK: - Source Pack Management
+
+    /// Install or replace a community source pack.
+    ///
+    /// The `sourceID` is the stable identifier for the pack (e.g. `"expanded-adversary-compendium"`).
+    /// Calling this again with the same `sourceID` replaces the previous pack entirely.
+    public func replaceSourceContent(
+        sourceID: String,
+        adversaries: [Adversary],
+        environments: [DaggerheartEnvironment]
+    ) {
+        sourcesAdversariesByID[sourceID]  = Dictionary(uniqueKeysWithValues: adversaries.map  { ($0.id, $0) })
+        sourcesEnvironmentsByID[sourceID] = Dictionary(uniqueKeysWithValues: environments.map { ($0.id, $0) })
+        logger.info("Compendium source '\(sourceID)' replaced: \(adversaries.count) adversaries, \(environments.count) environments")
+    }
+
+    /// Remove a community source pack entirely.
+    /// No-op if the `sourceID` is not present.
+    public func removeSourceContent(sourceID: String) {
+        sourcesAdversariesByID.removeValue(forKey: sourceID)
+        sourcesEnvironmentsByID.removeValue(forKey: sourceID)
+        logger.info("Compendium source '\(sourceID)' removed")
     }
 
     // MARK: - Homebrew
 
     /// Add or replace a homebrew adversary.
-    /// Homebrew entries shadow SRD entries with the same `id`.
+    /// Homebrew entries shadow SRD and source pack entries with the same `id`.
     public func addAdversary(_ adversary: Adversary) {
         homebrewAdversariesByID[adversary.id] = adversary
     }

@@ -153,7 +153,8 @@ nonisolated public struct Adversary: Codable, Identifiable, Sendable, Equatable,
     /// URL-safe slug, e.g. `"acid-burrower"`. Used as stable ID for cross-referencing.
     public let id: String
     public let name: String
-    /// Content source tag: `"SRD"`, `"Homebrew"`, a book name, etc.
+    /// Content source tag, always lowercased: `"srd"`, `"homebrew"`, a book name, etc.
+    /// Values from external JSON are normalized to lowercase at decode time.
     public let source: String
 
     // MARK: Classification
@@ -242,9 +243,17 @@ nonisolated public struct Adversary: Codable, Identifiable, Sendable, Equatable,
         let c = try decoder.container(keyedBy: CodingKeys.self)
 
         // name decoded first so it can serve as the id fallback.
-        name        = try c.decode(String.self,       forKey: .name)
-        id          = try c.decodeIfPresent(String.self, forKey: .id) ?? Self.slug(name)
-        source      = try c.decodeIfPresent(String.self, forKey: .source) ?? "SRD"
+        name        = try c.decode(String.self, forKey: .name)
+        let rawID   = try c.decodeIfPresent(String.self, forKey: .id) ?? Self.slug(name)
+        guard !rawID.isEmpty else {
+            throw DecodingError.dataCorruptedError(
+                forKey: .id, in: c,
+                debugDescription: "Adversary 'id' must not be empty (name: '\(name)')"
+            )
+        }
+        id = rawID
+        // Normalize source to lowercase so "SRD", "srd", "Homebrew", etc. all compare equal.
+        source      = (try c.decodeIfPresent(String.self, forKey: .source) ?? "srd").lowercased()
         // SRD JSON encodes numeric stats as strings; homebrew may use ints.
         tier        = try Self.intOrString(c, forKey: .tier)
         type        = try c.decode(AdversaryType.self, forKey: .type)
@@ -325,7 +334,7 @@ nonisolated public struct Adversary: Codable, Identifiable, Sendable, Equatable,
     public init(
         id: String,
         name: String,
-        source: String = "SRD",
+        source: String = "srd",
         tier: Int,
         type: AdversaryType,
         description: String,

@@ -26,6 +26,7 @@ import Observation
 /// Retrieve or create a session via ``session(for:definition:compendium:)``.
 /// The same session is returned on every call for a given definition ID until
 /// ``clearSession(for:)`` is called.
+@MainActor
 @Observable
 public final class SessionRegistry {
     public private(set) var sessions: [UUID: EncounterSession] = [:]
