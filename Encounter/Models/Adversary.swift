@@ -47,14 +47,15 @@ nonisolated public enum AdversaryType: String, Codable, CaseIterable, Sendable {
     // SRD JSON encodes horde variants with HP-per-unit notation,
     // e.g. "Horde (3/HP)". Normalise all to .horde.
     public init(from decoder: Decoder) throws {
-        let raw = try decoder.singleValueContainer().decode(String.self)
+        let container = try decoder.singleValueContainer()
+        let raw = try container.decode(String.self)
         if let exact = Self(rawValue: raw) {
             self = exact
         } else if raw.hasPrefix("Horde") {
             self = .horde
         } else {
             throw DecodingError.dataCorruptedError(
-                in: try decoder.singleValueContainer(),
+                in: container,
                 debugDescription: "Unknown AdversaryType '\(raw)'"
             )
         }

@@ -21,7 +21,7 @@ struct AdversaryRosterSection: View {
                     .foregroundStyle(.secondary)
                     .italic()
             } else {
-                ForEach(adversaryIDs, id: \.self) { id in
+                ForEach(Array(adversaryIDs.enumerated()), id: \.offset) { _, id in
                     AdversaryRosterRow(adversaryID: id, compendium: compendium)
                 }
                 .onDelete(perform: onRemove)
