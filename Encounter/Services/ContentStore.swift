@@ -229,6 +229,10 @@ public final class ContentStore {
                 // HTTP 304: server confirmed cached content is current. This is a
                 // success — update lastFetched and clear any prior error state.
                 // The Compendium already has this source's content from loadOnStartup.
+                guard sources[id] != nil else {
+                    logger.info("ContentStore: source '\(id)' removed mid-fetch — discarding notModified result")
+                    return
+                }
                 let existing = source.fingerprint ?? ContentFingerprint(sha256: "", etag: nil)
                 source = source.recordingSuccess(fingerprint: existing)
                 sources[id] = source
@@ -236,7 +240,7 @@ public final class ContentStore {
                 logger.info("ContentStore: source '\(id)' not modified — still current")
 
             case .fetched(let data, let fingerprint):
-                // Decode and write — nonisolated, runs on cooperative thread pool when awaited.
+                // Decode and write — @concurrent, runs on cooperative thread pool when awaited.
                 let pack = try await fetcher.decode(data: data, sourceID: id)
 
                 try await writer.writeSourcePack(
@@ -246,6 +250,11 @@ public final class ContentStore {
                 )
 
                 // Back on main actor: update state and Compendium.
+                // Guard against source being removed while the fetch was in-flight.
+                guard sources[id] != nil else {
+                    logger.info("ContentStore: source '\(id)' removed mid-fetch — discarding fetched result")
+                    return
+                }
                 source = source.recordingSuccess(fingerprint: fingerprint)
                 sources[id] = source
                 compendium.replaceSourceContent(
@@ -257,12 +266,14 @@ public final class ContentStore {
                 logger.info("ContentStore: source '\(id)' fetched: \(pack.adversaries.count) adversaries")
             }
         } catch let error as ContentStoreError {
+            guard sources[id] != nil else { return }
             source = source.recordingFailure()
             sources[id] = source
             lastError = error
             await persistSourceIndex()
             logger.error("ContentStore: source '\(id)' fetch failed: \(error.localizedDescription)")
         } catch {
+            guard sources[id] != nil else { return }
             source = source.recordingFailure()
             sources[id] = source
             lastError = ContentStoreError.networkError(sourceID: id, underlying: error)
