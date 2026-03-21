@@ -1,6 +1,6 @@
 # Encounter — Claude Code Context
 
-Daggerheart encounter prep and run app for iOS and macOS, targeting game masters who need to set up and track encounters at the table.
+Daggerheart encounter prep and run app for iOS and macOS, primarily for game masters who need to set up and track encounters at the table.
 Built with SwiftUI, targeting Xcode 26.3 / Swift 6.
 
 ---
@@ -21,10 +21,12 @@ Encounter/
 │   ├── ContentView.swift       # Root view (stub)
 │   └── EncounterApp.swift      # App entry point
 ├── EncounterTests/             # Swift Testing unit tests
-│   └── EncounterTests.swift    # Model tests (Adversary decoding, EncounterSession mutations)
 ├── EncounterUITests/           # XCUITest UI tests
 ├── docs/
-│   └── data-schema.md          # Daggerheart JSON schema reference + source links
+│   ├── data-schema.md          # Daggerheart JSON schema reference + source links
+│   └── decisions/              # Architecture Decision Records (ADRs)
+│       └── README.md           # ADR format, lifecycle, and superseded process
+├── README.md                   # Project overview
 └── CLAUDE.md                   # This file
 ```
 
@@ -161,6 +163,48 @@ Test coverage priorities:
 
 ---
 
+## Architecture Decision Records
+
+Significant architectural, data-format, and UX decisions are recorded as ADRs in
+`docs/decisions/`. See `docs/decisions/README.md` for the full format and process.
+
+### When to write an ADR
+
+Write one when choosing between meaningfully different approaches, establishing a
+project-wide convention, making a UX decision that constrains future work, or
+deciding explicitly *not* to do something. Do not write one for routine
+implementation details. At the end of any planning session, propose ADRs for
+what was decided and let the user confirm which to write.
+
+### ADR statuses
+
+| Status | Meaning |
+|---|---|
+| **Proposed** | Under active exploration; not yet settled |
+| **Accepted** | Decided and currently in effect |
+| **Rejected** | Explored but not implemented; findings recorded to prevent re-exploring the same dead end |
+| **Deprecated** | No longer applies; no direct replacement |
+| **Superseded by ADR-NNNN** | A later decision replaced this one |
+
+### Superseded / Mistake Process
+
+**Never edit or delete an existing ADR.** If a decision was wrong or needs to change:
+
+1. Write a **new ADR** with the next available number. Open its Context section
+   with _"This supersedes [ADR-NNNN](NNNN-title.md)."_ Explain what changed and why.
+2. Update the **original ADR's status line only** to:
+   `Superseded by [ADR-NNNN](NNNN-title.md)`
+3. Leave the original content completely intact below the status line.
+
+### Branch explorations
+
+A `Proposed` ADR on a feature branch documents an approach under exploration.
+If the branch is discarded but the findings matter, cherry-pick just the ADR
+file to `main` with status `Rejected` before deleting the branch. If nothing
+was learned worth preserving, don't bring the ADR to `main`.
+
+---
+
 ## Git
 
 - **Never commit on behalf of the user.** Do not create commits unless explicitly asked.
@@ -184,32 +228,10 @@ Test coverage priorities:
 
 ## Known Gaps / Next Steps
 
-Full gap detail: `.claude/memory/project_data_model_gaps.md`
-
-### High priority — blocking architecture
-
-- [x] **GAP-1** `EncounterDefinition` type — `EncounterDefinition.swift` added; `EncounterSession.start(from:using:)` factory method bridges the two.
-- [x] **GAP-2** `PlayerSlot` type — `PlayerSlot.swift` added; participates in turn order; full HP/stress/armor/condition tracking in `EncounterSession`.
-- [x] **GAP-3** Difficulty budget model — `DifficultyBudget.swift` added; pure Battle Points namespace per SRD.
-- [x] **GAP-4** `EncounterDefinition` `Codable` — resolved with GAP-1; `PlayerConfig` also fully Codable.
-
-### Medium priority
-
-- [x] **GAP-5** Homebrew distinction — `Compendium` now has separate `srdAdversariesByID` / `homebrewAdversariesByID` dicts; `homebrewAdversaries` / `homebrewEnvironments` arrays for filtering; `removeHomebrewAdversary(id:)` / `removeHomebrewEnvironment(id:)` for deletion.
-- [x] **GAP-6** Condition tags — `Condition.swift` added; `Set<Condition>` on both `AdversarySlot` and `PlayerSlot`.
-
-### Low priority
-
-- [x] **GAP-7** `createdAt`/`modifiedAt` — included in `EncounterDefinition`.
-- [x] **GAP-8** `Compendium.load()` — now `async throws`; decodes on a background task.
-- [x] **GAP-9** `AdversarySlot` stat snapshot — `maxHP` and `maxStress` snapshotted at slot creation; `applyStress` and `heal` no longer need a `Compendium` parameter.
-
-### Pre-existing
-
-- [ ] `ContentView.swift` is a stub — needs compendium browser + encounter runner UI
-- [ ] `adversaries.json` / `environments.json` are sample data — replace with full SRD export
+- [ ] `adversaries.json` / `environments.json` are stub data — replace with full SRD export and move to writable content directory (see ADRs on content architecture)
 - [ ] No dice rolling logic — `damage` strings are stored raw (e.g. `"1d12+2 phy"`)
 - [ ] Horde adversary rules (shared HP pool, modified attack) not yet implemented
+- [ ] Adversary creation UI and difficulty meter — deferred to a dedicated design session
 - [ ] No iCloud sync or Handoff between iOS and macOS
 
 ### Future (out of scope for v1)
