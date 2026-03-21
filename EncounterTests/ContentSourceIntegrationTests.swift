@@ -46,7 +46,6 @@ private final class FixtureBundleToken {}
     @Test func importPackLoadsAdversariesIntoCompendium() async throws {
         let compendium = Compendium()
         let store = makeStore(compendium: compendium)
-        store.configure(compendium: compendium)
         await store.loadOnStartup()
         await store.importPack(from: try fixtureURL())
         #expect(compendium.adversariesByID["test-goblin"] != nil)
@@ -59,7 +58,6 @@ private final class FixtureBundleToken {}
     @Test func removeSourceEvictsContentFromCompendium() async throws {
         let compendium = Compendium()
         let store = makeStore(compendium: compendium)
-        store.configure(compendium: compendium)
         await store.loadOnStartup()
         await store.importPack(from: try fixtureURL())
         #expect(compendium.adversariesByID["test-goblin"] != nil)

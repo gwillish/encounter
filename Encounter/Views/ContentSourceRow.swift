@@ -18,7 +18,7 @@ struct ContentSourceRow: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
             HStack(spacing: 8) {
-                lastFetchedLabel
+                LastFetchedLabel(lastFetched: source.lastFetched)
                 if source.isThrottled() {
                     Text("Fetch paused")
                         .font(.caption2)
@@ -35,25 +35,6 @@ struct ContentSourceRow: View {
             return url.absoluteString
         } else {
             return "Unknown source"
-        }
-    }
-
-    @ViewBuilder
-    private var lastFetchedLabel: some View {
-        if let date = source.lastFetched {
-            Text("Last updated ")
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-            + Text(date, style: .relative)
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-            + Text(" ago")
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-        } else {
-            Text("Never updated")
-                .font(.caption2)
-                .foregroundStyle(.secondary)
         }
     }
 }
