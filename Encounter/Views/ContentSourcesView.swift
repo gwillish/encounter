@@ -112,11 +112,13 @@ struct ContentSourcesView: View {
             name: "sample-homebrew",
             importedAt: Date().addingTimeInterval(-3600)
         ))
-        await store.addSource(ContentSource(
-            id: "expanded-compendium",
-            name: "Expanded Adversary Compendium",
-            url: URL(string: "https://example.com/expanded.dhpack")!,
-            lastFetched: Date().addingTimeInterval(-86400)
-        ))
+        if let url = URL(string: "https://example.com/expanded.dhpack") {
+            await store.addSource(ContentSource(
+                id: "expanded-compendium",
+                name: "Expanded Adversary Compendium",
+                url: url,
+                lastFetched: Date().addingTimeInterval(-86400)
+            ))
+        }
     }
 }
