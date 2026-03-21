@@ -90,20 +90,55 @@ public final class EncounterStore {
 
     /// Returns the preferred storage directory, using iCloud when available.
     ///
-    /// `url(forUbiquityContainerIdentifier:)` may perform file-system operations,
-    /// so this method runs inside a background task.
+    /// `url(forUbiquityContainerIdentifier:)` may perform file-system operations.
+    /// Because this is `nonisolated async`, awaiting it from a `@MainActor` context
+    /// automatically runs the body on the cooperative thread pool.
     nonisolated public static func defaultDirectory() async -> URL {
-        await Task.detached(priority: .userInitiated) {
-            let fm = FileManager.default
-            if let ubiquity = fm.url(forUbiquityContainerIdentifier: nil) {
-                let dir = ubiquity
-                    .appending(path: "Documents")
-                    .appending(path: "Encounters")
-                try? fm.createDirectory(at: dir, withIntermediateDirectories: true)
-                return dir
+        await resolveDefaultDirectory()
+    }
+
+    nonisolated private static func resolveDefaultDirectory() async -> URL {
+        let fm = FileManager.default
+        if let ubiquity = fm.url(forUbiquityContainerIdentifier: nil) {
+            let dir = ubiquity
+                .appending(path: "Documents")
+                .appending(path: "Encounters")
+            try? fm.createDirectory(at: dir, withIntermediateDirectories: true)
+            return dir
+        }
+        return Self.localDirectory
+    }
+
+    nonisolated private static func readAllEncounters(from dir: URL) async throws -> [EncounterDefinition] {
+        let fm = FileManager.default
+        try fm.createDirectory(at: dir, withIntermediateDirectories: true)
+        let contents = try fm.contentsOfDirectory(at: dir, includingPropertiesForKeys: [])
+        let decoder = JSONDecoder()
+        return contents
+            .filter { $0.lastPathComponent.hasSuffix(".encounter.json") }
+            .compactMap { url -> EncounterDefinition? in
+                guard let data = try? Data(contentsOf: url),
+                      let def = try? decoder.decode(EncounterDefinition.self, from: data)
+                else { return nil }
+                return def
             }
-            return Self.localDirectory
-        }.value
+    }
+
+    nonisolated private static func writeEncounter(_ definition: EncounterDefinition, to url: URL) async throws {
+        // Create directory defensively so persist() works even if
+        // called before load() has had a chance to create it.
+        try FileManager.default.createDirectory(
+            at: url.deletingLastPathComponent(),
+            withIntermediateDirectories: true
+        )
+        // JSONEncoder is allocated per-call because JSONEncoder is not
+        // Sendable in Swift 6 and cannot be safely shared across tasks.
+        let data = try JSONEncoder().encode(definition)
+        try data.write(to: url, options: .atomic)
+    }
+
+    nonisolated private static func deleteEncounter(at url: URL) async throws {
+        try FileManager.default.removeItem(at: url)
     }
 
     /// Local Application Support directory. A pure URL — no file I/O performed.
@@ -137,20 +172,7 @@ public final class EncounterStore {
 
         let dir = directory
         do {
-            let loaded = try await Task.detached(priority: .userInitiated) { () throws -> [EncounterDefinition] in
-                let fm = FileManager.default
-                try fm.createDirectory(at: dir, withIntermediateDirectories: true)
-                let contents = try fm.contentsOfDirectory(at: dir, includingPropertiesForKeys: [])
-                let decoder = JSONDecoder()
-                return contents
-                    .filter { $0.lastPathComponent.hasSuffix(".encounter.json") }
-                    .compactMap { url -> EncounterDefinition? in
-                        guard let data = try? Data(contentsOf: url),
-                              let def = try? decoder.decode(EncounterDefinition.self, from: data)
-                        else { return nil }
-                        return def
-                    }
-            }.value
+            let loaded = try await Self.readAllEncounters(from: dir)
             definitions = loaded.sorted { $0.modifiedAt > $1.modifiedAt }
         } catch {
             loadError = error
@@ -198,9 +220,7 @@ public final class EncounterStore {
         }
         let url = fileURL(for: id)
         do {
-            try await Task.detached(priority: .userInitiated) {
-                try FileManager.default.removeItem(at: url)
-            }.value
+            try await Self.deleteEncounter(at: url)
         } catch {
             throw EncounterStoreError.deleteFailed(id, error)
         }
@@ -245,20 +265,7 @@ public final class EncounterStore {
     private func persist(_ definition: EncounterDefinition) async throws {
         let url = fileURL(for: definition.id)
         do {
-            try await Task.detached(priority: .userInitiated) {
-                // Create directory defensively so persist() works even if
-                // called before load() has had a chance to create it.
-                try FileManager.default.createDirectory(
-                    at: url.deletingLastPathComponent(),
-                    withIntermediateDirectories: true
-                )
-                // JSONEncoder is allocated per-call because JSONEncoder is not
-                // Sendable in Swift 6 and cannot be safely shared across
-                // Task.detached boundaries. For GM-scale encounter lists this
-                // allocation cost is negligible.
-                let data = try JSONEncoder().encode(definition)
-                try data.write(to: url, options: .atomic)
-            }.value
+            try await Self.writeEncounter(definition, to: url)
         } catch {
             throw EncounterStoreError.saveFailed(definition.id, error)
         }

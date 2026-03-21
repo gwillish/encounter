@@ -26,6 +26,7 @@ struct EncounterBuilderView: View {
     @State private var manualAdjustments: Set<DifficultyBudget.Adjustment> = []
     @State private var saveError: String?
     @State private var runSession: EncounterSession?
+    @State private var saveTask: Task<Void, Never>?
 
     init(definition: EncounterDefinition) {
         self.definition = definition
@@ -78,7 +79,7 @@ struct EncounterBuilderView: View {
             BuilderNotesSection(
                 notes: $draft.gmNotes,
                 isExpanded: $notesExpanded,
-                onChange: save
+                onChange: saveDebounced
             )
         }
         .navigationTitle(draft.name)
@@ -119,7 +120,12 @@ struct EncounterBuilderView: View {
             }
         }
         .navigationDestination(item: $runSession) { session in
-            EncounterRunnerView(session: session)
+            EncounterRunnerView(session: session, definition: draft)
+        }
+        .onChange(of: definition) { _, newDefinition in
+            if newDefinition.modifiedAt > draft.modifiedAt {
+                draft = newDefinition
+            }
         }
     }
 
@@ -178,6 +184,20 @@ struct EncounterBuilderView: View {
 
     private func save() {
         Task {
+            do {
+                try await store.save(draft)
+            } catch {
+                saveError = error.localizedDescription
+            }
+        }
+    }
+
+    /// Debounced save for notes changes — coalesces rapid keystrokes into one write.
+    private func saveDebounced() {
+        saveTask?.cancel()
+        saveTask = Task {
+            try? await Task.sleep(for: .milliseconds(400))
+            guard !Task.isCancelled else { return }
             do {
                 try await store.save(draft)
             } catch {

@@ -65,7 +65,7 @@ public struct ContentWriter: Sendable {
     ///
     /// - Parameter bundleVersion: Current `CFBundleVersion` from `Bundle.main`.
     /// - Returns: `true` if seeding was performed.
-    nonisolated public func seedSRDIfNeeded(bundleVersion: String) throws -> Bool {
+    nonisolated public func seedSRDIfNeeded(bundleVersion: String) async throws -> Bool {
         let srdDir   = contentDirectory.appendingPathComponent("srd", isDirectory: true)
         let stampURL = srdDir.appendingPathComponent("bundle_version")
 
@@ -101,7 +101,7 @@ public struct ContentWriter: Sendable {
         adversaries: [Adversary],
         environments: [DaggerheartEnvironment],
         sourceID: String
-    ) throws {
+    ) async throws {
         let dir = sourcesDirectory.appendingPathComponent(sourceID, isDirectory: true)
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
 
@@ -114,7 +114,7 @@ public struct ContentWriter: Sendable {
     }
 
     /// Read adversaries for a source pack from disk. Returns `[]` if not yet written.
-    nonisolated public func readAdversaries(sourceID: String) throws -> [Adversary] {
+    nonisolated public func readAdversaries(sourceID: String) async throws -> [Adversary] {
         let url = sourcesDirectory.appendingPathComponent("\(sourceID)/adversaries.json")
         guard FileManager.default.fileExists(atPath: url.path) else { return [] }
         do {
@@ -125,7 +125,7 @@ public struct ContentWriter: Sendable {
     }
 
     /// Read environments for a source pack from disk. Returns `[]` if not yet written.
-    nonisolated public func readEnvironments(sourceID: String) throws -> [DaggerheartEnvironment] {
+    nonisolated public func readEnvironments(sourceID: String) async throws -> [DaggerheartEnvironment] {
         let url = sourcesDirectory.appendingPathComponent("\(sourceID)/environments.json")
         guard FileManager.default.fileExists(atPath: url.path) else { return [] }
         do {
@@ -136,7 +136,7 @@ public struct ContentWriter: Sendable {
     }
 
     /// Remove a source pack's directory from disk. No-op if not present.
-    nonisolated public func removeSourcePack(sourceID: String) throws {
+    nonisolated public func removeSourcePack(sourceID: String) async throws {
         let dir = sourcesDirectory.appendingPathComponent(sourceID, isDirectory: true)
         guard FileManager.default.fileExists(atPath: dir.path) else { return }
         try FileManager.default.removeItem(at: dir)
@@ -146,7 +146,7 @@ public struct ContentWriter: Sendable {
     // MARK: - Source index (ContentSource metadata)
 
     /// Persist the source index to `sources/index.json`.
-    nonisolated public func writeSourceIndex(_ sources: [ContentSource]) throws {
+    nonisolated public func writeSourceIndex(_ sources: [ContentSource]) async throws {
         try FileManager.default.createDirectory(at: sourcesDirectory, withIntermediateDirectories: true)
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
@@ -156,7 +156,7 @@ public struct ContentWriter: Sendable {
     }
 
     /// Load the source index from `sources/index.json`. Returns `[]` if not present.
-    nonisolated public func readSourceIndex() throws -> [ContentSource] {
+    nonisolated public func readSourceIndex() async throws -> [ContentSource] {
         let url = sourcesDirectory.appendingPathComponent("index.json")
         guard FileManager.default.fileExists(atPath: url.path) else { return [] }
         let decoder = JSONDecoder()
@@ -165,6 +165,45 @@ public struct ContentWriter: Sendable {
             return try decoder.decode([ContentSource].self, from: Data(contentsOf: url))
         } catch {
             throw ContentStoreError.readFailed(sourceID: "index", underlying: error)
+        }
+    }
+
+    // MARK: - Static helpers for relocate
+
+    /// Returns `true` if a subdirectory named `srd` exists under `url`.
+    /// Used by `ContentStore.relocate(to:)` to check whether a directory has content.
+    nonisolated public static func checkSubdirectoryExists(_ url: URL) async -> Bool {
+        FileManager.default.fileExists(atPath: url.appendingPathComponent("srd").path)
+    }
+
+    /// Moves `names` subdirectories from `source` to `destination`, skipping any
+    /// that already exist at the destination. Never overwrites.
+    nonisolated public static func migrateSubdirectories(
+        from source: URL,
+        to destination: URL,
+        names: [String],
+        logger: Logger
+    ) async {
+        let fm = FileManager.default
+        do {
+            try fm.createDirectory(at: destination, withIntermediateDirectories: true)
+        } catch {
+            logger.error("ContentWriter.migrateSubdirectories: could not create destination '\(destination.path)': \(error)")
+            return
+        }
+        for name in names {
+            let src = source.appendingPathComponent(name)
+            let dst = destination.appendingPathComponent(name)
+            guard fm.fileExists(atPath: src.path) else { continue }
+            guard !fm.fileExists(atPath: dst.path) else {
+                logger.warning("ContentWriter.migrateSubdirectories: '\(name)' already exists at destination — skipped")
+                continue
+            }
+            do {
+                try fm.moveItem(at: src, to: dst)
+            } catch {
+                logger.error("ContentWriter.migrateSubdirectories: failed to move '\(name)': \(error)")
+            }
         }
     }
 
