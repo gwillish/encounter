@@ -20,6 +20,7 @@ struct EncounterLibraryView: View {
     @State private var deleteTarget: EncounterDefinition?
     @State private var actionError: String?
     @State private var loadErrorDismissed = false
+    @State private var isShowingSources = false
 
     var body: some View {
         Group {
@@ -66,6 +67,11 @@ struct EncounterLibraryView: View {
         .onChange(of: store.loadError?.localizedDescription) { _, newDescription in
             if newDescription != nil { loadErrorDismissed = false }
         }
+        .sheet(isPresented: $isShowingSources) {
+            NavigationStack {
+                ContentSourcesView()
+            }
+        }
         // Error banners
         .safeAreaInset(edge: .top) {
             if let error = store.loadError, !loadErrorDismissed {
@@ -86,6 +92,11 @@ struct EncounterLibraryView: View {
     private var toolbarContent: some ToolbarContent {
         ToolbarItem(placement: .primaryAction) {
             Button("New Encounter", systemImage: "plus", action: beginCreate)
+        }
+        ToolbarItem(placement: .secondaryAction) {
+            Button("Content Sources", systemImage: "archivebox") {
+                isShowingSources = true
+            }
         }
     }
 
