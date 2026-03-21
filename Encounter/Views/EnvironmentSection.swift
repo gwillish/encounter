@@ -24,7 +24,7 @@ struct EnvironmentSection: View {
                     Label("Add Environment", systemImage: "plus")
                 }
             } else {
-                ForEach(environmentIDs, id: \.self) { id in
+                ForEach(Array(environmentIDs.enumerated()), id: \.offset) { _, id in
                     let environment = compendium.environment(id: id)
                     VStack(alignment: .leading, spacing: 2) {
                         Text(environment?.name ?? "Unknown Environment")

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!--
+        UTExportedTypeDeclarations declares that this app owns the .dhpack file type.
+        The OS uses this to route AirDrop, Files-app opens, and Mail attachments to Encounter.
+        See ADR-0016 for the conformance chain and format rationale.
+    -->
+    <key>UTExportedTypeDeclarations</key>
+    <array>
+        <dict>
+            <key>UTTypeIdentifier</key>
+            <string>gwillish.Encounter.dhpack</string>
+            <key>UTTypeDescription</key>
+            <string>Encounter Content Pack</string>
+            <key>UTTypeConformsTo</key>
+            <array>
+                <!-- Conforming to public.json gives Quick Look preview and JSON-aware app compatibility. -->
+                <string>public.json</string>
+            </array>
+            <key>UTTypeTagSpecification</key>
+            <dict>
+                <key>public.filename-extension</key>
+                <array>
+                    <string>dhpack</string>
+                </array>
+                <key>public.mime-type</key>
+                <string>application/json</string>
+            </dict>
+        </dict>
+    </array>
+
+    <!--
+        CFBundleDocumentTypes registers Encounter as the handler for .dhpack files.
+        LSHandlerRank = Owner means Encounter is the preferred app; other JSON editors
+        remain available via "Open With…" since the type conforms to public.json.
+    -->
+    <key>CFBundleDocumentTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleTypeName</key>
+            <string>Encounter Content Pack</string>
+            <key>CFBundleTypeRole</key>
+            <string>Editor</string>
+            <key>LSItemContentTypes</key>
+            <array>
+                <string>gwillish.Encounter.dhpack</string>
+            </array>
+            <key>LSHandlerRank</key>
+            <string>Owner</string>
+        </dict>
+    </array>
+</dict>
+</plist>

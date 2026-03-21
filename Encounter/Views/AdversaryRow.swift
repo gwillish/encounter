@@ -15,7 +15,7 @@ struct AdversaryRow: View {
             HStack {
                 Text(adversary.name)
                     .font(.body)
-                if adversary.source != "SRD" {
+                if adversary.source != "srd" {
                     Text(adversary.source)
                         .font(.caption2)
                         .foregroundStyle(.white)

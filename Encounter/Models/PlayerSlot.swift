@@ -19,7 +19,7 @@ import Foundation
 ///
 /// Tracks combat-relevant PC stats the GM needs to resolve hits and
 /// track health during play. The full character sheet remains with the player.
-nonisolated public struct PlayerSlot: Identifiable, Sendable, Equatable {
+nonisolated public struct PlayerSlot: Identifiable, Sendable, Equatable, Hashable {
     public let id: UUID
     public var name: String
 

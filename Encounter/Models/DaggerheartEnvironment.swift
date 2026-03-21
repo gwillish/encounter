@@ -28,7 +28,7 @@ nonisolated public struct DaggerheartEnvironment: Codable, Identifiable, Sendabl
     /// URL-safe slug, e.g. `"collapsing-cavern"`.
     public let id: String
     public let name: String
-    /// Content source tag: `"SRD"`, `"Homebrew"`, a book name, etc.
+    /// Content source tag, always lowercased: `"srd"`, `"homebrew"`, a book name, etc.
     public let source: String
 
     // MARK: Description
@@ -58,7 +58,8 @@ nonisolated public struct DaggerheartEnvironment: Codable, Identifiable, Sendabl
                 .components(separatedBy: CharacterSet.alphanumerics.inverted)
                 .filter { !$0.isEmpty }
                 .joined(separator: "-")
-        source      = try c.decodeIfPresent(String.self, forKey: .source) ?? "SRD"
+        // Normalize source to lowercase so "SRD", "srd", "Homebrew", etc. all compare equal.
+        source      = (try c.decodeIfPresent(String.self, forKey: .source) ?? "srd").lowercased()
         description = try c.decode(String.self, forKey: .description)
         features    = try c.decodeIfPresent([AdversaryFeature].self, forKey: .features) ?? []
     }
@@ -79,7 +80,7 @@ nonisolated public struct DaggerheartEnvironment: Codable, Identifiable, Sendabl
     public init(
         id: String,
         name: String,
-        source: String = "SRD",
+        source: String = "srd",
         description: String,
         features: [AdversaryFeature] = []
     ) {

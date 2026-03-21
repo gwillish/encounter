@@ -8,7 +8,7 @@
 import Foundation
 
 /// Errors produced by the content loading and update pipeline.
-public enum ContentStoreError: Error, LocalizedError, Sendable {
+nonisolated public enum ContentStoreError: Error, LocalizedError, Sendable {
     /// The source is currently throttled by exponential backoff.
     case fetchThrottled(sourceID: String, until: Date)
     /// A network or URLSession error occurred during fetch.

@@ -15,7 +15,7 @@ struct EnvironmentRow: View {
             HStack {
                 Text(environment.name)
                     .font(.body)
-                if environment.source != "SRD" {
+                if environment.source != "srd" {
                     Text(environment.source)
                         .font(.caption2)
                         .foregroundStyle(.white)

@@ -30,7 +30,7 @@ import OSLog
 /// `maxHP` and `maxStress` are snapshotted from the catalog at slot-creation
 /// time so that HP/stress clamping works correctly even if the source adversary
 /// is later edited or removed from the ``Compendium`` (homebrew orphan safety).
-nonisolated public struct AdversarySlot: Identifiable, Sendable, Equatable {
+nonisolated public struct AdversarySlot: Identifiable, Sendable, Equatable, Hashable {
     public let id: UUID
     /// The slug that identifies this adversary in the ``Compendium``.
     public let adversaryID: String
@@ -89,7 +89,7 @@ nonisolated public struct AdversarySlot: Identifiable, Sendable, Equatable {
 ///
 /// Environments have no HP or Stress — they are tracked only for
 /// their features and activation state.
-nonisolated public struct EnvironmentSlot: Identifiable, Sendable, Equatable {
+nonisolated public struct EnvironmentSlot: Identifiable, Sendable, Equatable, Hashable {
     public let id: UUID
     /// The slug identifying this environment in the ``Compendium``.
     public let environmentID: String
@@ -417,7 +417,7 @@ public final class EncounterSession: Identifiable, Hashable {
 
     /// `true` when all adversary slots are defeated.
     public var isOver: Bool {
-        adversarySlots.allSatisfy(\.isDefeated)
+        !adversarySlots.isEmpty && adversarySlots.allSatisfy(\.isDefeated)
     }
 
     // MARK: - Factory

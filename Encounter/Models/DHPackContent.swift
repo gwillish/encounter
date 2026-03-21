@@ -8,6 +8,23 @@
 //
 
 import Foundation
+import UniformTypeIdentifiers
+
+// MARK: - UTType
+
+extension UTType {
+    /// The `.dhpack` file type: a JSON content pack for Encounter.
+    ///
+    /// Declared in `Info.plist` as `gwillish.Encounter.dhpack`, conforming to
+    /// `public.json → public.text → public.data`. The `public.json` conformance
+    /// allows text editors and Quick Look to preview the file, and lets the OS
+    /// route AirDrop and Files-app opens to Encounter (see ADR-0016).
+    ///
+    /// Use `static let` (not `var`) because the type is exported by this app's
+    /// bundle and is stable for the app's lifetime.
+    public static let dhpack: UTType = UTType(exportedAs: "gwillish.Encounter.dhpack",
+                                              conformingTo: .json)
+}
 
 /// The decoded contents of a `.dhpack` file.
 ///
