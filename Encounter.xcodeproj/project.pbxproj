@@ -27,12 +27,24 @@
 		1A8F7B9A2F660D3800548E3A /* Encounter.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Encounter.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1A8F7BA72F660D3900548E3A /* EncounterTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = EncounterTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		1A8F7BB12F660D3900548E3A /* EncounterUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = EncounterUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		1A8F7BEC2F66186100548E3A /* Encounter.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = Encounter.xctestplan; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		1A0238B72F6F5766009AD9A0 /* Exceptions for "Encounter" folder in "Encounter" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 1A8F7B992F660D3800548E3A /* Encounter */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		1A8F7B9C2F660D3800548E3A /* Encounter */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				1A0238B72F6F5766009AD9A0 /* Exceptions for "Encounter" folder in "Encounter" target */,
+			);
 			path = Encounter;
 			sourceTree = "<group>";
 		};
@@ -76,7 +88,6 @@
 		1A8F7B912F660D3800548E3A = {
 			isa = PBXGroup;
 			children = (
-				1A8F7BEC2F66186100548E3A /* Encounter.xctestplan */,
 				1A8F7B9C2F660D3800548E3A /* Encounter */,
 				1A8F7BAA2F660D3900548E3A /* EncounterTests */,
 				1A8F7BB42F660D3900548E3A /* EncounterUITests */,
