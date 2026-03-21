@@ -715,36 +715,21 @@ struct EncounterDefinitionTests {
         #expect(definition.modifiedAt >= before)
     }
 
-    @Test func mutatingNameUpdatesModifiedAt() async throws {
-        var definition = EncounterDefinition(name: "Original")
-        let before = definition.modifiedAt
-        try await Task.sleep(for: .milliseconds(10))
-        definition.name = "Updated"
-        #expect(definition.modifiedAt > before)
-    }
-
-    @Test func mutatingAdversaryIDsUpdatesModifiedAt() async throws {
-        var definition = EncounterDefinition(name: "Test")
-        let before = definition.modifiedAt
-        try await Task.sleep(for: .milliseconds(10))
-        definition.adversaryIDs = ["ironguard-soldier"]
-        #expect(definition.modifiedAt > before)
-    }
-
-    @Test func mutatingGMNotesUpdatesModifiedAt() async throws {
-        var definition = EncounterDefinition(name: "Test")
-        let before = definition.modifiedAt
-        try await Task.sleep(for: .milliseconds(10))
-        definition.gmNotes = "Remember the trap."
-        #expect(definition.modifiedAt > before)
+    @Test func modifiedAtOnlyChangesAfterSave() {
+        var def = EncounterDefinition(name: "Test")
+        let before = def.modifiedAt
+        def.name = "Changed"
+        def.adversaryIDs = ["ironguard-soldier"]
+        def.gmNotes = "Remember the trap."
+        // Direct property mutations must NOT update modifiedAt — only store.save() stamps it.
+        #expect(def.modifiedAt == before)
     }
 
     @Test func decodingDoesNotResetModifiedAt() throws {
-        var definition = EncounterDefinition(
+        let definition = EncounterDefinition(
             name: "Test",
             modifiedAt: Date(timeIntervalSince1970: 1_000_000)
         )
-        definition.adversaryIDs = [] // trigger didSet after init
         let data = try JSONEncoder().encode(definition)
         let decoded = try JSONDecoder().decode(EncounterDefinition.self, from: data)
         // Decoded modifiedAt should be the encoded value, not .now

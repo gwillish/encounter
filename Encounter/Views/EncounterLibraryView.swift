@@ -62,9 +62,9 @@ struct EncounterLibraryView: View {
         } message: { _ in
             Text("This action cannot be undone.")
         }
-        // Reset dismissed flag whenever a new load cycle begins, so fresh errors surface.
-        .onChange(of: store.isLoading) {
-            if store.isLoading { loadErrorDismissed = false }
+        // Reset dismissed flag whenever a new distinct error appears, so fresh errors surface.
+        .onChange(of: store.loadError?.localizedDescription) { _, newDescription in
+            if newDescription != nil { loadErrorDismissed = false }
         }
         // Error banners
         .safeAreaInset(edge: .top) {

@@ -90,24 +90,36 @@ public final class Compendium {
     /// Homebrew environments added at runtime, keyed by slug.
     private var homebrewEnvironmentsByID: [String: DaggerheartEnvironment] = [:]
 
+    /// Cached result of the last adversary merge. `nil` when the cache is dirty.
+    private var _cachedAdversariesByID: [String: Adversary]?
+
+    /// Cached result of the last environment merge. `nil` when the cache is dirty.
+    private var _cachedEnvironmentsByID: [String: DaggerheartEnvironment]?
+
     /// All adversaries merged in priority order: homebrew → sources → srd.
     /// Within sources, higher-priority packs should be inserted last to win conflicts.
+    /// Result is cached; invalidated whenever any source bucket changes.
     public var adversariesByID: [String: Adversary] {
+        if let cached = _cachedAdversariesByID { return cached }
         var merged = srdAdversariesByID
         for packAdversaries in sourcesAdversariesByID.values {
             merged.merge(packAdversaries) { _, source in source }
         }
         merged.merge(homebrewAdversariesByID) { _, homebrew in homebrew }
+        _cachedAdversariesByID = merged
         return merged
     }
 
     /// All environments merged in priority order: homebrew → sources → srd.
+    /// Result is cached; invalidated whenever any source bucket changes.
     public var environmentsByID: [String: DaggerheartEnvironment] {
+        if let cached = _cachedEnvironmentsByID { return cached }
         var merged = srdEnvironmentsByID
         for packEnvironments in sourcesEnvironmentsByID.values {
             merged.merge(packEnvironments) { _, source in source }
         }
         merged.merge(homebrewEnvironmentsByID) { _, homebrew in homebrew }
+        _cachedEnvironmentsByID = merged
         return merged
     }
 
@@ -163,14 +175,14 @@ public final class Compendium {
         defer { isLoading = false }
 
         do {
-            let (loadedAdversaries, loadedEnvironments) = try await Task.detached(priority: .userInitiated) { [self] in
-                let a = try self.decodeArray(Adversary.self, fromResource: "adversaries")
-                let e = try self.decodeArray(DaggerheartEnvironment.self, fromResource: "environments")
-                return (a, e)
-            }.value
+            async let adversaries = Self.decodeArray(Adversary.self, fromResource: "adversaries")
+            async let environments = Self.decodeArray(DaggerheartEnvironment.self, fromResource: "environments")
+            let (loadedAdversaries, loadedEnvironments) = try await (adversaries, environments)
 
             srdAdversariesByID  = Dictionary(uniqueKeysWithValues: loadedAdversaries.map  { ($0.id, $0) })
             srdEnvironmentsByID = Dictionary(uniqueKeysWithValues: loadedEnvironments.map { ($0.id, $0) })
+            _cachedAdversariesByID = nil
+            _cachedEnvironmentsByID = nil
             logger.info("Compendium loaded \(loadedAdversaries.count) adversaries, \(loadedEnvironments.count) environments")
         } catch let error as CompendiumError {
             loadError = error
@@ -186,14 +198,16 @@ public final class Compendium {
 
     // MARK: - Lookup
 
-    /// Look up an adversary by its slug ID. Homebrew shadows SRD for the same ID.
+    /// Look up an adversary by slug, respecting the full priority order:
+    /// homebrew → sources → srd.
     public func adversary(id: String) -> Adversary? {
-        homebrewAdversariesByID[id] ?? srdAdversariesByID[id]
+        adversariesByID[id]
     }
 
-    /// Look up an environment by its slug ID. Homebrew shadows SRD for the same ID.
+    /// Look up an environment by slug, respecting the full priority order:
+    /// homebrew → sources → srd.
     public func environment(id: String) -> DaggerheartEnvironment? {
-        homebrewEnvironmentsByID[id] ?? srdEnvironmentsByID[id]
+        environmentsByID[id]
     }
 
     /// Return all adversaries for a given tier.
@@ -225,6 +239,8 @@ public final class Compendium {
     public func replaceSRDContent(adversaries: [Adversary], environments: [DaggerheartEnvironment]) {
         srdAdversariesByID  = Dictionary(uniqueKeysWithValues: adversaries.map  { ($0.id, $0) })
         srdEnvironmentsByID = Dictionary(uniqueKeysWithValues: environments.map { ($0.id, $0) })
+        _cachedAdversariesByID = nil
+        _cachedEnvironmentsByID = nil
         logger.info("Compendium SRD content replaced: \(adversaries.count) adversaries, \(environments.count) environments")
     }
 
@@ -241,6 +257,8 @@ public final class Compendium {
     ) {
         sourcesAdversariesByID[sourceID]  = Dictionary(uniqueKeysWithValues: adversaries.map  { ($0.id, $0) })
         sourcesEnvironmentsByID[sourceID] = Dictionary(uniqueKeysWithValues: environments.map { ($0.id, $0) })
+        _cachedAdversariesByID = nil
+        _cachedEnvironmentsByID = nil
         logger.info("Compendium source '\(sourceID)' replaced: \(adversaries.count) adversaries, \(environments.count) environments")
     }
 
@@ -249,6 +267,8 @@ public final class Compendium {
     public func removeSourceContent(sourceID: String) {
         sourcesAdversariesByID.removeValue(forKey: sourceID)
         sourcesEnvironmentsByID.removeValue(forKey: sourceID)
+        _cachedAdversariesByID = nil
+        _cachedEnvironmentsByID = nil
         logger.info("Compendium source '\(sourceID)' removed")
     }
 
@@ -258,26 +278,30 @@ public final class Compendium {
     /// Homebrew entries shadow SRD and source pack entries with the same `id`.
     public func addAdversary(_ adversary: Adversary) {
         homebrewAdversariesByID[adversary.id] = adversary
+        _cachedAdversariesByID = nil
     }
 
     /// Remove a homebrew adversary by slug. No-op if not present.
     public func removeHomebrewAdversary(id: String) {
         homebrewAdversariesByID.removeValue(forKey: id)
+        _cachedAdversariesByID = nil
     }
 
     /// Add or replace a homebrew environment.
     public func addEnvironment(_ environment: DaggerheartEnvironment) {
         homebrewEnvironmentsByID[environment.id] = environment
+        _cachedEnvironmentsByID = nil
     }
 
     /// Remove a homebrew environment by slug. No-op if not present.
     public func removeHomebrewEnvironment(id: String) {
         homebrewEnvironmentsByID.removeValue(forKey: id)
+        _cachedEnvironmentsByID = nil
     }
 
     // MARK: - Private Helpers
 
-    nonisolated private func decodeArray<T: Decodable>(_ type: T.Type, fromResource name: String) throws -> [T] {
+    nonisolated private static func decodeArray<T: Decodable>(_ type: T.Type, fromResource name: String) async throws -> [T] {
         guard let url = Bundle.main.url(forResource: name, withExtension: "json") else {
             throw CompendiumError.fileNotFound("\(name).json")
         }

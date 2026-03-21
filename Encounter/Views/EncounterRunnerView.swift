@@ -15,8 +15,10 @@ import SwiftUI
 
 struct EncounterRunnerView: View {
     let session: EncounterSession
+    let definition: EncounterDefinition
 
     @Environment(Compendium.self) private var compendium
+    @Environment(SessionRegistry.self) private var sessionRegistry
     @State private var expandedSlotID: UUID?
 
     // MARK: - Sorted slots (computed, non-mutating)
@@ -42,6 +44,15 @@ struct EncounterRunnerView: View {
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 FearTrackerButton(session: session)
+            }
+            ToolbarItem(placement: .secondaryAction) {
+                Button("Reset Session") {
+                    sessionRegistry.resetSession(
+                        for: definition.id,
+                        definition: definition,
+                        compendium: compendium
+                    )
+                }
             }
         }
         .safeAreaInset(edge: .bottom) {
@@ -78,7 +89,8 @@ struct EncounterRunnerView: View {
     )
     let session = EncounterSession.start(from: definition, using: compendium)
     return NavigationStack {
-        EncounterRunnerView(session: session)
+        EncounterRunnerView(session: session, definition: definition)
     }
     .environment(compendium)
+    .environment(SessionRegistry())
 }

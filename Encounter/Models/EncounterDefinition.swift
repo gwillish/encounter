@@ -68,25 +68,26 @@ nonisolated public struct PlayerConfig: Codable, Sendable, Equatable, Hashable, 
 /// using ``EncounterSession/start(from:using:)``.
 nonisolated public struct EncounterDefinition: Codable, Sendable, Equatable, Hashable, Identifiable {
     public let id: UUID
-    public var name: String { didSet { modifiedAt = .now } }
+    public var name: String
 
     /// Adversary catalog IDs. Duplicates represent multiple copies of the same adversary.
-    public var adversaryIDs: [String] { didSet { modifiedAt = .now } }
+    public var adversaryIDs: [String]
 
     /// Environment catalog IDs.
-    public var environmentIDs: [String] { didSet { modifiedAt = .now } }
+    public var environmentIDs: [String]
 
     /// Player character configurations for this encounter.
-    public var playerConfigs: [PlayerConfig] { didSet { modifiedAt = .now } }
+    public var playerConfigs: [PlayerConfig]
 
     /// Freeform GM notes for encounter prep.
-    public var gmNotes: String { didSet { modifiedAt = .now } }
+    public var gmNotes: String
 
     // MARK: Timestamps
 
     /// When this definition was first created.
     public let createdAt: Date
-    /// When this definition was last modified.
+
+    /// Stamped by ``EncounterStore/save(_:)`` — do not set directly.
     public var modifiedAt: Date
 
     public init(

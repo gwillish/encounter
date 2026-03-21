@@ -50,4 +50,18 @@ public final class SessionRegistry {
     public func clearSession(for definitionID: UUID) {
         sessions.removeValue(forKey: definitionID)
     }
+
+    /// Discard the existing session and immediately create a fresh one from the given definition.
+    ///
+    /// Use this when the GM wants to restart an encounter from scratch without navigating away.
+    @discardableResult
+    public func resetSession(
+        for definitionID: UUID,
+        definition: EncounterDefinition,
+        compendium: Compendium
+    ) -> EncounterSession {
+        let newSession = EncounterSession.start(from: definition, using: compendium)
+        sessions[definitionID] = newSession
+        return newSession
+    }
 }

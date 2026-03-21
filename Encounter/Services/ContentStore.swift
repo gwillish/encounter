@@ -11,15 +11,6 @@
 import Foundation
 import Observation
 import OSLog
-import UniformTypeIdentifiers
-
-// MARK: - UTType
-
-extension UTType {
-    /// The `.dhpack` file type: a JSON content pack for Encounter.
-    /// Declared in Info.plist as `gwillish.Encounter.dhpack`, conforming to `public.json`.
-    public static let dhpack: UTType = UTType(exportedAs: "gwillish.Encounter.dhpack")
-}
 
 // MARK: - ContentStore
 
@@ -44,9 +35,19 @@ public final class ContentStore {
 
     // MARK: - Dependencies
 
-    private let fetcher: ContentFetcher
-    private let writer: ContentWriter
-    private let compendium: Compendium
+    // fetcher is an immutable Sendable value type; nonisolated so awaiting its
+    // methods from a @MainActor context runs them on the cooperative thread pool.
+    nonisolated private let fetcher: ContentFetcher
+
+    // writer is a var so relocate(to:) can swap it when the real content
+    // directory is known. Callers capture the current writer value via await,
+    // so in-flight tasks are unaffected by a reassignment.
+    private var writer: ContentWriter
+
+    private var compendium: Compendium
+
+    /// The current content root directory. Read-only outside this type.
+    public private(set) var contentDirectory: URL
 
     // MARK: - Published state
 
@@ -62,12 +63,81 @@ public final class ContentStore {
     /// Non-nil if the most recent operation produced an error.
     public private(set) var lastError: ContentStoreError?
 
-    // MARK: - Init
+    // MARK: - Init / directory resolution
+
+    /// Placeholder content directory used until `relocate(to:)` is called.
+    /// Always local Application Support — no file I/O performed.
+    nonisolated public static var localContentDirectory: URL {
+        URL.applicationSupportDirectory
+            .appending(path: "gwillish.Encounter", directoryHint: .isDirectory)
+            .appending(path: "Content",            directoryHint: .isDirectory)
+    }
 
     public init(contentDirectory: URL, compendium: Compendium) {
-        self.fetcher   = ContentFetcher()
-        self.writer    = ContentWriter(contentDirectory: contentDirectory)
+        self.contentDirectory = contentDirectory
+        self.fetcher          = ContentFetcher()
+        self.writer           = ContentWriter(contentDirectory: contentDirectory)
+        self.compendium       = compendium
+    }
+
+    /// Wire in the real ``Compendium`` instance after construction.
+    ///
+    /// Call this in `EncounterApp.task` before ``loadOnStartup()`` to replace
+    /// the placeholder `Compendium` passed to `init`. This avoids recreating
+    /// the entire `ContentStore` just to swap the compendium reference.
+    public func configure(compendium: Compendium) {
         self.compendium = compendium
+    }
+
+    /// Switches to a new content directory with safety checks.
+    ///
+    /// Call this once in `EncounterApp.task` before ``loadOnStartup()``,
+    /// passing the resolved real directory (which may differ from the
+    /// placeholder when iCloud or a custom path is in use).
+    ///
+    /// Safety rules (all comparisons use standardized paths):
+    /// 1. **Same path** — no-op; logs and returns immediately.
+    /// 2. **New path already has content** — switches without touching existing
+    ///    files; logs a warning so the situation is visible.
+    /// 3. **Old path has content, new path is empty** — migrates subdirectories
+    ///    one at a time. Never overwrites a subdirectory that already exists at
+    ///    the destination. Falls back to a switch-only if migration fails.
+    /// 4. **Old path is empty** — switches silently.
+    public func relocate(to newDirectory: URL) async {
+        let oldStd = contentDirectory.standardized
+        let newStd = newDirectory.standardized
+        guard oldStd != newStd else {
+            logger.debug("ContentStore.relocate: already at target '\(newStd.path)' — no-op")
+            return
+        }
+
+        let oldHasContent = await ContentWriter.checkSubdirectoryExists(oldStd)
+        let newHasContent = await ContentWriter.checkSubdirectoryExists(newStd)
+
+        if newHasContent {
+            // The target already has data — switch without touching anything.
+            if oldHasContent {
+                logger.warning("ContentStore.relocate: both '\(oldStd.path)' and '\(newStd.path)' have content. Switching to new path; old content left in place.")
+            } else {
+                logger.info("ContentStore.relocate: switching to existing content at '\(newStd.path)'")
+            }
+        } else if oldHasContent {
+            // Old has data, new is empty — attempt migration.
+            logger.info(
+                "ContentStore.relocate: migrating content from '\(oldStd.path)' to '\(newStd.path)'"
+            )
+            await ContentWriter.migrateSubdirectories(
+                from: oldStd,
+                to: newStd,
+                names: ["srd", "sources", "homebrew"],
+                logger: logger
+            )
+            logger.info("ContentStore.relocate: migration complete")
+        }
+
+        contentDirectory = newDirectory
+        writer = ContentWriter(contentDirectory: newDirectory)
+        logger.info("ContentStore.relocate: active directory is now '\(newDirectory.standardized.path)'")
     }
 
     // MARK: - Startup
@@ -85,21 +155,19 @@ public final class ContentStore {
         let bundleVersion = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
 
         do {
-            // Seed SRD — nonisolated, runs on cooperative thread pool
-            let seeded = try await Task.detached(priority: .userInitiated) { [writer] in
-                try writer.seedSRDIfNeeded(bundleVersion: bundleVersion)
-            }.value
+            // Seed SRD — nonisolated, runs on cooperative thread pool when awaited
+            let seeded = try await writer.seedSRDIfNeeded(bundleVersion: bundleVersion)
             if seeded { logger.info("ContentStore: SRD seeded from bundle") }
 
             // Load source index
-            let savedSources = try await Task.detached(priority: .userInitiated) { [writer] in
-                try writer.readSourceIndex()
-            }.value
+            let savedSources = try await writer.readSourceIndex()
             sources = Dictionary(uniqueKeysWithValues: savedSources.map { ($0.id, $0) })
 
-            // Hydrate Compendium with previously fetched source packs
-            for (sourceID, _) in sources {
-                await loadSourcePackIntoCompendium(sourceID: sourceID)
+            // Hydrate Compendium with previously fetched source packs (all in parallel)
+            await withTaskGroup(of: Void.self) { group in
+                for (sourceID, _) in sources {
+                    group.addTask { await self.loadSourcePackIntoCompendium(sourceID: sourceID) }
+                }
             }
             logger.info("ContentStore: startup complete, \(self.sources.count) sources loaded")
         } catch {
@@ -112,19 +180,21 @@ public final class ContentStore {
     // MARK: - Source management
 
     /// Register a new content source. Does not fetch immediately.
-    public func addSource(_ source: ContentSource) {
+    public func addSource(_ source: ContentSource) async {
         sources[source.id] = source
-        persistSourceIndex()
+        await persistSourceIndex()
     }
 
     /// Remove a source and its content from the Compendium and disk.
-    public func removeSource(id: String) {
+    public func removeSource(id: String) async {
         sources.removeValue(forKey: id)
         compendium.removeSourceContent(sourceID: id)
-        Task.detached(priority: .utility) { [writer] in
-            try? writer.removeSourcePack(sourceID: id)
+        do {
+            try await writer.removeSourcePack(sourceID: id)
+        } catch {
+            logger.error("ContentStore: failed to remove pack '\(id)' from disk: \(error)")
         }
-        persistSourceIndex()
+        await persistSourceIndex()
         logger.info("ContentStore: source '\(id)' removed")
     }
 
@@ -136,6 +206,10 @@ public final class ContentStore {
     /// or if the source is currently throttled.
     public func fetchSource(id: String) async {
         guard var source = sources[id] else { return }
+        guard !source.isLocalImport else {
+            logger.debug("ContentStore: source '\(id)' is a local import — no URL to fetch")
+            return
+        }
         guard !source.isThrottled() else {
             logger.info("ContentStore: source '\(id)' throttled, skipping")
             return
@@ -146,70 +220,101 @@ public final class ContentStore {
         defer { fetchingSourceIDs.remove(id) }
 
         do {
-            // Fetch + decode — both nonisolated, run off the main actor
-            let (pack, fingerprint) = try await fetchAndDecode(source: source)
+            // fetcher.fetch is nonisolated — suspends the main actor and runs on
+            // the cooperative thread pool. Resumes on the main actor with the outcome.
+            let outcome = try await fetcher.fetch(source: source)
 
-            // Write to disk — nonisolated
-            try await Task.detached(priority: .userInitiated) { [writer] in
-                try writer.writeSourcePack(
+            switch outcome {
+            case .notModified:
+                // HTTP 304: server confirmed cached content is current. This is a
+                // success — update lastFetched and clear any prior error state.
+                // The Compendium already has this source's content from loadOnStartup.
+                let existing = source.fingerprint ?? ContentFingerprint(sha256: "", etag: nil)
+                source = source.recordingSuccess(fingerprint: existing)
+                sources[id] = source
+                await persistSourceIndex()
+                logger.info("ContentStore: source '\(id)' not modified — still current")
+
+            case .fetched(let data, let fingerprint):
+                // Decode and write — nonisolated, runs on cooperative thread pool when awaited.
+                let pack = try await fetcher.decode(data: data, sourceID: id)
+
+                try await writer.writeSourcePack(
                     adversaries: pack.adversaries,
                     environments: pack.environments,
                     sourceID: id
                 )
-            }.value
 
-            // Back on main actor: update state and Compendium
-            source = source.recordingSuccess(fingerprint: fingerprint)
-            sources[id] = source
-            compendium.replaceSourceContent(
-                sourceID: id,
-                adversaries: pack.adversaries,
-                environments: pack.environments
-            )
-            persistSourceIndex()
-            logger.info("ContentStore: source '\(id)' fetched: \(pack.adversaries.count) adversaries")
+                // Back on main actor: update state and Compendium.
+                source = source.recordingSuccess(fingerprint: fingerprint)
+                sources[id] = source
+                compendium.replaceSourceContent(
+                    sourceID: id,
+                    adversaries: pack.adversaries,
+                    environments: pack.environments
+                )
+                await persistSourceIndex()
+                logger.info("ContentStore: source '\(id)' fetched: \(pack.adversaries.count) adversaries")
+            }
         } catch let error as ContentStoreError {
             source = source.recordingFailure()
             sources[id] = source
             lastError = error
-            persistSourceIndex()
+            await persistSourceIndex()
             logger.error("ContentStore: source '\(id)' fetch failed: \(error.localizedDescription)")
         } catch {
             source = source.recordingFailure()
             sources[id] = source
             lastError = ContentStoreError.networkError(sourceID: id, underlying: error)
-            persistSourceIndex()
+            await persistSourceIndex()
             logger.error("ContentStore: source '\(id)' fetch failed (unexpected): \(error)")
         }
     }
 
     // MARK: - .dhpack import
 
-    /// Import a locally opened `.dhpack` file.
+    /// Import a locally opened `.dhpack` file and persist it across launches.
     ///
-    /// Call this from the `onOpenURL` handler on the `Scene` level in `EncounterApp`.
-    /// The file at `url` is a security-scoped resource; access must be started before
-    /// calling this method and stopped after it returns.
+    /// The pack is decoded, written to the writable content directory, registered
+    /// as a local `ContentSource` (no URL), and loaded into `Compendium`. It will
+    /// reload automatically on every subsequent launch via `loadOnStartup`.
+    ///
+    /// If a source with the same derived ID already exists, it is replaced.
+    ///
+    /// Removal requires explicit user action via ``removeSource(id:)``.
+    /// A UI for this is tracked separately.
+    ///
+    /// The file at `url` is a security-scoped resource; the caller must start
+    /// access before calling this method and stop it after it returns.
     public func importPack(from url: URL) async {
-        let sourceID = url.deletingPathExtension().lastPathComponent
+        let displayName = url.deletingPathExtension().lastPathComponent
+        let sourceID = displayName
             .lowercased()
             .components(separatedBy: CharacterSet.alphanumerics.inverted)
             .filter { !$0.isEmpty }
             .joined(separator: "-")
 
         do {
-            let localFetcher = fetcher
-            let pack: DHPackContent = try await Task.detached(priority: .userInitiated) {
-                let data = try Data(contentsOf: url)
-                return try localFetcher.decode(data: data, sourceID: sourceID)
-            }.value
+            // Read, decode, and write — nonisolated, runs on cooperative thread pool when awaited.
+            let data = try await ContentFetcher.readData(from: url)
+            let pack = try await fetcher.decode(data: data, sourceID: sourceID)
 
+            try await writer.writeSourcePack(
+                adversaries: pack.adversaries,
+                environments: pack.environments,
+                sourceID: sourceID
+            )
+
+            // Register as a local ContentSource and update Compendium on the main actor.
+            let source = ContentSource(id: sourceID, name: displayName, importedAt: .now)
+            sources[sourceID] = source
             compendium.replaceSourceContent(
                 sourceID: sourceID,
                 adversaries: pack.adversaries,
                 environments: pack.environments
             )
-            logger.info("ContentStore: imported pack '\(sourceID)': \(pack.adversaries.count) adversaries")
+            await persistSourceIndex()
+            logger.info("ContentStore: imported '\(sourceID)': \(pack.adversaries.count) adversaries, persisted")
         } catch {
             lastError = error as? ContentStoreError
                 ?? ContentStoreError.decodingFailed(sourceID: sourceID, underlying: error)
@@ -219,29 +324,10 @@ public final class ContentStore {
 
     // MARK: - Private helpers
 
-    nonisolated private func fetchAndDecode(
-        source: ContentSource
-    ) async throws -> (DHPackContent, ContentFingerprint) {
-        switch try await fetcher.fetch(source: source) {
-        case .notModified:
-            // Cached content on disk is still valid — load it
-            throw ContentStoreError.networkError(
-                sourceID: source.id,
-                underlying: URLError(.resourceUnavailable)
-            )
-        case .fetched(let data, let fingerprint):
-            let pack = try fetcher.decode(data: data, sourceID: source.id)
-            return (pack, fingerprint)
-        }
-    }
-
     private func loadSourcePackIntoCompendium(sourceID: String) async {
         do {
-            let (adversaries, environments) = try await Task.detached(priority: .userInitiated) { [writer] in
-                let a = try writer.readAdversaries(sourceID: sourceID)
-                let e = try writer.readEnvironments(sourceID: sourceID)
-                return (a, e)
-            }.value
+            let adversaries = try await writer.readAdversaries(sourceID: sourceID)
+            let environments = try await writer.readEnvironments(sourceID: sourceID)
             guard !adversaries.isEmpty else { return }
             compendium.replaceSourceContent(
                 sourceID: sourceID,
@@ -253,10 +339,13 @@ public final class ContentStore {
         }
     }
 
-    private func persistSourceIndex() {
+    private func persistSourceIndex() async {
         let snapshot = Array(sources.values)
-        Task.detached(priority: .utility) { [writer] in
-            try? writer.writeSourceIndex(snapshot)
+        do {
+            try await writer.writeSourceIndex(snapshot)
+        } catch {
+            lastError = ContentStoreError.writeFailed(sourceID: "source-index", underlying: error)
+            logger.error("ContentStore: failed to persist source index: \(error)")
         }
     }
 }

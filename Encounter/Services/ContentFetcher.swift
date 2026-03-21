@@ -51,7 +51,11 @@ public struct ContentFetcher: Sendable {
     ///
     /// - Throws: ``ContentStoreError/networkError(sourceID:underlying:)`` on transport failure.
     nonisolated public func fetch(source: ContentSource) async throws -> Outcome {
-        var request = URLRequest(url: source.url)
+        guard let remoteURL = source.url else {
+            // Local imports have no URL — callers should guard on isLocalImport before calling.
+            throw ContentStoreError.networkError(sourceID: source.id, underlying: URLError(.unsupportedURL))
+        }
+        var request = URLRequest(url: remoteURL)
         request.cachePolicy = .reloadIgnoringLocalCacheData
         if let etag = source.fingerprint?.etag {
             request.setValue(etag, forHTTPHeaderField: "If-None-Match")
@@ -80,12 +84,20 @@ public struct ContentFetcher: Sendable {
     /// Decode raw `.dhpack` bytes into adversaries and environments.
     ///
     /// - Throws: ``ContentStoreError/decodingFailed(sourceID:underlying:)`` on decode error.
-    nonisolated public func decode(data: Data, sourceID: String) throws -> DHPackContent {
+    nonisolated public func decode(data: Data, sourceID: String) async throws -> DHPackContent {
         do {
             return try JSONDecoder().decode(DHPackContent.self, from: data)
         } catch {
             throw ContentStoreError.decodingFailed(sourceID: sourceID, underlying: error)
         }
+    }
+
+    /// Read raw bytes from a local file URL.
+    ///
+    /// Used by `ContentStore.importPack(from:)` to read a security-scoped file
+    /// off the cooperative thread pool rather than blocking the main actor.
+    nonisolated public static func readData(from url: URL) async throws -> Data {
+        try Data(contentsOf: url)
     }
 
     // MARK: - Fingerprinting
