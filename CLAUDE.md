@@ -121,7 +121,7 @@ to get the complete adversary list.
 
 ## Development Loop
 
-The primary iteration cycle is running tests from the terminal:
+The primary iteration cycle is running unit tests from the terminal:
 
 ```bash
 xcodebuild test \
@@ -130,9 +130,22 @@ xcodebuild test \
   -resultBundlePath TestResults.xcresult
 ```
 
-Run this after every meaningful change. All test output — including `print()` calls and
-`Logger` messages routed to stderr — is visible directly in the terminal. Prefer this
-over the interactive Xcode debugger for CLI-driven iteration.
+This uses the `UnitTests` test plan (the scheme default) — UI tests are excluded so no
+unlock prompt appears. Run this after every meaningful change.
+
+To include UI tests (e.g. before a PR or release):
+
+```bash
+xcodebuild test \
+  -scheme Encounter \
+  -destination 'platform=macOS' \
+  -testPlan AllTests \
+  -resultBundlePath TestResults.xcresult
+```
+
+All test output — including `print()` calls and `Logger` messages routed to stderr — is
+visible directly in the terminal. Prefer this over the interactive Xcode debugger for
+CLI-driven iteration.
 
 ---
 
