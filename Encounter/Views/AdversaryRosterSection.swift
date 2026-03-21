@@ -3,7 +3,7 @@
 //  Encounter
 //
 //  Form section listing adversaries added to the encounter.
-//  Uses id: \.self on the String IDs; onDelete receives a position-based IndexSet.
+//  Uses index-based identity to support duplicate adversary IDs; onDelete receives a position-based IndexSet.
 //
 
 import SwiftUI
@@ -21,8 +21,8 @@ struct AdversaryRosterSection: View {
                     .foregroundStyle(.secondary)
                     .italic()
             } else {
-                ForEach(Array(adversaryIDs.enumerated()), id: \.offset) { _, id in
-                    AdversaryRosterRow(adversaryID: id, compendium: compendium)
+                ForEach(adversaryIDs.indices, id: \.self) { index in
+                    AdversaryRosterRow(adversaryID: adversaryIDs[index], compendium: compendium)
                 }
                 .onDelete(perform: onRemove)
             }

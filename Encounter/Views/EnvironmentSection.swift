@@ -24,8 +24,8 @@ struct EnvironmentSection: View {
                     Label("Add Environment", systemImage: "plus")
                 }
             } else {
-                ForEach(Array(environmentIDs.enumerated()), id: \.offset) { _, id in
-                    let environment = compendium.environment(id: id)
+                ForEach(environmentIDs.indices, id: \.self) { index in
+                    let environment = compendium.environment(id: environmentIDs[index])
                     VStack(alignment: .leading, spacing: 2) {
                         Text(environment?.name ?? "Unknown Environment")
                             .font(.body)
@@ -35,7 +35,7 @@ struct EnvironmentSection: View {
                                 .foregroundStyle(.secondary)
                                 .lineLimit(2)
                         } else {
-                            Text("ID: \(id)")
+                            Text("ID: \(environmentIDs[index])")
                                 .font(.caption2)
                                 .foregroundStyle(.tertiary)
                         }

@@ -30,6 +30,8 @@ nonisolated public struct DaggerheartEnvironment: Codable, Identifiable, Sendabl
     public let name: String
     /// Content source tag, always lowercased: `"srd"`, `"homebrew"`, a book name, etc.
     public let source: String
+    /// `true` if this environment comes from a non-SRD source (homebrew or a named book).
+    public var isHomebrew: Bool { source != "srd" }
 
     // MARK: Description
     public let description: String
