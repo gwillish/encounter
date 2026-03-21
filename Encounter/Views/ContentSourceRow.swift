@@ -50,12 +50,15 @@ struct ContentSourceRow: View {
 }
 
 #Preview("Remote source") {
+    let url = URL(string: "https://example.com/expanded.dhpack")
     List {
-        ContentSourceRow(source: ContentSource(
-            id: "expanded-compendium",
-            name: "Expanded Adversary Compendium",
-            url: URL(string: "https://example.com/expanded.dhpack")!,
-            lastFetched: Date().addingTimeInterval(-86400)
-        ))
+        if let url {
+            ContentSourceRow(source: ContentSource(
+                id: "expanded-compendium",
+                name: "Expanded Adversary Compendium",
+                url: url,
+                lastFetched: Date().addingTimeInterval(-86400)
+            ))
+        }
     }
 }

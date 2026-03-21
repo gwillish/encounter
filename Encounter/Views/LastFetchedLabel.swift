@@ -12,7 +12,7 @@ struct LastFetchedLabel: View {
 
     var body: some View {
         if let date = lastFetched {
-            (Text("Last updated ") + Text(date, style: .relative) + Text(" ago"))
+            Text("Last updated \(Text(date, style: .relative)) ago")
                 .font(.caption2)
                 .foregroundStyle(.secondary)
         } else {
