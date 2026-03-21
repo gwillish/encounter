@@ -1,8 +1,8 @@
 {
   "configurations" : [
     {
-      "id" : "85A8E511-ECFA-4462-86AB-719C348A9161",
-      "name" : "Test Scheme Action",
+      "id" : "3F1A2B4C-1234-5678-ABCD-000000000001",
+      "name" : "Unit Tests",
       "options" : {
 
       }
@@ -23,17 +23,6 @@
         "containerPath" : "container:Encounter.xcodeproj",
         "identifier" : "1A8F7BA62F660D3900548E3A",
         "name" : "EncounterTests"
-      }
-    },
-    {
-      "enabled" : false,
-      "selectedTests" : [
-        "EncounterUITestsLaunchTests\/testLaunch()"
-      ],
-      "target" : {
-        "containerPath" : "container:Encounter.xcodeproj",
-        "identifier" : "1A8F7BB02F660D3900548E3A",
-        "name" : "EncounterUITests"
       }
     }
   ],
