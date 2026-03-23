@@ -7,11 +7,26 @@ Built with SwiftUI, targeting iOS 26, macOS 26, and visionOS 26.
 
 ## Documentation
 
+Full documentation is hosted at **[gwillish.github.io/encounter](https://gwillish.github.io/encounter/documentation/encounter/)** (see [issue #20](https://github.com/gwillish/encounter/issues/20) for CI setup).
+
 - `CLAUDE.md` — full technical context, conventions, and build instructions for
   development with Claude Code
 - `docs/data-schema.md` — Daggerheart JSON schema reference and source links
 - `docs/decisions/` — Architecture Decision Records (ADRs): the history of
   significant architectural, data-format, and UX choices made during development
+
+## Content Packs
+
+Encounter supports community and homebrew content through the `.dhpack` format — a
+plain JSON file containing adversaries, environments, or both.
+
+- [.dhpack format reference](https://gwillish.github.io/encounter/documentation/encounter/dhpackformat) — complete schema, field tables, and examples
+- [Authoring a pack](https://gwillish.github.io/encounter/documentation/encounter/authoringapack) — three paths: text editor, in-app export, or programmatic generation
+- [Sharing and hosting](https://gwillish.github.io/encounter/documentation/encounter/sharingandhostingpacks) — AirDrop, URL sources, GitHub Releases, jsDelivr, Gist
+
+The JSON Schema for `.dhpack` is at [`schemas/dhpack.schema.json`](schemas/dhpack.schema.json).
+Add `"$schema": "https://gwillish.github.io/encounter/schemas/dhpack.schema.json"` to
+your pack file to enable validation and autocomplete in VS Code.
 
 ## Architecture Decision Records
 
