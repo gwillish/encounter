@@ -14,83 +14,87 @@
 import SwiftUI
 
 struct EncounterRunnerView: View {
-    let session: EncounterSession
-    let definition: EncounterDefinition
+  let session: EncounterSession
+  let definition: EncounterDefinition
 
-    @Environment(Compendium.self) private var compendium
-    @Environment(SessionRegistry.self) private var sessionRegistry
-    @State private var expandedSlotID: UUID?
+  @Environment(Compendium.self) private var compendium
+  @Environment(SessionRegistry.self) private var sessionRegistry
+  @State private var expandedSlotID: UUID?
 
-    // MARK: - Sorted slots (computed, non-mutating)
-    // Active adversaries preserve original insertion order (stable sort).
-    // Defeated adversaries accumulate at the bottom in defeat order.
-    private var sortedAdversarySlots: [AdversarySlot] {
-        session.adversarySlots.sorted { !$0.isDefeated && $1.isDefeated }
+  // MARK: - Sorted slots (computed, non-mutating)
+  // Active adversaries preserve original insertion order (stable sort).
+  // Defeated adversaries accumulate at the bottom in defeat order.
+  private var sortedAdversarySlots: [AdversarySlot] {
+    session.adversarySlots.sorted { !$0.isDefeated && $1.isDefeated }
+  }
+
+  var body: some View {
+    List {
+      AdversaryRunnerSection(
+        slots: sortedAdversarySlots,
+        expandedSlotID: $expandedSlotID,
+        session: session,
+        compendium: compendium
+      )
     }
-
-    var body: some View {
-        List {
-            AdversaryRunnerSection(
-                slots: sortedAdversarySlots,
-                expandedSlotID: $expandedSlotID,
-                session: session,
-                compendium: compendium
-            )
+    .navigationTitle("\(session.name) · R\(session.currentRound)")
+    #if os(iOS)
+      .navigationBarTitleDisplayMode(.inline)
+    #endif
+    .toolbar {
+      ToolbarItem(placement: .primaryAction) {
+        FearTrackerButton(session: session)
+      }
+      ToolbarItem(placement: .secondaryAction) {
+        Button("Reset Session") {
+          sessionRegistry.resetSession(
+            for: definition.id,
+            definition: definition,
+            compendium: compendium
+          )
         }
-        .navigationTitle("\(session.name) · R\(session.currentRound)")
-        #if os(iOS)
-        .navigationBarTitleDisplayMode(.inline)
-        #endif
-        .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                FearTrackerButton(session: session)
-            }
-            ToolbarItem(placement: .secondaryAction) {
-                Button("Reset Session") {
-                    sessionRegistry.resetSession(
-                        for: definition.id,
-                        definition: definition,
-                        compendium: compendium
-                    )
-                }
-            }
-        }
-        .safeAreaInset(edge: .bottom) {
-            PlayerStrip(session: session)
-        }
+      }
     }
+    .safeAreaInset(edge: .bottom) {
+      PlayerStrip(session: session)
+    }
+  }
 }
 
 #Preview {
-    let compendium = Compendium()
-    compendium.addAdversary(Adversary(
-        id: "goblin", name: "Goblin", tier: 1, type: .minion,
-        description: "Small and cunning.", difficulty: 10,
-        thresholdMajor: 5, thresholdSevere: 10, hp: 3, stress: 2,
-        attackModifier: "+2", attackName: "Rusty Blade",
-        attackRange: .veryClose, damage: "1d4 phy"
+  let compendium = Compendium()
+  compendium.addAdversary(
+    Adversary(
+      id: "goblin", name: "Goblin", tier: 1, type: .minion,
+      description: "Small and cunning.", difficulty: 10,
+      thresholdMajor: 5, thresholdSevere: 10, hp: 3, stress: 2,
+      attackModifier: "+2", attackName: "Rusty Blade",
+      attackRange: .veryClose, damage: "1d4 phy"
     ))
-    compendium.addAdversary(Adversary(
-        id: "orc", name: "Orc Bruiser", tier: 2, type: .bruiser,
-        description: "Massive and relentless.", difficulty: 14,
-        thresholdMajor: 10, thresholdSevere: 20, hp: 8, stress: 4,
-        attackModifier: "+5", attackName: "Great Axe",
-        attackRange: .veryClose, damage: "2d10+4 phy"
+  compendium.addAdversary(
+    Adversary(
+      id: "orc", name: "Orc Bruiser", tier: 2, type: .bruiser,
+      description: "Massive and relentless.", difficulty: 14,
+      thresholdMajor: 10, thresholdSevere: 20, hp: 8, stress: 4,
+      attackModifier: "+5", attackName: "Great Axe",
+      attackRange: .veryClose, damage: "2d10+4 phy"
     ))
-    let definition = EncounterDefinition(
-        name: "Goblin Ambush",
-        adversaryIDs: ["goblin", "goblin", "orc"],
-        playerConfigs: [
-            PlayerConfig(name: "Aric", maxHP: 6, maxStress: 6, evasion: 12,
-                         thresholdMajor: 5, thresholdSevere: 10, armorSlots: 3),
-            PlayerConfig(name: "Lira", maxHP: 5, maxStress: 7, evasion: 14,
-                         thresholdMajor: 4, thresholdSevere: 8, armorSlots: 2),
-        ]
-    )
-    let session = EncounterSession.start(from: definition, using: compendium)
-    return NavigationStack {
-        EncounterRunnerView(session: session, definition: definition)
-    }
-    .environment(compendium)
-    .environment(SessionRegistry())
+  let definition = EncounterDefinition(
+    name: "Goblin Ambush",
+    adversaryIDs: ["goblin", "goblin", "orc"],
+    playerConfigs: [
+      PlayerConfig(
+        name: "Aric", maxHP: 6, maxStress: 6, evasion: 12,
+        thresholdMajor: 5, thresholdSevere: 10, armorSlots: 3),
+      PlayerConfig(
+        name: "Lira", maxHP: 5, maxStress: 7, evasion: 14,
+        thresholdMajor: 4, thresholdSevere: 8, armorSlots: 2),
+    ]
+  )
+  let session = EncounterSession.start(from: definition, using: compendium)
+  return NavigationStack {
+    EncounterRunnerView(session: session, definition: definition)
+  }
+  .environment(compendium)
+  .environment(SessionRegistry())
 }

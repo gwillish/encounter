@@ -10,32 +10,32 @@
 import SwiftUI
 
 struct AdversaryRunnerSection: View {
-    let slots: [AdversarySlot]
-    @Binding var expandedSlotID: UUID?
-    let session: EncounterSession
-    let compendium: Compendium
+  let slots: [AdversarySlot]
+  @Binding var expandedSlotID: UUID?
+  let session: EncounterSession
+  let compendium: Compendium
 
-    var body: some View {
-        ForEach(slots) { slot in
-            if expandedSlotID == slot.id {
-                AdversaryRunnerCard(
-                    slot: slot,
-                    session: session,
-                    compendium: compendium,
-                    onCollapse: { expandedSlotID = nil }
-                )
-                .opacity(slot.isDefeated ? 0.4 : 1.0)
-                .listRowSeparator(.hidden)
-            } else {
-                Button {
-                    expandedSlotID = slot.id
-                } label: {
-                    AdversaryRunnerRow(slot: slot, compendium: compendium)
-                        .opacity(slot.isDefeated ? 0.4 : 1.0)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-            }
+  var body: some View {
+    ForEach(slots) { slot in
+      if expandedSlotID == slot.id {
+        AdversaryRunnerCard(
+          slot: slot,
+          session: session,
+          compendium: compendium,
+          onCollapse: { expandedSlotID = nil }
+        )
+        .opacity(slot.isDefeated ? 0.4 : 1.0)
+        .listRowSeparator(.hidden)
+      } else {
+        Button {
+          expandedSlotID = slot.id
+        } label: {
+          AdversaryRunnerRow(slot: slot, compendium: compendium)
+            .opacity(slot.isDefeated ? 0.4 : 1.0)
+            .contentShape(Rectangle())
         }
+        .buttonStyle(.plain)
+      }
     }
+  }
 }
