@@ -32,7 +32,7 @@ These will not be accepted as contributions, regardless of implementation qualit
 | Initiative tracking | Daggerheart uses spotlight rotation, not initiative — see ADR-0021 |
 | Dice rolling | Physical dice stay physical — see Principle 4 |
 | In-app rules browser or SRD display | Licensing questions unresolved; see Principle 4 |
-| Spell or ability management | Not a Daggerheart concept |
+| Domain ability and class feature browsing | Outside the encounter lifecycle — see Principle 2 |
 | Multi-GM collaboration | Single-GM scope only |
 | Background sync or push notifications | All updates are user-initiated — see Principle 3 and ADR-0018 |
 
