@@ -37,6 +37,7 @@ struct EncounterRunnerView: View {
         compendium: compendium
       )
     }
+    .accessibilityIdentifier("runner.adversary-list")
     .navigationTitle("\(session.name) · R\(session.currentRound)")
     #if os(iOS)
       .navigationBarTitleDisplayMode(.inline)
@@ -44,6 +45,7 @@ struct EncounterRunnerView: View {
     .toolbar {
       ToolbarItem(placement: .primaryAction) {
         FearTrackerButton(session: session)
+          .accessibilityIdentifier("runner.fear-tracker-button")
       }
       ToolbarItem(placement: .secondaryAction) {
         Button("Reset Session") {
@@ -53,10 +55,12 @@ struct EncounterRunnerView: View {
             compendium: compendium
           )
         }
+        .accessibilityIdentifier("runner.reset-button")
       }
     }
     .safeAreaInset(edge: .bottom) {
       PlayerStrip(session: session)
+        .accessibilityIdentifier("runner.player-strip")
     }
   }
 }

@@ -40,6 +40,8 @@ struct ContentSourcesView: View {
             Section("Local Imports") {
               ForEach(localImports) { source in
                 ContentSourceRemovableRow(source: source, onRemove: beginRemove)
+                  .accessibilityIdentifier("sources.row")
+                  .accessibilityValue(source.name)
               }
             }
           }
@@ -47,10 +49,13 @@ struct ContentSourcesView: View {
             Section("Remote Sources") {
               ForEach(remoteSources) { source in
                 ContentSourceRemovableRow(source: source, onRemove: beginRemove)
+                  .accessibilityIdentifier("sources.row")
+                  .accessibilityValue(source.name)
               }
             }
           }
         }
+        .accessibilityIdentifier("sources.list")
       }
     }
     .navigationTitle("Content Sources")
@@ -60,6 +65,7 @@ struct ContentSourcesView: View {
     .toolbar {
       ToolbarItem(placement: .confirmationAction) {
         Button("Done") { dismiss() }
+          .accessibilityIdentifier("sources.done-button")
       }
     }
     .confirmationDialog(

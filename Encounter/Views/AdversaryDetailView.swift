@@ -95,6 +95,7 @@ struct AdversaryDetailView: View {
             onSelect(adversary)
             dismiss()
           }
+          .accessibilityIdentifier("compendium.add-to-encounter-button")
         }
       }
     }

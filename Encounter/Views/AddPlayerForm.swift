@@ -34,36 +34,43 @@ struct AddPlayerForm: View {
       Form {
         Section("Character") {
           TextField("Name", text: $name)
+            .accessibilityIdentifier("player-form.name-field")
         }
         Section("Stats") {
           TextField("Max HP", text: $maxHP)
             #if os(iOS)
               .keyboardType(.numberPad)
             #endif
+            .accessibilityIdentifier("player-form.max-hp-field")
           TextField("Max Stress", text: $maxStress)
             #if os(iOS)
               .keyboardType(.numberPad)
             #endif
+            .accessibilityIdentifier("player-form.max-stress-field")
           TextField("Evasion", text: $evasion)
             #if os(iOS)
               .keyboardType(.numberPad)
             #endif
+            .accessibilityIdentifier("player-form.evasion-field")
         }
         Section("Damage Thresholds") {
           TextField("Major Threshold", text: $thresholdMajor)
             #if os(iOS)
               .keyboardType(.numberPad)
             #endif
+            .accessibilityIdentifier("player-form.threshold-major-field")
           TextField("Severe Threshold", text: $thresholdSevere)
             #if os(iOS)
               .keyboardType(.numberPad)
             #endif
+            .accessibilityIdentifier("player-form.threshold-severe-field")
         }
         Section("Armor") {
           TextField("Armor Slots", text: $armorSlots)
             #if os(iOS)
               .keyboardType(.numberPad)
             #endif
+            .accessibilityIdentifier("player-form.armor-slots-field")
         }
       }
       .navigationTitle("Add Player")
@@ -73,10 +80,12 @@ struct AddPlayerForm: View {
       .toolbar {
         ToolbarItem(placement: .cancellationAction) {
           Button("Cancel") { dismiss() }
+            .accessibilityIdentifier("player-form.cancel-button")
         }
         ToolbarItem(placement: .confirmationAction) {
           Button("Add") { commitAdd() }
             .disabled(!isValid)
+            .accessibilityIdentifier("player-form.add-button")
         }
       }
     }

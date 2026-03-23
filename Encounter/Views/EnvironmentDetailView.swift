@@ -54,6 +54,7 @@ struct EnvironmentDetailView: View {
             onSelect(environment)
             dismiss()
           }
+          .accessibilityIdentifier("compendium.add-to-encounter-button")
         }
       }
     }

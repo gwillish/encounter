@@ -19,6 +19,7 @@ struct BuilderNotesSection: View {
         TextEditor(text: $notes)
           .frame(minHeight: 100)
           .onChange(of: notes) { _, _ in onChange() }
+          .accessibilityIdentifier("builder.notes-field")
       }
     }
   }

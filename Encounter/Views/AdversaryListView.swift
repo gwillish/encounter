@@ -23,7 +23,10 @@ struct AdversaryListView: View {
         NavigationLink(value: adversary) {
           AdversaryRow(adversary: adversary)
         }
+        .accessibilityIdentifier("compendium.adversary-row")
+        .accessibilityValue(adversary.name)
       }
+      .accessibilityIdentifier("compendium.adversary-list")
     }
   }
 }

@@ -35,6 +35,8 @@ struct AdversaryRunnerSection: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .accessibilityIdentifier("runner.adversary-row")
+        .accessibilityValue(slot.customName ?? slot.adversaryID)
       }
     }
   }

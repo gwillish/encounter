@@ -23,6 +23,7 @@ struct EnvironmentSection: View {
         } label: {
           Label("Add Environment", systemImage: "plus")
         }
+        .accessibilityIdentifier("builder.add-environment-button")
       } else {
         ForEach(environmentIDs.indices, id: \.self) { index in
           let environment = compendium.environment(id: environmentIDs[index])
@@ -53,6 +54,7 @@ struct EnvironmentSection: View {
             .buttonStyle(.borderless)
             .font(.caption)
             .labelStyle(.iconOnly)
+            .accessibilityIdentifier("builder.replace-environment-button")
         }
       }
     }
