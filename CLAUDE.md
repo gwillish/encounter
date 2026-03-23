@@ -24,9 +24,11 @@ Encounter/
 ├── EncounterUITests/           # XCUITest UI tests
 ├── docs/
 │   ├── data-schema.md          # Daggerheart JSON schema reference + source links
+│   ├── first-principles.md     # Product principles — what the app is and isn't
 │   └── decisions/              # Architecture Decision Records (ADRs)
 │       └── README.md           # ADR format, lifecycle, and superseded process
 ├── README.md                   # Project overview
+├── CONTRIBUTING.md             # Contributor guidelines, scope boundaries, PR process
 └── CLAUDE.md                   # This file
 ```
 
@@ -223,19 +225,22 @@ was learned worth preserving, don't bring the ADR to `main`.
   platform-specific adaptations.
 - **Daggerheart-specific naming:** Use game terms as-is (`hp`, `stress`, `fear`, `hope`,
   `difficulty`, `thresholds`). Do not rename to generic terms like `health` or `defense`.
+- **Formatting:** `swift-format` (built-in Swift toolchain). Run before committing:
+  `swift-format format --recursive --in-place Encounter/`
 
 ---
 
-## Known Gaps / Next Steps
+## Roadmap and Scope
 
-- [ ] `adversaries.json` / `environments.json` are stub data — replace with full SRD export and move to writable content directory (see ADRs on content architecture)
-- [ ] No dice rolling logic — `damage` strings are stored raw (e.g. `"1d12+2 phy"`)
-- [ ] Horde adversary rules (shared HP pool, modified attack) not yet implemented
-- [ ] Adversary creation UI and difficulty meter — deferred to a dedicated design session
-- [ ] No iCloud sync or Handoff between iOS and macOS
+- **Development roadmap:** GitHub issues organized by milestone (Phase 0 through Phase 6)
+- **First principles and scope boundaries:** [`docs/first-principles.md`](docs/first-principles.md)
+- **Contributor guidelines:** [`CONTRIBUTING.md`](CONTRIBUTING.md)
 
-### Future (out of scope for v1)
+### Deferred (planned, not yet scheduled)
 
-- [ ] LLM-assisted ad-hoc encounter generation from description
-- [ ] Continuity/Handoff between Mac and iPhone
-- [ ] Player companion app with live status push to GM
+- LLM-assisted ad-hoc encounter generation from description
+- Continuity/Handoff between Mac and iPhone mid-session
+- Player companion app with live GM sync
+- Swift Package extraction — when a second app exists that needs the models
+- Hope tracking per player — pending playtesting to determine GM visibility needs
+- In-app rules/condition tooltips — pending licensing clarity
