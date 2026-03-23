@@ -17,6 +17,8 @@ struct EncounterLibraryList: View {
     List(definitions, selection: $selection) { definition in
       #if os(macOS)
         EncounterLibraryRow(definition: definition)
+          .accessibilityIdentifier("library.row")
+          .accessibilityValue(definition.name)
           .contextMenu {
             Button {
               onRename(definition)
@@ -34,6 +36,8 @@ struct EncounterLibraryList: View {
         NavigationLink(value: definition) {
           EncounterLibraryRow(definition: definition)
         }
+        .accessibilityIdentifier("library.row")
+        .accessibilityValue(definition.name)
         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
           Button(role: .destructive) {
             onDelete(definition)
@@ -67,6 +71,7 @@ struct EncounterLibraryList: View {
         EncounterBuilderView(definition: definition)
       }
     #endif
+    .accessibilityIdentifier("library.list")
   }
 }
 

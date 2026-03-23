@@ -20,6 +20,7 @@ struct FearTrackerButton: View {
         .monospacedDigit()
     }
     .tint(.orange)
+    .accessibilityIdentifier("runner.fear-tracker")
     .popover(isPresented: $showPopover) {
       VStack(spacing: 12) {
         Text("Fear")
@@ -32,15 +33,19 @@ struct FearTrackerButton: View {
         HStack(spacing: 8) {
           Button("+1") { session.incrementFear(by: 1) }
             .buttonStyle(.bordered)
+            .accessibilityIdentifier("runner.fear.increment")
           Button("−1") { session.spendFear(1) }
             .buttonStyle(.bordered)
             .disabled(session.fearPool < 1)
+            .accessibilityIdentifier("runner.fear.spend-1")
           Button("−2") { session.spendFear(2) }
             .buttonStyle(.bordered)
             .disabled(session.fearPool < 2)
+            .accessibilityIdentifier("runner.fear.spend-2")
           Button("−3") { session.spendFear(3) }
             .buttonStyle(.bordered)
             .disabled(session.fearPool < 3)
+            .accessibilityIdentifier("runner.fear.spend-3")
         }
       }
       .padding()

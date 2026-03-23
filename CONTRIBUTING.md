@@ -90,6 +90,58 @@ PRs with formatting violations will be asked to reformat before review.
 
 ---
 
+## Agentic development tools
+
+The following agent skills and tools enable autonomous UI inspection, accessibility
+auditing, and iOS Simulator interaction for AI-assisted development (Issue #23).
+
+### Recommended skill stack
+
+| Skill | Install | Purpose |
+|---|---|---|
+| swiftui-pro | pre-installed | SwiftUI patterns and best practices |
+| swift-concurrency-pro | pre-installed | Async/await and actor correctness |
+| swift-testing-pro | pre-installed | Unit + integration test authoring |
+| ios-simulator-skill | `git clone https://github.com/conorluddy/ios-simulator-skill.git ~/.claude/skills/ios-simulator-skill` | Build, test, and semantically navigate iOS Simulator |
+| axe | `brew tap cameroncooke/axe && brew install axe && axe init --client claude` | iOS Simulator automation: tap, type, screenshot, record |
+| ios-accessibility | `npx skills add https://github.com/dadederk/iOS-Accessibility-Agent-Skill --skill ios-accessibility` | VoiceOver, Dynamic Type, and accessibility guidance |
+| swift-accessibility-skill | `npx skills add https://github.com/PasqualeVittoriosi/swift-accessibility-skill` | macOS accessibility and WCAG Nutrition Labels |
+
+### macOS native automation (MCP server)
+
+For automating the macOS target, add [mcp-server-macos-use](https://github.com/mediar-ai/mcp-server-macos-use)
+as an MCP server in Claude Code settings. After installing, grant Accessibility permission
+to the Claude Code process in System Settings > Privacy & Security > Accessibility.
+
+---
+
+## Accessibility identifiers
+
+All interactive SwiftUI views must have `.accessibilityIdentifier()` on interactive
+elements. This enables semantic navigation by agent tools (AXe, ios-simulator-skill)
+and assistive technology alike — poorly labelled elements fail both.
+
+### Naming convention
+
+Use kebab-case string literals with a feature-area prefix:
+
+| Prefix | Scope |
+|---|---|
+| `library.*` | EncounterLibraryView and subviews |
+| `builder.*` | EncounterBuilderView and subviews |
+| `runner.*` | EncounterRunnerView and subviews |
+| `compendium.*` | CompendiumBrowserView and subviews |
+| `sources.*` | ContentSourcesView |
+| `player-form.*` | AddPlayerForm |
+
+Examples: `library.create-button`, `builder.run-button`, `runner.threshold.minor`,
+`compendium.adversary-list`, `player-form.name-field`.
+
+Use `.accessibilityValue(name)` on list rows so agent tools can distinguish items
+with the same identifier (e.g. multiple `library.row` rows differentiated by name).
+
+---
+
 ## Testing
 
 - Tests use **Swift Testing** (`import Testing`), not XCTest

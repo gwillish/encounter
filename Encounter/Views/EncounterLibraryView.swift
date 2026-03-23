@@ -43,12 +43,14 @@ struct EncounterLibraryView: View {
     // Create alert
     .alert("New Encounter", isPresented: $isCreating) {
       TextField("Encounter name", text: $newName)
+        .accessibilityIdentifier("library.new-name-field")
       Button("Create") { createEncounter() }
       Button("Cancel", role: .cancel) { newName = "" }
     }
     // Rename alert — uses presenting: to avoid Binding(get:set:)
     .alert("Rename Encounter", isPresented: $isRenaming, presenting: renameTarget) { _ in
       TextField("Name", text: $renameText)
+        .accessibilityIdentifier("library.rename-field")
       Button("Rename") { commitRename() }
       Button("Cancel", role: .cancel) {}
     }
@@ -92,11 +94,13 @@ struct EncounterLibraryView: View {
   private var toolbarContent: some ToolbarContent {
     ToolbarItem(placement: .primaryAction) {
       Button("New Encounter", systemImage: "plus", action: beginCreate)
+        .accessibilityIdentifier("library.create-button")
     }
     ToolbarItem(placement: .secondaryAction) {
       Button("Content Sources", systemImage: "archivebox") {
         isShowingSources = true
       }
+      .accessibilityIdentifier("library.sources-button")
     }
   }
 

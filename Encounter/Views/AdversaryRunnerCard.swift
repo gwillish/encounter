@@ -40,6 +40,7 @@ struct AdversaryRunnerCard: View {
         Button("Collapse", systemImage: "chevron.up", action: onCollapse)
           .labelStyle(.iconOnly)
           .buttonStyle(.borderless)
+          .accessibilityIdentifier("runner.adversary-card.collapse-button")
       }
 
       // HP pip track
@@ -78,6 +79,7 @@ struct AdversaryRunnerCard: View {
       }
       .buttonStyle(.bordered)
       .disabled(slot.currentStress >= slot.maxStress || slot.isDefeated)
+      .accessibilityIdentifier("runner.adversary-card.stress-button")
 
       // Condition toggles
       AdversaryConditionsSection(slot: slot, session: session)

@@ -34,6 +34,7 @@ struct AdversaryRosterSection: View {
           .buttonStyle(.borderless)
           .font(.caption)
           .labelStyle(.iconOnly)
+          .accessibilityIdentifier("builder.add-adversary-button")
       }
     }
   }

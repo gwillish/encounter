@@ -23,7 +23,10 @@ struct EnvironmentListView: View {
         NavigationLink(value: environment) {
           EnvironmentRow(environment: environment)
         }
+        .accessibilityIdentifier("compendium.environment-row")
+        .accessibilityValue(environment.name)
       }
+      .accessibilityIdentifier("compendium.environment-list")
     }
   }
 }

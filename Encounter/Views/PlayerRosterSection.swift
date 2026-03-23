@@ -28,6 +28,7 @@ struct PlayerRosterSection: View {
           .buttonStyle(.borderless)
           .font(.caption)
           .labelStyle(.iconOnly)
+          .accessibilityIdentifier("builder.add-player-button")
       }
     } footer: {
       if playerConfigs.isEmpty {

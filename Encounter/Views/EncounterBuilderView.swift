@@ -142,11 +142,13 @@ struct EncounterBuilderView: View {
         )
       }
       .disabled(draft.adversaryIDs.isEmpty)
+      .accessibilityIdentifier("builder.run-button")
     }
     ToolbarItem(placement: .primaryAction) {
       Button("Browse Compendium", systemImage: "books.vertical") {
         showCompendium = true
       }
+      .accessibilityIdentifier("builder.browse-compendium-button")
     }
   }
 

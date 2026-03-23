@@ -18,6 +18,7 @@ struct EncounterLibraryEmptyState: View {
     } actions: {
       Button("Create Encounter", action: onCreateTapped)
         .buttonStyle(.borderedProminent)
+        .accessibilityIdentifier("library.create-button")
     }
   }
 }

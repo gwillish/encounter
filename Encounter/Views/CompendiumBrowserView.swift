@@ -77,6 +77,7 @@ struct CompendiumBrowserView: View {
     if onSelect != nil || onSelectEnvironment != nil {
       ToolbarItem(placement: .cancellationAction) {
         Button("Done") { dismiss() }
+          .accessibilityIdentifier("compendium.done-button")
       }
     }
 
@@ -89,6 +90,7 @@ struct CompendiumBrowserView: View {
       }
       .pickerStyle(.segmented)
       .frame(maxWidth: 240)
+      .accessibilityIdentifier("compendium.tab-picker")
     }
 
     // Type filter — adversaries tab only

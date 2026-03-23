@@ -36,5 +36,6 @@ struct ThresholdButton: View {
     }
     .buttonStyle(.bordered)
     .disabled(isDefeated)
+    .accessibilityIdentifier("runner.threshold.\(label.lowercased())")
   }
 }

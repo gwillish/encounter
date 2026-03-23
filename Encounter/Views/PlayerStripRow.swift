@@ -56,6 +56,8 @@ struct PlayerStripRow: View {
       .foregroundStyle(.primary)
     }
     .buttonStyle(.plain)
+    .accessibilityIdentifier("runner.player-row")
+    .accessibilityLabel(player.name)
     .popover(isPresented: $showPopover) {
       PlayerEditPopover(player: player, session: session)
         .presentationCompactAdaptation(.popover)
