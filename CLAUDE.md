@@ -117,9 +117,9 @@ Full schema documentation: `docs/data-schema.md`
 | Player content (classes, ancestries, items) | daggersearch/daggerheart-data | Not yet imported; no adversaries in this repo |
 | Homebrew schema | Same as SRD JSON | Decoder accepts both `thresholds: "8/15"` and pre-split keys |
 
-The bundled `adversaries.json` and `environments.json` in `Encounter/Resources/` are
-sample/stub files. Replace them with the full SRD exports from seansbox/daggerheart-srd
-to get the complete adversary list.
+The bundled `adversaries.json` and `environments.json` in `Encounter/Resources/` contain
+the complete SRD exports from seansbox/daggerheart-srd (129 adversaries, 19 environments).
+See `Encounter/Resources/README.md` for license attribution.
 
 ---
 
