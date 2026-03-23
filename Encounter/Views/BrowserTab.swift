@@ -6,6 +6,6 @@
 //
 
 nonisolated enum BrowserTab: String, CaseIterable {
-    case adversaries  = "Adversaries"
-    case environments = "Environments"
+  case adversaries = "Adversaries"
+  case environments = "Environments"
 }

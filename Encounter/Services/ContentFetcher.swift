@@ -28,89 +28,91 @@ import OSLog
 /// content size.
 public struct ContentFetcher: Sendable {
 
-    nonisolated private static let logger = Logger(subsystem: "gwillish.Encounter", category: "ContentFetcher")
+  nonisolated private static let logger = Logger(
+    subsystem: "gwillish.Encounter", category: "ContentFetcher")
 
-    public init() {}
+  public init() {}
 
-    // MARK: - Fetch outcome
+  // MARK: - Fetch outcome
 
-    /// The result of a fetch attempt.
-    public enum Outcome: Sendable {
-        /// New content was downloaded. `data` is the raw bytes; `fingerprint` is ready to persist.
-        case fetched(data: Data, fingerprint: ContentFingerprint)
-        /// The server returned HTTP 304 Not Modified. The cached content is still current.
-        case notModified
+  /// The result of a fetch attempt.
+  public enum Outcome: Sendable {
+    /// New content was downloaded. `data` is the raw bytes; `fingerprint` is ready to persist.
+    case fetched(data: Data, fingerprint: ContentFingerprint)
+    /// The server returned HTTP 304 Not Modified. The cached content is still current.
+    case notModified
+  }
+
+  // MARK: - Public API
+
+  /// Fetch the content pack for `source`.
+  ///
+  /// Sends a conditional GET using the stored ETag if available. Returns
+  /// `.notModified` when the server confirms the cached copy is current.
+  ///
+  /// - Throws: ``ContentStoreError/networkError(sourceID:underlying:)`` on transport failure.
+  @concurrent
+  nonisolated public func fetch(source: ContentSource) async throws -> Outcome {
+    guard let remoteURL = source.url else {
+      // Local imports have no URL — callers should guard on isLocalImport before calling.
+      throw ContentStoreError.networkError(
+        sourceID: source.id, underlying: URLError(.unsupportedURL))
+    }
+    var request = URLRequest(url: remoteURL)
+    request.cachePolicy = .reloadIgnoringLocalCacheData
+    if let etag = source.fingerprint?.etag {
+      request.setValue(etag, forHTTPHeaderField: "If-None-Match")
     }
 
-    // MARK: - Public API
-
-    /// Fetch the content pack for `source`.
-    ///
-    /// Sends a conditional GET using the stored ETag if available. Returns
-    /// `.notModified` when the server confirms the cached copy is current.
-    ///
-    /// - Throws: ``ContentStoreError/networkError(sourceID:underlying:)`` on transport failure.
-    @concurrent
-    nonisolated public func fetch(source: ContentSource) async throws -> Outcome {
-        guard let remoteURL = source.url else {
-            // Local imports have no URL — callers should guard on isLocalImport before calling.
-            throw ContentStoreError.networkError(sourceID: source.id, underlying: URLError(.unsupportedURL))
-        }
-        var request = URLRequest(url: remoteURL)
-        request.cachePolicy = .reloadIgnoringLocalCacheData
-        if let etag = source.fingerprint?.etag {
-            request.setValue(etag, forHTTPHeaderField: "If-None-Match")
-        }
-
-        let (data, response): (Data, URLResponse)
-        do {
-            (data, response) = try await URLSession.shared.data(for: request)
-        } catch {
-            throw ContentStoreError.networkError(sourceID: source.id, underlying: error)
-        }
-
-        if let http = response as? HTTPURLResponse, http.statusCode == 304 {
-            Self.logger.info("Source '\(source.id)' not modified (304)")
-            return .notModified
-        }
-
-        let sha256 = computeSHA256(data)
-        let etag   = (response as? HTTPURLResponse)?.value(forHTTPHeaderField: "ETag")
-        let fingerprint = ContentFingerprint(sha256: sha256, etag: etag)
-
-        Self.logger.info("ContentFetcher: \(data.count) bytes from '\(source.id)'")
-        return .fetched(data: data, fingerprint: fingerprint)
+    let (data, response): (Data, URLResponse)
+    do {
+      (data, response) = try await URLSession.shared.data(for: request)
+    } catch {
+      throw ContentStoreError.networkError(sourceID: source.id, underlying: error)
     }
 
-    /// Decode raw `.dhpack` bytes into adversaries and environments.
-    ///
-    /// - Throws: ``ContentStoreError/decodingFailed(sourceID:underlying:)`` on decode error.
-    @concurrent
-    nonisolated public func decode(data: Data, sourceID: String) async throws -> DHPackContent {
-        do {
-            return try JSONDecoder().decode(DHPackContent.self, from: data)
-        } catch {
-            throw ContentStoreError.decodingFailed(sourceID: sourceID, underlying: error)
-        }
+    if let http = response as? HTTPURLResponse, http.statusCode == 304 {
+      Self.logger.info("Source '\(source.id)' not modified (304)")
+      return .notModified
     }
 
-    /// Read raw bytes from a local file URL.
-    ///
-    /// Used by `ContentStore.importPack(from:)` to read a security-scoped file
-    /// off the cooperative thread pool rather than blocking the main actor.
-    @concurrent
-    nonisolated public static func readData(from url: URL) async throws -> Data {
-        try Data(contentsOf: url)
-    }
+    let sha256 = computeSHA256(data)
+    let etag = (response as? HTTPURLResponse)?.value(forHTTPHeaderField: "ETag")
+    let fingerprint = ContentFingerprint(sha256: sha256, etag: etag)
 
-    // MARK: - Fingerprinting
+    Self.logger.info("ContentFetcher: \(data.count) bytes from '\(source.id)'")
+    return .fetched(data: data, fingerprint: fingerprint)
+  }
 
-    /// Computes a SHA-256 hex string for the given data.
-    ///
-    /// Intentionally `nonisolated` — must only be called off the main actor.
-    nonisolated public func computeSHA256(_ data: Data) -> String {
-        SHA256.hash(data: data)
-            .map { String(format: "%02x", $0) }
-            .joined()
+  /// Decode raw `.dhpack` bytes into adversaries and environments.
+  ///
+  /// - Throws: ``ContentStoreError/decodingFailed(sourceID:underlying:)`` on decode error.
+  @concurrent
+  nonisolated public func decode(data: Data, sourceID: String) async throws -> DHPackContent {
+    do {
+      return try JSONDecoder().decode(DHPackContent.self, from: data)
+    } catch {
+      throw ContentStoreError.decodingFailed(sourceID: sourceID, underlying: error)
     }
+  }
+
+  /// Read raw bytes from a local file URL.
+  ///
+  /// Used by `ContentStore.importPack(from:)` to read a security-scoped file
+  /// off the cooperative thread pool rather than blocking the main actor.
+  @concurrent
+  nonisolated public static func readData(from url: URL) async throws -> Data {
+    try Data(contentsOf: url)
+  }
+
+  // MARK: - Fingerprinting
+
+  /// Computes a SHA-256 hex string for the given data.
+  ///
+  /// Intentionally `nonisolated` — must only be called off the main actor.
+  nonisolated public func computeSHA256(_ data: Data) -> String {
+    SHA256.hash(data: data)
+      .map { String(format: "%02x", $0) }
+      .joined()
+  }
 }
