@@ -78,12 +78,22 @@ These will not be accepted as contributions, regardless of implementation qualit
 ## Formatting
 
 This project uses **`swift-format`** (the built-in Swift toolchain formatter).
+The `.swift-format` file at the project root is the source of truth for all
+formatting rules. It contains explicit toolchain defaults so that local runs
+and CI agree regardless of toolchain version drift.
 
-Run it before every commit:
+Run it before every commit using the project script:
 
 ```bash
-swift-format format --recursive --in-place Encounter/
-swift-format lint --recursive Encounter/
+./Scripts/format.sh
+```
+
+The script formats and lints all tracked Swift files using `git ls-files`.
+It is equivalent to:
+
+```bash
+git ls-files -z '*.swift' | xargs -0 swift format format --parallel --in-place
+git ls-files -z '*.swift' | xargs -0 swift format lint --strict --parallel
 ```
 
 PRs with formatting violations will be asked to reformat before review.
@@ -176,6 +186,6 @@ change, write a new superseding ADR. The history is preserved intentionally.
 2. **Human author required.** AI-generated code is permitted; the PR author and at
    least one reviewer must be human. PRs without a human author will not be merged.
 3. **Tests required.** New behavior without tests will not be merged.
-4. **swift-format clean.** Run the formatter before pushing.
+4. **swift-format clean.** Run `./Scripts/format.sh` before pushing.
 5. **Human review required.** All PRs require approval from a human reviewer before
    merge, regardless of how the code was written.

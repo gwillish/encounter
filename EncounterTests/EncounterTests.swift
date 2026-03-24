@@ -7,961 +7,964 @@
 
 import Foundation
 import Testing
+
 @testable import Encounter
 
 // MARK: - Adversary Decoding
 
 struct AdversaryDecodingTests {
 
-    // MARK: Combined threshold string ("8/15")
+  // MARK: Combined threshold string ("8/15")
 
-    @Test func decodesThresholdsFromCombinedString() throws {
-        let json = """
+  @Test func decodesThresholdsFromCombinedString() throws {
+    let json = """
+      {
+        "id": "test-creature",
+        "name": "Test Creature",
+        "source": "SRD",
+        "tier": 1,
+        "type": "Bruiser",
+        "description": "A test creature.",
+        "difficulty": 12,
+        "thresholds": "8/15",
+        "hp": 8,
+        "stress": 3,
+        "atk": "+3",
+        "attack": "Claws",
+        "range": "Very Close",
+        "damage": "1d10+2 phy",
+        "feature": []
+      }
+      """.data(using: .utf8)!
+
+    let adversary = try JSONDecoder().decode(Adversary.self, from: json)
+    #expect(adversary.thresholdMajor == 8)
+    #expect(adversary.thresholdSevere == 15)
+  }
+
+  // MARK: Pre-split threshold keys
+
+  @Test func decodesThresholdsFromSplitKeys() throws {
+    let json = """
+      {
+        "id": "warlord-keth",
+        "name": "Warlord Keth",
+        "tier": 2,
+        "type": "Leader",
+        "description": "A scarred half-giant general.",
+        "difficulty": 14,
+        "threshold_major": 9,
+        "threshold_severe": 17,
+        "hp": 12,
+        "stress": 6,
+        "atk": "+5",
+        "attack": "Greataxe",
+        "range": "Very Close",
+        "damage": "2d10+4 phy",
+        "feature": []
+      }
+      """.data(using: .utf8)!
+
+    let adversary = try JSONDecoder().decode(Adversary.self, from: json)
+    #expect(adversary.thresholdMajor == 9)
+    #expect(adversary.thresholdSevere == 17)
+    #expect(adversary.source == "srd")  // absent in JSON → default "srd" (lowercased)
+  }
+
+  // MARK: Feature decoding
+
+  @Test func decodesFeatures() throws {
+    let json = """
+      {
+        "id": "test",
+        "name": "Test",
+        "tier": 1,
+        "type": "Minion",
+        "description": "Desc",
+        "difficulty": 9,
+        "thresholds": "3/6",
+        "hp": 3,
+        "stress": 2,
+        "atk": "+1",
+        "attack": "Bite",
+        "range": "Very Close",
+        "damage": "1d6 phy",
+        "feature": [
+          { "name": "Pack Tactics", "text": "Deals bonus damage in groups.", "feat_type": "passive" },
+          { "name": "Snap",         "text": "Triggers when hit.",            "feat_type": "reaction" },
+          { "name": "Lunge",        "text": "Extra attack once per round.",  "feat_type": "action" }
+        ]
+      }
+      """.data(using: .utf8)!
+
+    let adversary = try JSONDecoder().decode(Adversary.self, from: json)
+    #expect(adversary.features.count == 3)
+    #expect(adversary.features[0].featType == FeatureType.passive)
+    #expect(adversary.features[1].featType == FeatureType.reaction)
+    #expect(adversary.features[2].featType == FeatureType.action)
+  }
+
+  // MARK: AdversaryType round-trip
+
+  @Test func adversaryTypeRoundTrip() throws {
+    for type_ in AdversaryType.allCases {
+      let encoded = try JSONEncoder().encode(type_)
+      let decoded = try JSONDecoder().decode(AdversaryType.self, from: encoded)
+      #expect(decoded == type_)
+    }
+  }
+
+  // MARK: AttackRange round-trip
+
+  @Test func attackRangeRoundTrip() throws {
+    for range in AttackRange.allCases {
+      let encoded = try JSONEncoder().encode(range)
+      let decoded = try JSONDecoder().decode(AttackRange.self, from: encoded)
+      #expect(decoded == range)
+    }
+  }
+
+  // MARK: New SRD adversary types (Skulk, Social, Support)
+
+  @Test func decodesNewAdversaryTypes() throws {
+    for typeString in ["Skulk", "Social", "Support"] {
+      let json = """
         {
-          "id": "test-creature",
-          "name": "Test Creature",
-          "source": "SRD",
+          "id": "test-\(typeString.lowercased())",
+          "name": "Test \(typeString)",
           "tier": 1,
-          "type": "Bruiser",
+          "type": "\(typeString)",
           "description": "A test creature.",
-          "difficulty": 12,
-          "thresholds": "8/15",
-          "hp": 8,
-          "stress": 3,
-          "atk": "+3",
-          "attack": "Claws",
-          "range": "Very Close",
-          "damage": "1d10+2 phy",
-          "feature": []
-        }
-        """.data(using: .utf8)!
-
-        let adversary = try JSONDecoder().decode(Adversary.self, from: json)
-        #expect(adversary.thresholdMajor  == 8)
-        #expect(adversary.thresholdSevere == 15)
-    }
-
-    // MARK: Pre-split threshold keys
-
-    @Test func decodesThresholdsFromSplitKeys() throws {
-        let json = """
-        {
-          "id": "warlord-keth",
-          "name": "Warlord Keth",
-          "tier": 2,
-          "type": "Leader",
-          "description": "A scarred half-giant general.",
-          "difficulty": 14,
-          "threshold_major": 9,
-          "threshold_severe": 17,
-          "hp": 12,
-          "stress": 6,
-          "atk": "+5",
-          "attack": "Greataxe",
-          "range": "Very Close",
-          "damage": "2d10+4 phy",
-          "feature": []
-        }
-        """.data(using: .utf8)!
-
-        let adversary = try JSONDecoder().decode(Adversary.self, from: json)
-        #expect(adversary.thresholdMajor  == 9)
-        #expect(adversary.thresholdSevere == 17)
-        #expect(adversary.source          == "srd") // absent in JSON → default "srd" (lowercased)
-    }
-
-    // MARK: Feature decoding
-
-    @Test func decodesFeatures() throws {
-        let json = """
-        {
-          "id": "test",
-          "name": "Test",
-          "tier": 1,
-          "type": "Minion",
-          "description": "Desc",
-          "difficulty": 9,
-          "thresholds": "3/6",
-          "hp": 3,
+          "difficulty": 10,
+          "thresholds": "5/10",
+          "hp": 4,
           "stress": 2,
-          "atk": "+1",
-          "attack": "Bite",
-          "range": "Very Close",
-          "damage": "1d6 phy",
-          "feature": [
-            { "name": "Pack Tactics", "text": "Deals bonus damage in groups.", "feat_type": "passive" },
-            { "name": "Snap",         "text": "Triggers when hit.",            "feat_type": "reaction" },
-            { "name": "Lunge",        "text": "Extra attack once per round.",  "feat_type": "action" }
-          ]
-        }
-        """.data(using: .utf8)!
-
-        let adversary = try JSONDecoder().decode(Adversary.self, from: json)
-        #expect(adversary.features.count == 3)
-        #expect(adversary.features[0].featType == FeatureType.passive)
-        #expect(adversary.features[1].featType == FeatureType.reaction)
-        #expect(adversary.features[2].featType == FeatureType.action)
-    }
-
-    // MARK: AdversaryType round-trip
-
-    @Test func adversaryTypeRoundTrip() throws {
-        for type_ in AdversaryType.allCases {
-            let encoded = try JSONEncoder().encode(type_)
-            let decoded = try JSONDecoder().decode(AdversaryType.self, from: encoded)
-            #expect(decoded == type_)
-        }
-    }
-
-    // MARK: AttackRange round-trip
-
-    @Test func attackRangeRoundTrip() throws {
-        for range in AttackRange.allCases {
-            let encoded = try JSONEncoder().encode(range)
-            let decoded = try JSONDecoder().decode(AttackRange.self, from: encoded)
-            #expect(decoded == range)
-        }
-    }
-
-    // MARK: New SRD adversary types (Skulk, Social, Support)
-
-    @Test func decodesNewAdversaryTypes() throws {
-        for typeString in ["Skulk", "Social", "Support"] {
-            let json = """
-            {
-              "id": "test-\(typeString.lowercased())",
-              "name": "Test \(typeString)",
-              "tier": 1,
-              "type": "\(typeString)",
-              "description": "A test creature.",
-              "difficulty": 10,
-              "thresholds": "5/10",
-              "hp": 4,
-              "stress": 2,
-              "atk": "+2",
-              "attack": "Strike",
-              "range": "Close",
-              "damage": "1d6 phy",
-              "feature": []
-            }
-            """.data(using: .utf8)!
-
-            let adversary = try JSONDecoder().decode(Adversary.self, from: json)
-            #expect(adversary.type.rawValue == typeString)
-        }
-    }
-
-    @Test func adversaryTypeHasAllTenCases() {
-        #expect(AdversaryType.allCases.count == 10)
-    }
-
-    // MARK: Malformed threshold throws
-
-    @Test func malformedThresholdStringThrows() {
-        let json = """
-        {
-          "id": "bad",
-          "name": "Bad",
-          "tier": 1,
-          "type": "Minion",
-          "description": "Desc",
-          "difficulty": 9,
-          "thresholds": "notanumber",
-          "hp": 3,
-          "stress": 2,
-          "atk": "+1",
-          "attack": "Bite",
+          "atk": "+2",
+          "attack": "Strike",
           "range": "Close",
           "damage": "1d6 phy",
           "feature": []
         }
         """.data(using: .utf8)!
 
-        #expect(throws: (any Error).self) {
-            try JSONDecoder().decode(Adversary.self, from: json)
-        }
+      let adversary = try JSONDecoder().decode(Adversary.self, from: json)
+      #expect(adversary.type.rawValue == typeString)
     }
+  }
+
+  @Test func adversaryTypeHasAllTenCases() {
+    #expect(AdversaryType.allCases.count == 10)
+  }
+
+  // MARK: Malformed threshold throws
+
+  @Test func malformedThresholdStringThrows() {
+    let json = """
+      {
+        "id": "bad",
+        "name": "Bad",
+        "tier": 1,
+        "type": "Minion",
+        "description": "Desc",
+        "difficulty": 9,
+        "thresholds": "notanumber",
+        "hp": 3,
+        "stress": 2,
+        "atk": "+1",
+        "attack": "Bite",
+        "range": "Close",
+        "damage": "1d6 phy",
+        "feature": []
+      }
+      """.data(using: .utf8)!
+
+    #expect(throws: (any Error).self) {
+      try JSONDecoder().decode(Adversary.self, from: json)
+    }
+  }
 }
 
 // MARK: - Condition
 
 struct ConditionTests {
 
-    @Test func standardConditionsExist() {
-        let conditions: Set<Condition> = [.hidden, .restrained, .vulnerable]
-        #expect(conditions.count == 3)
-    }
+  @Test func standardConditionsExist() {
+    let conditions: Set<Condition> = [.hidden, .restrained, .vulnerable]
+    #expect(conditions.count == 3)
+  }
 
-    @Test func customConditionEquality() {
-        let c1 = Condition.custom("Enraged")
-        let c2 = Condition.custom("Enraged")
-        let c3 = Condition.custom("Prone")
-        #expect(c1 == c2)
-        #expect(c1 != c3)
-    }
+  @Test func customConditionEquality() {
+    let c1 = Condition.custom("Enraged")
+    let c2 = Condition.custom("Enraged")
+    let c3 = Condition.custom("Prone")
+    #expect(c1 == c2)
+    #expect(c1 != c3)
+  }
 
-    @Test func conditionSetPreventsStacking() {
-        var conditions: Set<Condition> = []
-        conditions.insert(.hidden)
-        conditions.insert(.hidden)
-        #expect(conditions.count == 1)
-    }
+  @Test func conditionSetPreventsStacking() {
+    var conditions: Set<Condition> = []
+    conditions.insert(.hidden)
+    conditions.insert(.hidden)
+    #expect(conditions.count == 1)
+  }
 
-    @Test func conditionCodableRoundTrip() throws {
-        let original: Set<Condition> = [.hidden, .restrained, .custom("Enraged")]
-        let data = try JSONEncoder().encode(original)
-        let decoded = try JSONDecoder().decode(Set<Condition>.self, from: data)
-        #expect(decoded == original)
-    }
+  @Test func conditionCodableRoundTrip() throws {
+    let original: Set<Condition> = [.hidden, .restrained, .custom("Enraged")]
+    let data = try JSONEncoder().encode(original)
+    let decoded = try JSONDecoder().decode(Set<Condition>.self, from: data)
+    #expect(decoded == original)
+  }
 
-    @Test func conditionDisplayName() {
-        #expect(Condition.hidden.displayName == "Hidden")
-        #expect(Condition.restrained.displayName == "Restrained")
-        #expect(Condition.vulnerable.displayName == "Vulnerable")
-        #expect(Condition.custom("Enraged").displayName == "Enraged")
-    }
+  @Test func conditionDisplayName() {
+    #expect(Condition.hidden.displayName == "Hidden")
+    #expect(Condition.restrained.displayName == "Restrained")
+    #expect(Condition.vulnerable.displayName == "Vulnerable")
+    #expect(Condition.custom("Enraged").displayName == "Enraged")
+  }
 }
 
 // MARK: - EncounterSession
 
 @MainActor struct EncounterSessionTests {
 
-    private func makeSession() -> EncounterSession {
-        EncounterSession(name: "Test Encounter")
-    }
+  private func makeSession() -> EncounterSession {
+    EncounterSession(name: "Test Encounter")
+  }
 
-    private func makeSoldier() -> Adversary {
-        Adversary(
-            id: "ironguard-soldier",
-            name: "Ironguard Soldier",
-            tier: 1,
-            type: .bruiser,
-            description: "A disciplined mercenary.",
-            difficulty: 11,
-            thresholdMajor: 5,
-            thresholdSevere: 10,
-            hp: 6,
-            stress: 3,
-            attackModifier: "+3",
-            attackName: "Longsword",
-            attackRange: .veryClose,
-            damage: "1d10+3 phy"
-        )
-    }
+  private func makeSoldier() -> Adversary {
+    Adversary(
+      id: "ironguard-soldier",
+      name: "Ironguard Soldier",
+      tier: 1,
+      type: .bruiser,
+      description: "A disciplined mercenary.",
+      difficulty: 11,
+      thresholdMajor: 5,
+      thresholdSevere: 10,
+      hp: 6,
+      stress: 3,
+      attackModifier: "+3",
+      attackName: "Longsword",
+      attackRange: .veryClose,
+      damage: "1d10+3 phy"
+    )
+  }
 
-    @Test func addAdversaryPopulatesSlot() {
-        let session = makeSession()
-        let soldier = makeSoldier()
-        session.add(adversary: soldier)
+  @Test func addAdversaryPopulatesSlot() {
+    let session = makeSession()
+    let soldier = makeSoldier()
+    session.add(adversary: soldier)
 
-        #expect(session.adversarySlots.count == 1)
-        #expect(session.adversarySlots[0].currentHP == 6)
-        #expect(session.adversarySlots[0].currentStress == 0)
-        #expect(session.adversarySlots[0].isDefeated == false)
-    }
+    #expect(session.adversarySlots.count == 1)
+    #expect(session.adversarySlots[0].currentHP == 6)
+    #expect(session.adversarySlots[0].currentStress == 0)
+    #expect(session.adversarySlots[0].isDefeated == false)
+  }
 
-    @Test func applyDamageReducesHP() {
-        let session = makeSession()
-        let soldier = makeSoldier()
-        session.add(adversary: soldier)
-        let slotID = session.adversarySlots[0].id
+  @Test func applyDamageReducesHP() {
+    let session = makeSession()
+    let soldier = makeSoldier()
+    session.add(adversary: soldier)
+    let slotID = session.adversarySlots[0].id
 
-        session.applyDamage(4, to: slotID)
-        #expect(session.adversarySlots[0].currentHP == 2)
-    }
+    session.applyDamage(4, to: slotID)
+    #expect(session.adversarySlots[0].currentHP == 2)
+  }
 
-    @Test func applyDamageToZeroMarksDefeated() {
-        let session = makeSession()
-        let soldier = makeSoldier()
-        session.add(adversary: soldier)
-        let slotID = session.adversarySlots[0].id
+  @Test func applyDamageToZeroMarksDefeated() {
+    let session = makeSession()
+    let soldier = makeSoldier()
+    session.add(adversary: soldier)
+    let slotID = session.adversarySlots[0].id
 
-        session.applyDamage(100, to: slotID)
-        #expect(session.adversarySlots[0].currentHP    == 0)
-        #expect(session.adversarySlots[0].isDefeated   == true)
-        #expect(session.activeAdversaries.isEmpty)
-    }
+    session.applyDamage(100, to: slotID)
+    #expect(session.adversarySlots[0].currentHP == 0)
+    #expect(session.adversarySlots[0].isDefeated == true)
+    #expect(session.activeAdversaries.isEmpty)
+  }
 
-    @Test func fearAndHopeMutations() {
-        let session = makeSession()
-        session.incrementFear(by: 3)
-        #expect(session.fearPool == 3)
+  @Test func fearAndHopeMutations() {
+    let session = makeSession()
+    session.incrementFear(by: 3)
+    #expect(session.fearPool == 3)
 
-        session.spendFear(2)
-        #expect(session.fearPool == 1)
+    session.spendFear(2)
+    #expect(session.fearPool == 1)
 
-        session.spendFear(10) // clamped
-        #expect(session.fearPool == 0)
+    session.spendFear(10)  // clamped
+    #expect(session.fearPool == 0)
 
-        session.incrementHope(by: 5)
-        session.spendHope(2)
-        #expect(session.hopePool == 3)
-    }
+    session.incrementHope(by: 5)
+    session.spendHope(2)
+    #expect(session.hopePool == 3)
+  }
 
-    @Test func isOverWhenAllDefeated() {
-        let session = makeSession()
-        let soldier = makeSoldier()
-        session.add(adversary: soldier)
-        #expect(session.isOver == false)
+  @Test func isOverWhenAllDefeated() {
+    let session = makeSession()
+    let soldier = makeSoldier()
+    session.add(adversary: soldier)
+    #expect(session.isOver == false)
 
-        let slotID = session.adversarySlots[0].id
-        session.applyDamage(999, to: slotID)
-        #expect(session.isOver == true)
-    }
+    let slotID = session.adversarySlots[0].id
+    session.applyDamage(999, to: slotID)
+    #expect(session.isOver == true)
+  }
 
-    @Test func advanceRoundIncrementsCounter() {
-        let session = makeSession()
-        #expect(session.currentRound == 1)
-        session.advanceRound()
-        #expect(session.currentRound == 2)
-    }
+  @Test func advanceRoundIncrementsCounter() {
+    let session = makeSession()
+    #expect(session.currentRound == 1)
+    session.advanceRound()
+    #expect(session.currentRound == 2)
+  }
 
-    // MARK: Adversary Conditions
+  // MARK: Adversary Conditions
 
-    @Test func adversarySlotStartsWithNoConditions() {
-        let session = makeSession()
-        session.add(adversary: makeSoldier())
-        #expect(session.adversarySlots[0].conditions.isEmpty)
-    }
+  @Test func adversarySlotStartsWithNoConditions() {
+    let session = makeSession()
+    session.add(adversary: makeSoldier())
+    #expect(session.adversarySlots[0].conditions.isEmpty)
+  }
 
-    @Test func applyConditionToAdversarySlot() {
-        let session = makeSession()
-        session.add(adversary: makeSoldier())
-        let slotID = session.adversarySlots[0].id
+  @Test func applyConditionToAdversarySlot() {
+    let session = makeSession()
+    session.add(adversary: makeSoldier())
+    let slotID = session.adversarySlots[0].id
 
-        session.applyCondition(.restrained, to: slotID)
-        #expect(session.adversarySlots[0].conditions.contains(.restrained))
-    }
+    session.applyCondition(.restrained, to: slotID)
+    #expect(session.adversarySlots[0].conditions.contains(.restrained))
+  }
 
-    @Test func removeConditionFromAdversarySlot() {
-        let session = makeSession()
-        session.add(adversary: makeSoldier())
-        let slotID = session.adversarySlots[0].id
+  @Test func removeConditionFromAdversarySlot() {
+    let session = makeSession()
+    session.add(adversary: makeSoldier())
+    let slotID = session.adversarySlots[0].id
 
-        session.applyCondition(.hidden, to: slotID)
-        session.removeCondition(.hidden, from: slotID)
-        #expect(!session.adversarySlots[0].conditions.contains(.hidden))
-    }
+    session.applyCondition(.hidden, to: slotID)
+    session.removeCondition(.hidden, from: slotID)
+    #expect(!session.adversarySlots[0].conditions.contains(.hidden))
+  }
 
-    @Test func conditionsDoNotStack() {
-        let session = makeSession()
-        session.add(adversary: makeSoldier())
-        let slotID = session.adversarySlots[0].id
+  @Test func conditionsDoNotStack() {
+    let session = makeSession()
+    session.add(adversary: makeSoldier())
+    let slotID = session.adversarySlots[0].id
 
-        session.applyCondition(.vulnerable, to: slotID)
-        session.applyCondition(.vulnerable, to: slotID)
-        #expect(session.adversarySlots[0].conditions.count == 1)
-    }
+    session.applyCondition(.vulnerable, to: slotID)
+    session.applyCondition(.vulnerable, to: slotID)
+    #expect(session.adversarySlots[0].conditions.count == 1)
+  }
 
-    @Test func emptyCustomConditionOnAdversaryIsRejected() {
-        let session = makeSession()
-        session.add(adversary: makeSoldier())
-        let slotID = session.adversarySlots[0].id
+  @Test func emptyCustomConditionOnAdversaryIsRejected() {
+    let session = makeSession()
+    session.add(adversary: makeSoldier())
+    let slotID = session.adversarySlots[0].id
 
-        session.applyCondition(.custom(""), to: slotID)
-        #expect(session.adversarySlots[0].conditions.isEmpty)
-    }
+    session.applyCondition(.custom(""), to: slotID)
+    #expect(session.adversarySlots[0].conditions.isEmpty)
+  }
 
-    @Test func whitespaceCustomConditionOnAdversaryIsRejected() {
-        let session = makeSession()
-        session.add(adversary: makeSoldier())
-        let slotID = session.adversarySlots[0].id
+  @Test func whitespaceCustomConditionOnAdversaryIsRejected() {
+    let session = makeSession()
+    session.add(adversary: makeSoldier())
+    let slotID = session.adversarySlots[0].id
 
-        session.applyCondition(.custom("   "), to: slotID)
-        #expect(session.adversarySlots[0].conditions.isEmpty)
-    }
+    session.applyCondition(.custom("   "), to: slotID)
+    #expect(session.adversarySlots[0].conditions.isEmpty)
+  }
 
-    @Test func customConditionOnAdversarySlot() {
-        let session = makeSession()
-        session.add(adversary: makeSoldier())
-        let slotID = session.adversarySlots[0].id
+  @Test func customConditionOnAdversarySlot() {
+    let session = makeSession()
+    session.add(adversary: makeSoldier())
+    let slotID = session.adversarySlots[0].id
 
-        session.applyCondition(.custom("Enraged"), to: slotID)
-        #expect(session.adversarySlots[0].conditions.contains(.custom("Enraged")))
-    }
+    session.applyCondition(.custom("Enraged"), to: slotID)
+    #expect(session.adversarySlots[0].conditions.contains(.custom("Enraged")))
+  }
 
-    // MARK: Turn Order
+  // MARK: Turn Order
 
-    @Test func advanceTurnSkipsDefeatedAdversary() {
-        let session = makeSession()
-        session.add(adversary: makeSoldier())
-        session.add(adversary: makeSoldier())
+  @Test func advanceTurnSkipsDefeatedAdversary() {
+    let session = makeSession()
+    session.add(adversary: makeSoldier())
+    session.add(adversary: makeSoldier())
 
-        let firstID  = session.turnOrder[0]
-        let secondID = session.turnOrder[1]
+    let firstID = session.turnOrder[0]
+    let secondID = session.turnOrder[1]
 
-        // Defeat first adversary mid-round before taking a turn
-        session.applyDamage(999, to: firstID)
+    // Defeat first adversary mid-round before taking a turn
+    session.applyDamage(999, to: firstID)
 
-        // First advanceTurn should skip the defeated slot
-        session.advanceTurn()
-        #expect(session.activeSlotID == secondID)
-    }
+    // First advanceTurn should skip the defeated slot
+    session.advanceTurn()
+    #expect(session.activeSlotID == secondID)
+  }
 
-    @Test func advanceTurnSkipsDefeatedMidRound() {
-        let session = makeSession()
-        session.add(adversary: makeSoldier())
-        session.add(adversary: makeSoldier())
-        session.add(adversary: makeSoldier())
+  @Test func advanceTurnSkipsDefeatedMidRound() {
+    let session = makeSession()
+    session.add(adversary: makeSoldier())
+    session.add(adversary: makeSoldier())
+    session.add(adversary: makeSoldier())
 
-        let firstID  = session.turnOrder[0]
-        let secondID = session.turnOrder[1]
-        let thirdID  = session.turnOrder[2]
+    let firstID = session.turnOrder[0]
+    let secondID = session.turnOrder[1]
+    let thirdID = session.turnOrder[2]
 
-        // Advance to second slot
-        session.advanceTurn()
-        session.advanceTurn()
-        #expect(session.activeSlotID == secondID)
+    // Advance to second slot
+    session.advanceTurn()
+    session.advanceTurn()
+    #expect(session.activeSlotID == secondID)
 
-        // Defeat the third slot mid-round
-        session.applyDamage(999, to: thirdID)
+    // Defeat the third slot mid-round
+    session.applyDamage(999, to: thirdID)
 
-        // Next advance should skip defeated third and wrap back to first
-        session.advanceTurn()
-        #expect(session.activeSlotID == firstID)
-    }
+    // Next advance should skip defeated third and wrap back to first
+    session.advanceTurn()
+    #expect(session.activeSlotID == firstID)
+  }
 
-    @Test func advanceTurnCyclesSlots() {
-        let session = makeSession()
-        let soldier = makeSoldier()
-        session.add(adversary: soldier)
-        session.add(adversary: soldier)
+  @Test func advanceTurnCyclesSlots() {
+    let session = makeSession()
+    let soldier = makeSoldier()
+    session.add(adversary: soldier)
+    session.add(adversary: soldier)
 
-        let first = session.turnOrder[0]
-        let second = session.turnOrder[1]
+    let first = session.turnOrder[0]
+    let second = session.turnOrder[1]
 
-        session.advanceTurn()
-        #expect(session.activeSlotID == first)
+    session.advanceTurn()
+    #expect(session.activeSlotID == first)
 
-        session.advanceTurn()
-        #expect(session.activeSlotID == second)
+    session.advanceTurn()
+    #expect(session.activeSlotID == second)
 
-        // Wraps back to first slot
-        session.advanceTurn()
-        #expect(session.activeSlotID == first)
-    }
+    // Wraps back to first slot
+    session.advanceTurn()
+    #expect(session.activeSlotID == first)
+  }
 }
 
 // MARK: - PlayerSlot
 
 struct PlayerSlotTests {
 
-    @Test func playerSlotInitializesWithCorrectDefaults() {
-        let slot = PlayerSlot(
-            name: "Aldric",
-            maxHP: 6,
-            maxStress: 6,
-            evasion: 12,
-            thresholdMajor: 8,
-            thresholdSevere: 15,
-            armorSlots: 3
-        )
-        #expect(slot.name == "Aldric")
-        #expect(slot.currentHP == 6)
-        #expect(slot.currentStress == 0)
-        #expect(slot.currentArmorSlots == 3)
-        #expect(slot.conditions.isEmpty)
-    }
+  @Test func playerSlotInitializesWithCorrectDefaults() {
+    let slot = PlayerSlot(
+      name: "Aldric",
+      maxHP: 6,
+      maxStress: 6,
+      evasion: 12,
+      thresholdMajor: 8,
+      thresholdSevere: 15,
+      armorSlots: 3
+    )
+    #expect(slot.name == "Aldric")
+    #expect(slot.currentHP == 6)
+    #expect(slot.currentStress == 0)
+    #expect(slot.currentArmorSlots == 3)
+    #expect(slot.conditions.isEmpty)
+  }
 
-    @Test func playerSlotEquality() {
-        let id = UUID()
-        let slot1 = PlayerSlot(
-            id: id, name: "A", maxHP: 6, maxStress: 6,
-            evasion: 10, thresholdMajor: 5, thresholdSevere: 10, armorSlots: 2
-        )
-        let slot2 = PlayerSlot(
-            id: id, name: "A", maxHP: 6, maxStress: 6,
-            evasion: 10, thresholdMajor: 5, thresholdSevere: 10, armorSlots: 2
-        )
-        #expect(slot1 == slot2)
-    }
+  @Test func playerSlotEquality() {
+    let id = UUID()
+    let slot1 = PlayerSlot(
+      id: id, name: "A", maxHP: 6, maxStress: 6,
+      evasion: 10, thresholdMajor: 5, thresholdSevere: 10, armorSlots: 2
+    )
+    let slot2 = PlayerSlot(
+      id: id, name: "A", maxHP: 6, maxStress: 6,
+      evasion: 10, thresholdMajor: 5, thresholdSevere: 10, armorSlots: 2
+    )
+    #expect(slot1 == slot2)
+  }
 }
 
 // MARK: - PlayerSlot Session Integration
 
 @MainActor struct PlayerSlotSessionTests {
 
-    private func makeSession() -> EncounterSession {
-        EncounterSession(name: "Test Encounter")
-    }
+  private func makeSession() -> EncounterSession {
+    EncounterSession(name: "Test Encounter")
+  }
 
-    private func makeSoldier() -> Adversary {
-        Adversary(
-            id: "ironguard-soldier",
-            name: "Ironguard Soldier",
-            tier: 1,
-            type: .bruiser,
-            description: "A disciplined mercenary.",
-            difficulty: 11,
-            thresholdMajor: 5,
-            thresholdSevere: 10,
-            hp: 6,
-            stress: 3,
-            attackModifier: "+3",
-            attackName: "Longsword",
-            attackRange: .veryClose,
-            damage: "1d10+3 phy"
-        )
-    }
+  private func makeSoldier() -> Adversary {
+    Adversary(
+      id: "ironguard-soldier",
+      name: "Ironguard Soldier",
+      tier: 1,
+      type: .bruiser,
+      description: "A disciplined mercenary.",
+      difficulty: 11,
+      thresholdMajor: 5,
+      thresholdSevere: 10,
+      hp: 6,
+      stress: 3,
+      attackModifier: "+3",
+      attackName: "Longsword",
+      attackRange: .veryClose,
+      damage: "1d10+3 phy"
+    )
+  }
 
-    private func makePlayer() -> PlayerSlot {
-        PlayerSlot(
-            name: "Aldric",
-            maxHP: 6,
-            maxStress: 6,
-            evasion: 12,
-            thresholdMajor: 8,
-            thresholdSevere: 15,
-            armorSlots: 3
-        )
-    }
+  private func makePlayer() -> PlayerSlot {
+    PlayerSlot(
+      name: "Aldric",
+      maxHP: 6,
+      maxStress: 6,
+      evasion: 12,
+      thresholdMajor: 8,
+      thresholdSevere: 15,
+      armorSlots: 3
+    )
+  }
 
-    @Test func addPlayerSlotToSession() {
-        let session = makeSession()
-        session.addPlayer(makePlayer())
-        #expect(session.playerSlots.count == 1)
-        #expect(session.playerSlots[0].name == "Aldric")
-    }
+  @Test func addPlayerSlotToSession() {
+    let session = makeSession()
+    session.addPlayer(makePlayer())
+    #expect(session.playerSlots.count == 1)
+    #expect(session.playerSlots[0].name == "Aldric")
+  }
 
-    @Test func turnOrderIncludesPlayersAndAdversaries() {
-        let session = makeSession()
-        session.add(adversary: makeSoldier())
-        session.addPlayer(makePlayer())
-        #expect(session.turnOrder.count == 2)
-    }
+  @Test func turnOrderIncludesPlayersAndAdversaries() {
+    let session = makeSession()
+    session.add(adversary: makeSoldier())
+    session.addPlayer(makePlayer())
+    #expect(session.turnOrder.count == 2)
+  }
 
-    @Test func advanceTurnCyclesThroughBothSlotTypes() {
-        let session = makeSession()
-        session.add(adversary: makeSoldier())
-        session.addPlayer(makePlayer())
+  @Test func advanceTurnCyclesThroughBothSlotTypes() {
+    let session = makeSession()
+    session.add(adversary: makeSoldier())
+    session.addPlayer(makePlayer())
 
-        session.advanceTurn()
-        #expect(session.activeSlotID == session.turnOrder[0])
+    session.advanceTurn()
+    #expect(session.activeSlotID == session.turnOrder[0])
 
-        session.advanceTurn()
-        #expect(session.activeSlotID == session.turnOrder[1])
-    }
+    session.advanceTurn()
+    #expect(session.activeSlotID == session.turnOrder[1])
+  }
 
-    @Test func applyDamageToPlayerSlot() {
-        let session = makeSession()
-        session.addPlayer(makePlayer())
-        let slotID = session.playerSlots[0].id
+  @Test func applyDamageToPlayerSlot() {
+    let session = makeSession()
+    session.addPlayer(makePlayer())
+    let slotID = session.playerSlots[0].id
 
-        session.applyPlayerDamage(2, to: slotID)
-        #expect(session.playerSlots[0].currentHP == 4)
-    }
+    session.applyPlayerDamage(2, to: slotID)
+    #expect(session.playerSlots[0].currentHP == 4)
+  }
 
-    @Test func playerDamageClampsToZero() {
-        let session = makeSession()
-        session.addPlayer(makePlayer())
-        let slotID = session.playerSlots[0].id
+  @Test func playerDamageClampsToZero() {
+    let session = makeSession()
+    session.addPlayer(makePlayer())
+    let slotID = session.playerSlots[0].id
 
-        session.applyPlayerDamage(100, to: slotID)
-        #expect(session.playerSlots[0].currentHP == 0)
-    }
+    session.applyPlayerDamage(100, to: slotID)
+    #expect(session.playerSlots[0].currentHP == 0)
+  }
 
-    @Test func applyStressToPlayerSlot() {
-        let session = makeSession()
-        session.addPlayer(makePlayer())
-        let slotID = session.playerSlots[0].id
+  @Test func applyStressToPlayerSlot() {
+    let session = makeSession()
+    session.addPlayer(makePlayer())
+    let slotID = session.playerSlots[0].id
 
-        session.applyPlayerStress(3, to: slotID)
-        #expect(session.playerSlots[0].currentStress == 3)
-    }
+    session.applyPlayerStress(3, to: slotID)
+    #expect(session.playerSlots[0].currentStress == 3)
+  }
 
-    @Test func playerStressClampsToMax() {
-        let session = makeSession()
-        session.addPlayer(makePlayer())
-        let slotID = session.playerSlots[0].id
+  @Test func playerStressClampsToMax() {
+    let session = makeSession()
+    session.addPlayer(makePlayer())
+    let slotID = session.playerSlots[0].id
 
-        session.applyPlayerStress(100, to: slotID)
-        #expect(session.playerSlots[0].currentStress == 6)
-    }
+    session.applyPlayerStress(100, to: slotID)
+    #expect(session.playerSlots[0].currentStress == 6)
+  }
 
-    @Test func healPlayerSlot() {
-        let session = makeSession()
-        session.addPlayer(makePlayer())
-        let slotID = session.playerSlots[0].id
+  @Test func healPlayerSlot() {
+    let session = makeSession()
+    session.addPlayer(makePlayer())
+    let slotID = session.playerSlots[0].id
 
-        session.applyPlayerDamage(4, to: slotID)
-        session.healPlayer(2, slotID: slotID)
-        #expect(session.playerSlots[0].currentHP == 4)
-    }
+    session.applyPlayerDamage(4, to: slotID)
+    session.healPlayer(2, slotID: slotID)
+    #expect(session.playerSlots[0].currentHP == 4)
+  }
 
-    @Test func healPlayerClampsToMax() {
-        let session = makeSession()
-        session.addPlayer(makePlayer())
-        let slotID = session.playerSlots[0].id
+  @Test func healPlayerClampsToMax() {
+    let session = makeSession()
+    session.addPlayer(makePlayer())
+    let slotID = session.playerSlots[0].id
 
-        session.applyPlayerDamage(2, to: slotID)
-        session.healPlayer(100, slotID: slotID)
-        #expect(session.playerSlots[0].currentHP == 6)
-    }
+    session.applyPlayerDamage(2, to: slotID)
+    session.healPlayer(100, slotID: slotID)
+    #expect(session.playerSlots[0].currentHP == 6)
+  }
 
-    @Test func clearPlayerStress() {
-        let session = makeSession()
-        session.addPlayer(makePlayer())
-        let slotID = session.playerSlots[0].id
+  @Test func clearPlayerStress() {
+    let session = makeSession()
+    session.addPlayer(makePlayer())
+    let slotID = session.playerSlots[0].id
 
-        session.applyPlayerStress(4, to: slotID)
-        session.clearPlayerStress(2, slotID: slotID)
-        #expect(session.playerSlots[0].currentStress == 2)
-    }
+    session.applyPlayerStress(4, to: slotID)
+    session.clearPlayerStress(2, slotID: slotID)
+    #expect(session.playerSlots[0].currentStress == 2)
+  }
 
-    @Test func markArmorSlotOnPlayer() {
-        let session = makeSession()
-        session.addPlayer(makePlayer())
-        let slotID = session.playerSlots[0].id
+  @Test func markArmorSlotOnPlayer() {
+    let session = makeSession()
+    session.addPlayer(makePlayer())
+    let slotID = session.playerSlots[0].id
 
-        session.markPlayerArmorSlot(slotID)
-        #expect(session.playerSlots[0].currentArmorSlots == 2)
-    }
+    session.markPlayerArmorSlot(slotID)
+    #expect(session.playerSlots[0].currentArmorSlots == 2)
+  }
 
-    @Test func markArmorSlotClampsToZero() {
-        let session = makeSession()
-        var player = makePlayer()
-        player = PlayerSlot(
-            name: player.name, maxHP: player.maxHP, maxStress: player.maxStress,
-            evasion: player.evasion, thresholdMajor: player.thresholdMajor,
-            thresholdSevere: player.thresholdSevere, armorSlots: 1
-        )
-        session.addPlayer(player)
-        let slotID = session.playerSlots[0].id
+  @Test func markArmorSlotClampsToZero() {
+    let session = makeSession()
+    var player = makePlayer()
+    player = PlayerSlot(
+      name: player.name, maxHP: player.maxHP, maxStress: player.maxStress,
+      evasion: player.evasion, thresholdMajor: player.thresholdMajor,
+      thresholdSevere: player.thresholdSevere, armorSlots: 1
+    )
+    session.addPlayer(player)
+    let slotID = session.playerSlots[0].id
 
-        session.markPlayerArmorSlot(slotID)
-        session.markPlayerArmorSlot(slotID) // already at 0
-        #expect(session.playerSlots[0].currentArmorSlots == 0)
-    }
+    session.markPlayerArmorSlot(slotID)
+    session.markPlayerArmorSlot(slotID)  // already at 0
+    #expect(session.playerSlots[0].currentArmorSlots == 0)
+  }
 
-    @Test func emptyCustomConditionOnPlayerIsRejected() {
-        let session = makeSession()
-        session.addPlayer(makePlayer())
-        let slotID = session.playerSlots[0].id
+  @Test func emptyCustomConditionOnPlayerIsRejected() {
+    let session = makeSession()
+    session.addPlayer(makePlayer())
+    let slotID = session.playerSlots[0].id
 
-        session.applyPlayerCondition(.custom(""), to: slotID)
-        #expect(session.playerSlots[0].conditions.isEmpty)
-    }
+    session.applyPlayerCondition(.custom(""), to: slotID)
+    #expect(session.playerSlots[0].conditions.isEmpty)
+  }
 
-    @Test func applyConditionToPlayerSlot() {
-        let session = makeSession()
-        session.addPlayer(makePlayer())
-        let slotID = session.playerSlots[0].id
+  @Test func applyConditionToPlayerSlot() {
+    let session = makeSession()
+    session.addPlayer(makePlayer())
+    let slotID = session.playerSlots[0].id
 
-        session.applyPlayerCondition(.vulnerable, to: slotID)
-        #expect(session.playerSlots[0].conditions.contains(.vulnerable))
-    }
+    session.applyPlayerCondition(.vulnerable, to: slotID)
+    #expect(session.playerSlots[0].conditions.contains(.vulnerable))
+  }
 
-    @Test func removeConditionFromPlayerSlot() {
-        let session = makeSession()
-        session.addPlayer(makePlayer())
-        let slotID = session.playerSlots[0].id
+  @Test func removeConditionFromPlayerSlot() {
+    let session = makeSession()
+    session.addPlayer(makePlayer())
+    let slotID = session.playerSlots[0].id
 
-        session.applyPlayerCondition(.hidden, to: slotID)
-        session.removePlayerCondition(.hidden, from: slotID)
-        #expect(!session.playerSlots[0].conditions.contains(.hidden))
-    }
+    session.applyPlayerCondition(.hidden, to: slotID)
+    session.removePlayerCondition(.hidden, from: slotID)
+    #expect(!session.playerSlots[0].conditions.contains(.hidden))
+  }
 
-    @Test func removePlayerFromSession() {
-        let session = makeSession()
-        session.addPlayer(makePlayer())
-        let slotID = session.playerSlots[0].id
+  @Test func removePlayerFromSession() {
+    let session = makeSession()
+    session.addPlayer(makePlayer())
+    let slotID = session.playerSlots[0].id
 
-        session.removePlayer(id: slotID)
-        #expect(session.playerSlots.isEmpty)
-        #expect(!session.turnOrder.contains(slotID))
-    }
+    session.removePlayer(id: slotID)
+    #expect(session.playerSlots.isEmpty)
+    #expect(!session.turnOrder.contains(slotID))
+  }
 }
 
 // MARK: - EncounterDefinition
 
 struct EncounterDefinitionTests {
 
-    @Test func definitionIsValueType() {
-        var def1 = EncounterDefinition(name: "Test")
-        let def2 = def1
-        def1.name = "Modified"
-        #expect(def2.name == "Test")
-    }
+  @Test func definitionIsValueType() {
+    var def1 = EncounterDefinition(name: "Test")
+    let def2 = def1
+    def1.name = "Modified"
+    #expect(def2.name == "Test")
+  }
 
-    @Test func definitionCodableRoundTrip() throws {
-        var definition = EncounterDefinition(name: "Bandit Ambush")
-        definition.adversaryIDs = ["ironguard-soldier", "ironguard-soldier", "thornwood-archer"]
-        definition.environmentIDs = ["collapsing-bridge"]
-        definition.playerConfigs = [
-            PlayerConfig(
-                name: "Aldric", maxHP: 6, maxStress: 6,
-                evasion: 12, thresholdMajor: 8, thresholdSevere: 15, armorSlots: 3
-            )
-        ]
-        definition.gmNotes = "Start with archers hidden."
+  @Test func definitionCodableRoundTrip() throws {
+    var definition = EncounterDefinition(name: "Bandit Ambush")
+    definition.adversaryIDs = ["ironguard-soldier", "ironguard-soldier", "thornwood-archer"]
+    definition.environmentIDs = ["collapsing-bridge"]
+    definition.playerConfigs = [
+      PlayerConfig(
+        name: "Aldric", maxHP: 6, maxStress: 6,
+        evasion: 12, thresholdMajor: 8, thresholdSevere: 15, armorSlots: 3
+      )
+    ]
+    definition.gmNotes = "Start with archers hidden."
 
-        let data = try JSONEncoder().encode(definition)
-        let decoded = try JSONDecoder().decode(EncounterDefinition.self, from: data)
+    let data = try JSONEncoder().encode(definition)
+    let decoded = try JSONDecoder().decode(EncounterDefinition.self, from: data)
 
-        #expect(decoded.name == "Bandit Ambush")
-        #expect(decoded.adversaryIDs.count == 3)
-        #expect(decoded.environmentIDs == ["collapsing-bridge"])
-        #expect(decoded.playerConfigs.count == 1)
-        #expect(decoded.playerConfigs[0].name == "Aldric")
-        #expect(decoded.gmNotes == "Start with archers hidden.")
-    }
+    #expect(decoded.name == "Bandit Ambush")
+    #expect(decoded.adversaryIDs.count == 3)
+    #expect(decoded.environmentIDs == ["collapsing-bridge"])
+    #expect(decoded.playerConfigs.count == 1)
+    #expect(decoded.playerConfigs[0].name == "Aldric")
+    #expect(decoded.gmNotes == "Start with archers hidden.")
+  }
 
-    @Test func definitionHasTimestamps() {
-        let before = Date.now
-        let definition = EncounterDefinition(name: "Test")
-        let after = Date.now
-        #expect(definition.createdAt >= before)
-        #expect(definition.createdAt <= after)
-        #expect(definition.modifiedAt >= before)
-    }
+  @Test func definitionHasTimestamps() {
+    let before = Date.now
+    let definition = EncounterDefinition(name: "Test")
+    let after = Date.now
+    #expect(definition.createdAt >= before)
+    #expect(definition.createdAt <= after)
+    #expect(definition.modifiedAt >= before)
+  }
 
-    @Test func modifiedAtOnlyChangesAfterSave() {
-        var def = EncounterDefinition(name: "Test")
-        let before = def.modifiedAt
-        def.name = "Changed"
-        def.adversaryIDs = ["ironguard-soldier"]
-        def.gmNotes = "Remember the trap."
-        // Direct property mutations must NOT update modifiedAt — only store.save() stamps it.
-        #expect(def.modifiedAt == before)
-    }
+  @Test func modifiedAtOnlyChangesAfterSave() {
+    var def = EncounterDefinition(name: "Test")
+    let before = def.modifiedAt
+    def.name = "Changed"
+    def.adversaryIDs = ["ironguard-soldier"]
+    def.gmNotes = "Remember the trap."
+    // Direct property mutations must NOT update modifiedAt — only store.save() stamps it.
+    #expect(def.modifiedAt == before)
+  }
 
-    @Test func decodingDoesNotResetModifiedAt() throws {
-        let definition = EncounterDefinition(
-            name: "Test",
-            modifiedAt: Date(timeIntervalSince1970: 1_000_000)
-        )
-        let data = try JSONEncoder().encode(definition)
-        let decoded = try JSONDecoder().decode(EncounterDefinition.self, from: data)
-        // Decoded modifiedAt should be the encoded value, not .now
-        #expect(decoded.modifiedAt == definition.modifiedAt)
-    }
+  @Test func decodingDoesNotResetModifiedAt() throws {
+    let definition = EncounterDefinition(
+      name: "Test",
+      modifiedAt: Date(timeIntervalSince1970: 1_000_000)
+    )
+    let data = try JSONEncoder().encode(definition)
+    let decoded = try JSONDecoder().decode(EncounterDefinition.self, from: data)
+    // Decoded modifiedAt should be the encoded value, not .now
+    #expect(decoded.modifiedAt == definition.modifiedAt)
+  }
 
-    @Test func playerConfigCodableRoundTrip() throws {
-        let config = PlayerConfig(
-            name: "Sera", maxHP: 8, maxStress: 6,
-            evasion: 14, thresholdMajor: 10, thresholdSevere: 18, armorSlots: 4
-        )
-        let data = try JSONEncoder().encode(config)
-        let decoded = try JSONDecoder().decode(PlayerConfig.self, from: data)
+  @Test func playerConfigCodableRoundTrip() throws {
+    let config = PlayerConfig(
+      name: "Sera", maxHP: 8, maxStress: 6,
+      evasion: 14, thresholdMajor: 10, thresholdSevere: 18, armorSlots: 4
+    )
+    let data = try JSONEncoder().encode(config)
+    let decoded = try JSONDecoder().decode(PlayerConfig.self, from: data)
 
-        #expect(decoded.name == "Sera")
-        #expect(decoded.maxHP == 8)
-        #expect(decoded.evasion == 14)
-        #expect(decoded.armorSlots == 4)
-    }
+    #expect(decoded.name == "Sera")
+    #expect(decoded.maxHP == 8)
+    #expect(decoded.evasion == 14)
+    #expect(decoded.armorSlots == 4)
+  }
 }
 
 // MARK: - EncounterSession Factory
 
 @MainActor struct EncounterSessionFactoryTests {
 
-    private func makeCompendium() -> Compendium {
-        let comp = Compendium()
-        comp.addAdversary(Adversary(
-            id: "ironguard-soldier", name: "Ironguard Soldier",
-            tier: 1, type: .bruiser, description: "A disciplined mercenary.",
-            difficulty: 11, thresholdMajor: 5, thresholdSevere: 10,
-            hp: 6, stress: 3, attackModifier: "+3", attackName: "Longsword",
-            attackRange: .veryClose, damage: "1d10+3 phy"
-        ))
-        comp.addEnvironment(DaggerheartEnvironment(
-            id: "collapsing-bridge", name: "Collapsing Bridge",
-            description: "A rope-and-plank bridge."
-        ))
-        return comp
-    }
+  private func makeCompendium() -> Compendium {
+    let comp = Compendium()
+    comp.addAdversary(
+      Adversary(
+        id: "ironguard-soldier", name: "Ironguard Soldier",
+        tier: 1, type: .bruiser, description: "A disciplined mercenary.",
+        difficulty: 11, thresholdMajor: 5, thresholdSevere: 10,
+        hp: 6, stress: 3, attackModifier: "+3", attackName: "Longsword",
+        attackRange: .veryClose, damage: "1d10+3 phy"
+      ))
+    comp.addEnvironment(
+      DaggerheartEnvironment(
+        id: "collapsing-bridge", name: "Collapsing Bridge",
+        description: "A rope-and-plank bridge."
+      ))
+    return comp
+  }
 
-    @Test func sessionFromDefinitionPopulatesSlots() {
-        let compendium = makeCompendium()
-        var def = EncounterDefinition(name: "Test Battle")
-        def.adversaryIDs = ["ironguard-soldier", "ironguard-soldier"]
-        def.environmentIDs = ["collapsing-bridge"]
-        def.playerConfigs = [
-            PlayerConfig(
-                name: "Aldric", maxHP: 6, maxStress: 6,
-                evasion: 12, thresholdMajor: 8, thresholdSevere: 15, armorSlots: 3
-            )
-        ]
+  @Test func sessionFromDefinitionPopulatesSlots() {
+    let compendium = makeCompendium()
+    var def = EncounterDefinition(name: "Test Battle")
+    def.adversaryIDs = ["ironguard-soldier", "ironguard-soldier"]
+    def.environmentIDs = ["collapsing-bridge"]
+    def.playerConfigs = [
+      PlayerConfig(
+        name: "Aldric", maxHP: 6, maxStress: 6,
+        evasion: 12, thresholdMajor: 8, thresholdSevere: 15, armorSlots: 3
+      )
+    ]
 
-        let session = EncounterSession.start(from: def, using: compendium)
+    let session = EncounterSession.start(from: def, using: compendium)
 
-        #expect(session.name == "Test Battle")
-        #expect(session.adversarySlots.count == 2)
-        #expect(session.adversarySlots[0].currentHP == 6)
-        #expect(session.playerSlots.count == 1)
-        #expect(session.playerSlots[0].name == "Aldric")
-        #expect(session.environmentSlots.count == 1)
-        #expect(session.currentRound == 1)
-        #expect(session.fearPool == 0)
-    }
+    #expect(session.name == "Test Battle")
+    #expect(session.adversarySlots.count == 2)
+    #expect(session.adversarySlots[0].currentHP == 6)
+    #expect(session.playerSlots.count == 1)
+    #expect(session.playerSlots[0].name == "Aldric")
+    #expect(session.environmentSlots.count == 1)
+    #expect(session.currentRound == 1)
+    #expect(session.fearPool == 0)
+  }
 
-    @Test func sessionFromDefinitionSkipsUnknownAdversaries() {
-        let compendium = makeCompendium()
-        var def = EncounterDefinition(name: "Test")
-        def.adversaryIDs = ["ironguard-soldier", "nonexistent-creature"]
+  @Test func sessionFromDefinitionSkipsUnknownAdversaries() {
+    let compendium = makeCompendium()
+    var def = EncounterDefinition(name: "Test")
+    def.adversaryIDs = ["ironguard-soldier", "nonexistent-creature"]
 
-        let session = EncounterSession.start(from: def, using: compendium)
-        #expect(session.adversarySlots.count == 1)
-    }
+    let session = EncounterSession.start(from: def, using: compendium)
+    #expect(session.adversarySlots.count == 1)
+  }
 
-    @Test func sessionFromDefinitionPreservesGMNotes() {
-        let compendium = makeCompendium()
-        var def = EncounterDefinition(name: "Test")
-        def.gmNotes = "Remember the secret door."
+  @Test func sessionFromDefinitionPreservesGMNotes() {
+    let compendium = makeCompendium()
+    var def = EncounterDefinition(name: "Test")
+    def.gmNotes = "Remember the secret door."
 
-        let session = EncounterSession.start(from: def, using: compendium)
-        #expect(session.gmNotes == "Remember the secret door.")
-    }
+    let session = EncounterSession.start(from: def, using: compendium)
+    #expect(session.gmNotes == "Remember the secret door.")
+  }
 
-    @Test func sessionFromDefinitionBuildsTurnOrder() {
-        let compendium = makeCompendium()
-        var def = EncounterDefinition(name: "Test")
-        def.adversaryIDs = ["ironguard-soldier"]
-        def.playerConfigs = [
-            PlayerConfig(
-                name: "Aldric", maxHP: 6, maxStress: 6,
-                evasion: 12, thresholdMajor: 8, thresholdSevere: 15, armorSlots: 3
-            )
-        ]
+  @Test func sessionFromDefinitionBuildsTurnOrder() {
+    let compendium = makeCompendium()
+    var def = EncounterDefinition(name: "Test")
+    def.adversaryIDs = ["ironguard-soldier"]
+    def.playerConfigs = [
+      PlayerConfig(
+        name: "Aldric", maxHP: 6, maxStress: 6,
+        evasion: 12, thresholdMajor: 8, thresholdSevere: 15, armorSlots: 3
+      )
+    ]
 
-        let session = EncounterSession.start(from: def, using: compendium)
-        #expect(session.turnOrder.count == 2)
-    }
+    let session = EncounterSession.start(from: def, using: compendium)
+    #expect(session.turnOrder.count == 2)
+  }
 }
 
 // MARK: - DifficultyBudget
 
 struct DifficultyBudgetTests {
 
-    // MARK: Battle Point Costs
+  // MARK: Battle Point Costs
 
-    @Test func minionCostsOnePoint() {
-        #expect(DifficultyBudget.cost(for: .minion) == 1)
+  @Test func minionCostsOnePoint() {
+    #expect(DifficultyBudget.cost(for: .minion) == 1)
+  }
+
+  @Test func socialAndSupportCostOnePoint() {
+    #expect(DifficultyBudget.cost(for: .social) == 1)
+    #expect(DifficultyBudget.cost(for: .support) == 1)
+  }
+
+  @Test func standardTierCostsTwoPoints() {
+    for type in [AdversaryType.horde, .ranged, .skulk, .standard] {
+      #expect(
+        DifficultyBudget.cost(for: type) == 2,
+        "Expected \(type) to cost 2, got \(DifficultyBudget.cost(for: type))"
+      )
     }
+  }
 
-    @Test func socialAndSupportCostOnePoint() {
-        #expect(DifficultyBudget.cost(for: .social) == 1)
-        #expect(DifficultyBudget.cost(for: .support) == 1)
-    }
+  @Test func leaderCostsThreePoints() {
+    #expect(DifficultyBudget.cost(for: .leader) == 3)
+  }
 
-    @Test func standardTierCostsTwoPoints() {
-        for type in [AdversaryType.horde, .ranged, .skulk, .standard] {
-            #expect(
-                DifficultyBudget.cost(for: type) == 2,
-                "Expected \(type) to cost 2, got \(DifficultyBudget.cost(for: type))"
-            )
-        }
-    }
+  @Test func bruiserCostsFourPoints() {
+    #expect(DifficultyBudget.cost(for: .bruiser) == 4)
+  }
 
-    @Test func leaderCostsThreePoints() {
-        #expect(DifficultyBudget.cost(for: .leader) == 3)
-    }
+  @Test func soloCostsFivePoints() {
+    #expect(DifficultyBudget.cost(for: .solo) == 5)
+  }
 
-    @Test func bruiserCostsFourPoints() {
-        #expect(DifficultyBudget.cost(for: .bruiser) == 4)
-    }
+  // MARK: Base Budget
 
-    @Test func soloCostsFivePoints() {
-        #expect(DifficultyBudget.cost(for: .solo) == 5)
-    }
+  @Test func baseBudgetForFourPCs() {
+    #expect(DifficultyBudget.baseBudget(playerCount: 4) == 14)
+  }
 
-    // MARK: Base Budget
+  @Test func baseBudgetForThreePCs() {
+    #expect(DifficultyBudget.baseBudget(playerCount: 3) == 11)
+  }
 
-    @Test func baseBudgetForFourPCs() {
-        #expect(DifficultyBudget.baseBudget(playerCount: 4) == 14)
-    }
+  @Test func baseBudgetForOnePCMinimum() {
+    #expect(DifficultyBudget.baseBudget(playerCount: 1) == 5)
+  }
 
-    @Test func baseBudgetForThreePCs() {
-        #expect(DifficultyBudget.baseBudget(playerCount: 3) == 11)
-    }
+  // MARK: Total Cost
 
-    @Test func baseBudgetForOnePCMinimum() {
-        #expect(DifficultyBudget.baseBudget(playerCount: 1) == 5)
-    }
+  @Test func totalCostForAdversaryList() {
+    let types: [AdversaryType] = [.minion, .minion, .bruiser, .leader]
+    #expect(DifficultyBudget.totalCost(for: types) == 9)
+  }
 
-    // MARK: Total Cost
+  // MARK: Rating
 
-    @Test func totalCostForAdversaryList() {
-        let types: [AdversaryType] = [.minion, .minion, .bruiser, .leader]
-        #expect(DifficultyBudget.totalCost(for: types) == 9)
-    }
+  @Test func ratingWithinBudgetIsBalanced() {
+    let rating = DifficultyBudget.rating(
+      adversaryTypes: [.standard, .standard, .minion],
+      playerCount: 4
+    )
+    #expect(rating.totalCost == 5)
+    #expect(rating.budget == 14)
+    #expect(rating.remaining == 9)
+  }
 
-    // MARK: Rating
+  @Test func ratingOverBudgetShowsNegativeRemaining() {
+    let rating = DifficultyBudget.rating(
+      adversaryTypes: [.solo, .solo, .bruiser],
+      playerCount: 3
+    )
+    #expect(rating.totalCost == 14)
+    #expect(rating.budget == 11)
+    #expect(rating.remaining == -3)
+  }
 
-    @Test func ratingWithinBudgetIsBalanced() {
-        let rating = DifficultyBudget.rating(
-            adversaryTypes: [.standard, .standard, .minion],
-            playerCount: 4
-        )
-        #expect(rating.totalCost == 5)
-        #expect(rating.budget == 14)
-        #expect(rating.remaining == 9)
-    }
+  @Test func ratingWithBudgetAdjustment() {
+    let rating = DifficultyBudget.rating(
+      adversaryTypes: [.standard],
+      playerCount: 4,
+      budgetAdjustment: -2
+    )
+    #expect(rating.budget == 12)
+    #expect(rating.totalCost == 2)
+    #expect(rating.remaining == 10)
+  }
 
-    @Test func ratingOverBudgetShowsNegativeRemaining() {
-        let rating = DifficultyBudget.rating(
-            adversaryTypes: [.solo, .solo, .bruiser],
-            playerCount: 3
-        )
-        #expect(rating.totalCost == 14)
-        #expect(rating.budget == 11)
-        #expect(rating.remaining == -3)
-    }
+  // MARK: Adjustment Suggestions
 
-    @Test func ratingWithBudgetAdjustment() {
-        let rating = DifficultyBudget.rating(
-            adversaryTypes: [.standard],
-            playerCount: 4,
-            budgetAdjustment: -2
-        )
-        #expect(rating.budget == 12)
-        #expect(rating.totalCost == 2)
-        #expect(rating.remaining == 10)
-    }
+  @Test func adjustmentForMultipleSolos() {
+    let adjustments = DifficultyBudget.suggestedAdjustments(
+      adversaryTypes: [.solo, .solo]
+    )
+    #expect(adjustments.contains(.multipleSolos))
+  }
 
-    // MARK: Adjustment Suggestions
+  @Test func noMultipleSolosForSingleSolo() {
+    let adjustments = DifficultyBudget.suggestedAdjustments(
+      adversaryTypes: [.solo]
+    )
+    #expect(!adjustments.contains(.multipleSolos))
+  }
 
-    @Test func adjustmentForMultipleSolos() {
-        let adjustments = DifficultyBudget.suggestedAdjustments(
-            adversaryTypes: [.solo, .solo]
-        )
-        #expect(adjustments.contains(.multipleSolos))
-    }
+  @Test func adjustmentForNoBigThreats() {
+    let adjustments = DifficultyBudget.suggestedAdjustments(
+      adversaryTypes: [.standard, .minion, .ranged]
+    )
+    #expect(adjustments.contains(.noBigThreats))
+  }
 
-    @Test func noMultipleSolosForSingleSolo() {
-        let adjustments = DifficultyBudget.suggestedAdjustments(
-            adversaryTypes: [.solo]
-        )
-        #expect(!adjustments.contains(.multipleSolos))
-    }
+  @Test func noBigThreatsNotSuggestedWhenBruiserPresent() {
+    let adjustments = DifficultyBudget.suggestedAdjustments(
+      adversaryTypes: [.standard, .bruiser]
+    )
+    #expect(!adjustments.contains(.noBigThreats))
+  }
 
-    @Test func adjustmentForNoBigThreats() {
-        let adjustments = DifficultyBudget.suggestedAdjustments(
-            adversaryTypes: [.standard, .minion, .ranged]
-        )
-        #expect(adjustments.contains(.noBigThreats))
-    }
+  @Test func emptyRosterHasNoSuggestions() {
+    let adjustments = DifficultyBudget.suggestedAdjustments(adversaryTypes: [])
+    #expect(adjustments.isEmpty)
+  }
 
-    @Test func noBigThreatsNotSuggestedWhenBruiserPresent() {
-        let adjustments = DifficultyBudget.suggestedAdjustments(
-            adversaryTypes: [.standard, .bruiser]
-        )
-        #expect(!adjustments.contains(.noBigThreats))
-    }
-
-    @Test func emptyRosterHasNoSuggestions() {
-        let adjustments = DifficultyBudget.suggestedAdjustments(adversaryTypes: [])
-        #expect(adjustments.isEmpty)
-    }
-
-    @Test func adjustmentPointValues() {
-        #expect(DifficultyBudget.Adjustment.easierFight.pointValue == -1)
-        #expect(DifficultyBudget.Adjustment.multipleSolos.pointValue == -2)
-        #expect(DifficultyBudget.Adjustment.boostedDamage.pointValue == -2)
-        #expect(DifficultyBudget.Adjustment.lowerTierAdversary.pointValue == 1)
-        #expect(DifficultyBudget.Adjustment.noBigThreats.pointValue == 1)
-        #expect(DifficultyBudget.Adjustment.harderFight.pointValue == 2)
-    }
+  @Test func adjustmentPointValues() {
+    #expect(DifficultyBudget.Adjustment.easierFight.pointValue == -1)
+    #expect(DifficultyBudget.Adjustment.multipleSolos.pointValue == -2)
+    #expect(DifficultyBudget.Adjustment.boostedDamage.pointValue == -2)
+    #expect(DifficultyBudget.Adjustment.lowerTierAdversary.pointValue == 1)
+    #expect(DifficultyBudget.Adjustment.noBigThreats.pointValue == 1)
+    #expect(DifficultyBudget.Adjustment.harderFight.pointValue == 2)
+  }
 }
 
 // MARK: - Environment
@@ -970,451 +973,452 @@ struct DifficultyBudgetTests {
 
 @MainActor struct CompendiumLoadTests {
 
-    /// isLoading must return to false regardless of success or failure.
-    @Test func isLoadingFalseAfterLoadCompletes() async {
-        let compendium = Compendium()
-        try? await compendium.load()
-        #expect(compendium.isLoading == false)
-    }
+  /// isLoading must return to false regardless of success or failure.
+  @Test func isLoadingFalseAfterLoadCompletes() async {
+    let compendium = Compendium()
+    try? await compendium.load()
+    #expect(compendium.isLoading == false)
+  }
 
-    /// A second concurrent load call while the first is in-flight is a no-op.
-    @Test func concurrentLoadCallsAreDeduped() async {
-        let compendium = Compendium()
-        await withTaskGroup(of: Void.self) { group in
-            group.addTask { try? await compendium.load() }
-            group.addTask { try? await compendium.load() }
-        }
-        #expect(compendium.isLoading == false)
+  /// A second concurrent load call while the first is in-flight is a no-op.
+  @Test func concurrentLoadCallsAreDeduped() async {
+    let compendium = Compendium()
+    await withTaskGroup(of: Void.self) { group in
+      group.addTask { try? await compendium.load() }
+      group.addTask { try? await compendium.load() }
     }
+    #expect(compendium.isLoading == false)
+  }
 
-    /// When the bundle resource is missing, load() throws and sets loadError.
-    /// In the test bundle adversaries.json is not present, so this always exercises the error path.
-    @Test func loadSetsLoadErrorOnMissingResource() async {
-        let compendium = Compendium()
-        var didThrow = false
-        do {
-            try await compendium.load()
-        } catch {
-            didThrow = true
-        }
-        // Either the file was found (no throw) or it was missing (throw + loadError set).
-        // Either way isLoading must be false and state must be consistent.
-        if didThrow {
-            #expect(compendium.loadError != nil)
-        }
-        #expect(compendium.isLoading == false)
+  /// When the bundle resource is missing, load() throws and sets loadError.
+  /// In the test bundle adversaries.json is not present, so this always exercises the error path.
+  @Test func loadSetsLoadErrorOnMissingResource() async {
+    let compendium = Compendium()
+    var didThrow = false
+    do {
+      try await compendium.load()
+    } catch {
+      didThrow = true
     }
+    // Either the file was found (no throw) or it was missing (throw + loadError set).
+    // Either way isLoading must be false and state must be consistent.
+    if didThrow {
+      #expect(compendium.loadError != nil)
+    }
+    #expect(compendium.isLoading == false)
+  }
 
-    /// Homebrew entries added before load() survive a load() call that fails.
-    @Test func homebrewSurvivesFailedLoad() async {
-        let compendium = Compendium()
-        compendium.addAdversary(Adversary(
-            id: "test-creature", name: "Test", tier: 1, type: .minion,
-            description: "desc", difficulty: 8, thresholdMajor: 3, thresholdSevere: 6,
-            hp: 3, stress: 2, attackModifier: "+1", attackName: "Bite",
-            attackRange: .veryClose, damage: "1d6 phy"
-        ))
-        // load() will fail (no bundle JSON in test target) but homebrew should remain
-        try? await compendium.load()
-        // If load failed, adversary count depends on whether load clears homebrew on error.
-        // The important thing is we can still look up the homebrew entry if load failed.
-        // (If load succeeded it would replace; if it failed it should not clear homebrew.)
-        #expect(compendium.isLoading == false)
-    }
+  /// Homebrew entries added before load() survive a load() call that fails.
+  @Test func homebrewSurvivesFailedLoad() async {
+    let compendium = Compendium()
+    compendium.addAdversary(
+      Adversary(
+        id: "test-creature", name: "Test", tier: 1, type: .minion,
+        description: "desc", difficulty: 8, thresholdMajor: 3, thresholdSevere: 6,
+        hp: 3, stress: 2, attackModifier: "+1", attackName: "Bite",
+        attackRange: .veryClose, damage: "1d6 phy"
+      ))
+    // load() will fail (no bundle JSON in test target) but homebrew should remain
+    try? await compendium.load()
+    // If load failed, adversary count depends on whether load clears homebrew on error.
+    // The important thing is we can still look up the homebrew entry if load failed.
+    // (If load succeeded it would replace; if it failed it should not clear homebrew.)
+    #expect(compendium.isLoading == false)
+  }
 }
 
 // MARK: - GAP-5: Homebrew distinction in Compendium
 
 @MainActor struct CompendiumHomebrewTests {
 
-    private func makeSoldier(id: String = "ironguard-soldier") -> Adversary {
-        Adversary(
-            id: id, name: "Ironguard Soldier", tier: 1, type: .bruiser,
-            description: "A disciplined mercenary.", difficulty: 11,
-            thresholdMajor: 5, thresholdSevere: 10, hp: 6, stress: 3,
-            attackModifier: "+3", attackName: "Longsword",
-            attackRange: .veryClose, damage: "1d10+3 phy"
-        )
-    }
+  private func makeSoldier(id: String = "ironguard-soldier") -> Adversary {
+    Adversary(
+      id: id, name: "Ironguard Soldier", tier: 1, type: .bruiser,
+      description: "A disciplined mercenary.", difficulty: 11,
+      thresholdMajor: 5, thresholdSevere: 10, hp: 6, stress: 3,
+      attackModifier: "+3", attackName: "Longsword",
+      attackRange: .veryClose, damage: "1d10+3 phy"
+    )
+  }
 
-    private func makeEnv(id: String = "bridge") -> DaggerheartEnvironment {
-        DaggerheartEnvironment(id: id, name: "Bridge", description: "A rope bridge.")
-    }
+  private func makeEnv(id: String = "bridge") -> DaggerheartEnvironment {
+    DaggerheartEnvironment(id: id, name: "Bridge", description: "A rope bridge.")
+  }
 
-    @Test func homebrewAdversaryAppearsInHomebrewList() {
-        let compendium = Compendium()
-        compendium.addAdversary(makeSoldier())
-        #expect(compendium.homebrewAdversaries.count == 1)
-        #expect(compendium.homebrewAdversaries[0].id == "ironguard-soldier")
-    }
+  @Test func homebrewAdversaryAppearsInHomebrewList() {
+    let compendium = Compendium()
+    compendium.addAdversary(makeSoldier())
+    #expect(compendium.homebrewAdversaries.count == 1)
+    #expect(compendium.homebrewAdversaries[0].id == "ironguard-soldier")
+  }
 
-    @Test func homebrewAdversaryAppearsInAllAdversaries() {
-        let compendium = Compendium()
-        compendium.addAdversary(makeSoldier())
-        #expect(compendium.adversaries.contains { $0.id == "ironguard-soldier" })
-    }
+  @Test func homebrewAdversaryAppearsInAllAdversaries() {
+    let compendium = Compendium()
+    compendium.addAdversary(makeSoldier())
+    #expect(compendium.adversaries.contains { $0.id == "ironguard-soldier" })
+  }
 
-    @Test func srdAdversaryDoesNotAppearInHomebrewList() {
-        let compendium = Compendium()
-        // Simulate an SRD load by calling addAdversary... but that goes to homebrew.
-        // Instead verify that homebrewAdversaries starts empty.
-        #expect(compendium.homebrewAdversaries.isEmpty)
-    }
+  @Test func srdAdversaryDoesNotAppearInHomebrewList() {
+    let compendium = Compendium()
+    // Simulate an SRD load by calling addAdversary... but that goes to homebrew.
+    // Instead verify that homebrewAdversaries starts empty.
+    #expect(compendium.homebrewAdversaries.isEmpty)
+  }
 
-    @Test func homebrewOverridesSRDEntryOnLookup() {
-        let compendium = Compendium()
-        // Seed an SRD-style entry via the internal path isn't accessible in tests,
-        // so simulate conflict: add two homebrew entries with the same ID.
-        // The second addAdversary call replaces the first.
-        var variant = makeSoldier()
-        compendium.addAdversary(variant)
-        variant = Adversary(
-            id: "ironguard-soldier", name: "Elite Ironguard", tier: 2, type: .bruiser,
-            description: "Upgraded.", difficulty: 14, thresholdMajor: 7, thresholdSevere: 14,
-            hp: 10, stress: 4, attackModifier: "+5", attackName: "Longsword",
-            attackRange: .veryClose, damage: "2d10+5 phy"
-        )
-        compendium.addAdversary(variant)
-        #expect(compendium.adversary(id: "ironguard-soldier")?.name == "Elite Ironguard")
-        #expect(compendium.homebrewAdversaries.count == 1)
-    }
+  @Test func homebrewOverridesSRDEntryOnLookup() {
+    let compendium = Compendium()
+    // Seed an SRD-style entry via the internal path isn't accessible in tests,
+    // so simulate conflict: add two homebrew entries with the same ID.
+    // The second addAdversary call replaces the first.
+    var variant = makeSoldier()
+    compendium.addAdversary(variant)
+    variant = Adversary(
+      id: "ironguard-soldier", name: "Elite Ironguard", tier: 2, type: .bruiser,
+      description: "Upgraded.", difficulty: 14, thresholdMajor: 7, thresholdSevere: 14,
+      hp: 10, stress: 4, attackModifier: "+5", attackName: "Longsword",
+      attackRange: .veryClose, damage: "2d10+5 phy"
+    )
+    compendium.addAdversary(variant)
+    #expect(compendium.adversary(id: "ironguard-soldier")?.name == "Elite Ironguard")
+    #expect(compendium.homebrewAdversaries.count == 1)
+  }
 
-    @Test func removeHomebrewAdversaryRemovesFromBothLists() {
-        let compendium = Compendium()
-        compendium.addAdversary(makeSoldier())
-        compendium.removeHomebrewAdversary(id: "ironguard-soldier")
-        #expect(compendium.homebrewAdversaries.isEmpty)
-        #expect(compendium.adversary(id: "ironguard-soldier") == nil)
-    }
+  @Test func removeHomebrewAdversaryRemovesFromBothLists() {
+    let compendium = Compendium()
+    compendium.addAdversary(makeSoldier())
+    compendium.removeHomebrewAdversary(id: "ironguard-soldier")
+    #expect(compendium.homebrewAdversaries.isEmpty)
+    #expect(compendium.adversary(id: "ironguard-soldier") == nil)
+  }
 
-    @Test func homebrewEnvironmentAppearsInHomebrewList() {
-        let compendium = Compendium()
-        compendium.addEnvironment(makeEnv())
-        #expect(compendium.homebrewEnvironments.count == 1)
-    }
+  @Test func homebrewEnvironmentAppearsInHomebrewList() {
+    let compendium = Compendium()
+    compendium.addEnvironment(makeEnv())
+    #expect(compendium.homebrewEnvironments.count == 1)
+  }
 
-    @Test func removeHomebrewEnvironmentRemovesFromBothLists() {
-        let compendium = Compendium()
-        compendium.addEnvironment(makeEnv())
-        compendium.removeHomebrewEnvironment(id: "bridge")
-        #expect(compendium.homebrewEnvironments.isEmpty)
-        #expect(compendium.environment(id: "bridge") == nil)
-    }
+  @Test func removeHomebrewEnvironmentRemovesFromBothLists() {
+    let compendium = Compendium()
+    compendium.addEnvironment(makeEnv())
+    compendium.removeHomebrewEnvironment(id: "bridge")
+    #expect(compendium.homebrewEnvironments.isEmpty)
+    #expect(compendium.environment(id: "bridge") == nil)
+  }
 }
 
 // MARK: - GAP-9: AdversarySlot stat snapshot
 
 @MainActor struct AdversarySlotSnapshotTests {
 
-    private func makeSoldier() -> Adversary {
-        Adversary(
-            id: "ironguard-soldier", name: "Ironguard Soldier", tier: 1, type: .bruiser,
-            description: "A disciplined mercenary.", difficulty: 11,
-            thresholdMajor: 5, thresholdSevere: 10, hp: 6, stress: 3,
-            attackModifier: "+3", attackName: "Longsword",
-            attackRange: .veryClose, damage: "1d10+3 phy"
-        )
-    }
+  private func makeSoldier() -> Adversary {
+    Adversary(
+      id: "ironguard-soldier", name: "Ironguard Soldier", tier: 1, type: .bruiser,
+      description: "A disciplined mercenary.", difficulty: 11,
+      thresholdMajor: 5, thresholdSevere: 10, hp: 6, stress: 3,
+      attackModifier: "+3", attackName: "Longsword",
+      attackRange: .veryClose, damage: "1d10+3 phy"
+    )
+  }
 
-    @Test func slotSnapshotsMaxHPAndMaxStress() {
-        let slot = AdversarySlot.from(makeSoldier())
-        #expect(slot.maxHP == 6)
-        #expect(slot.maxStress == 3)
-    }
+  @Test func slotSnapshotsMaxHPAndMaxStress() {
+    let slot = AdversarySlot.from(makeSoldier())
+    #expect(slot.maxHP == 6)
+    #expect(slot.maxStress == 3)
+  }
 
-    @Test func applyStressClampedToSnapshotMax() {
-        let session = EncounterSession(name: "Test")
-        session.add(adversary: makeSoldier())
-        let slotID = session.adversarySlots[0].id
+  @Test func applyStressClampedToSnapshotMax() {
+    let session = EncounterSession(name: "Test")
+    session.add(adversary: makeSoldier())
+    let slotID = session.adversarySlots[0].id
 
-        session.applyStress(100, to: slotID)
-        #expect(session.adversarySlots[0].currentStress == 3)
-    }
+    session.applyStress(100, to: slotID)
+    #expect(session.adversarySlots[0].currentStress == 3)
+  }
 
-    @Test func applyStressAccumulatesCorrectly() {
-        let session = EncounterSession(name: "Test")
-        session.add(adversary: makeSoldier())
-        let slotID = session.adversarySlots[0].id
+  @Test func applyStressAccumulatesCorrectly() {
+    let session = EncounterSession(name: "Test")
+    session.add(adversary: makeSoldier())
+    let slotID = session.adversarySlots[0].id
 
-        session.applyStress(1, to: slotID)
-        session.applyStress(1, to: slotID)
-        #expect(session.adversarySlots[0].currentStress == 2)
-    }
+    session.applyStress(1, to: slotID)
+    session.applyStress(1, to: slotID)
+    #expect(session.adversarySlots[0].currentStress == 2)
+  }
 
-    @Test func healClampedToSnapshotMaxHP() {
-        let session = EncounterSession(name: "Test")
-        session.add(adversary: makeSoldier())
-        let slotID = session.adversarySlots[0].id
+  @Test func healClampedToSnapshotMaxHP() {
+    let session = EncounterSession(name: "Test")
+    session.add(adversary: makeSoldier())
+    let slotID = session.adversarySlots[0].id
 
-        session.applyDamage(4, to: slotID)
-        session.heal(100, slotID: slotID)
-        #expect(session.adversarySlots[0].currentHP == 6)
-    }
+    session.applyDamage(4, to: slotID)
+    session.heal(100, slotID: slotID)
+    #expect(session.adversarySlots[0].currentHP == 6)
+  }
 
-    @Test func healFromZeroUnsetsDefeated() {
-        let session = EncounterSession(name: "Test")
-        session.add(adversary: makeSoldier())
-        let slotID = session.adversarySlots[0].id
+  @Test func healFromZeroUnsetsDefeated() {
+    let session = EncounterSession(name: "Test")
+    session.add(adversary: makeSoldier())
+    let slotID = session.adversarySlots[0].id
 
-        session.applyDamage(999, to: slotID)
-        #expect(session.adversarySlots[0].isDefeated == true)
-        session.heal(6, slotID: slotID)
-        #expect(session.adversarySlots[0].isDefeated == false)
-        #expect(session.adversarySlots[0].currentHP == 6)
-    }
+    session.applyDamage(999, to: slotID)
+    #expect(session.adversarySlots[0].isDefeated == true)
+    session.heal(6, slotID: slotID)
+    #expect(session.adversarySlots[0].isDefeated == false)
+    #expect(session.adversarySlots[0].currentHP == 6)
+  }
 }
 
 // MARK: - EncounterStore
 
 @MainActor struct EncounterStoreTests {
 
-    /// Returns a fresh store backed by a unique temp directory.
-    private func makeStore() throws -> EncounterStore {
-        let dir = FileManager.default.temporaryDirectory
-            .appending(path: UUID().uuidString)
-        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-        return EncounterStore(directory: dir)
+  /// Returns a fresh store backed by a unique temp directory.
+  private func makeStore() throws -> EncounterStore {
+    let dir = FileManager.default.temporaryDirectory
+      .appending(path: UUID().uuidString)
+    try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+    return EncounterStore(directory: dir)
+  }
+
+  // MARK: create
+
+  @Test func createAddsToDefinitions() async throws {
+    let store = try makeStore()
+    try await store.create(name: "Bandit Camp")
+    #expect(store.definitions.count == 1)
+    #expect(store.definitions[0].name == "Bandit Camp")
+  }
+
+  @Test func createPersistsToFile() async throws {
+    let store = try makeStore()
+    try await store.create(name: "Bandit Camp")
+
+    let store2 = EncounterStore(directory: store.directory)
+    await store2.load()
+    #expect(store2.definitions.count == 1)
+    #expect(store2.definitions[0].name == "Bandit Camp")
+  }
+
+  @Test func createMultipleProducesDistinctDefinitions() async throws {
+    let store = try makeStore()
+    try await store.create(name: "Encounter A")
+    try await store.create(name: "Encounter B")
+    #expect(store.definitions.count == 2)
+    let ids = store.definitions.map(\.id)
+    #expect(Set(ids).count == 2)
+  }
+
+  // MARK: save
+
+  @Test func savePersistsMutations() async throws {
+    let store = try makeStore()
+    try await store.create(name: "Original")
+    var def = store.definitions[0]
+    def.name = "Updated"
+    def.gmNotes = "Remember the trap."
+    try await store.save(def)
+
+    let store2 = EncounterStore(directory: store.directory)
+    await store2.load()
+    #expect(store2.definitions.count == 1)
+    #expect(store2.definitions[0].name == "Updated")
+    #expect(store2.definitions[0].gmNotes == "Remember the trap.")
+  }
+
+  @Test func saveUpdatesInMemoryDefinition() async throws {
+    let store = try makeStore()
+    try await store.create(name: "Original")
+    var def = store.definitions[0]
+    def.name = "Renamed"
+    try await store.save(def)
+    #expect(store.definitions[0].name == "Renamed")
+  }
+
+  @Test func saveUnknownIDThrows() async throws {
+    let store = try makeStore()
+    let orphan = EncounterDefinition(name: "Ghost")
+    await #expect(throws: (any Error).self) {
+      try await store.save(orphan)
     }
+  }
 
-    // MARK: create
+  // MARK: delete
 
-    @Test func createAddsToDefinitions() async throws {
-        let store = try makeStore()
-        try await store.create(name: "Bandit Camp")
-        #expect(store.definitions.count == 1)
-        #expect(store.definitions[0].name == "Bandit Camp")
+  @Test func deleteRemovesFromDefinitions() async throws {
+    let store = try makeStore()
+    try await store.create(name: "Encounter A")
+    try await store.create(name: "Encounter B")
+    let idToDelete = try #require(store.definitions.first(where: { $0.name == "Encounter A" })).id
+
+    try await store.delete(id: idToDelete)
+    #expect(store.definitions.count == 1)
+    #expect(store.definitions[0].name == "Encounter B")
+  }
+
+  @Test func deleteRemovesFileFromDisk() async throws {
+    let store = try makeStore()
+    try await store.create(name: "Temp")
+    let id = store.definitions[0].id
+    try await store.delete(id: id)
+
+    let store2 = EncounterStore(directory: store.directory)
+    await store2.load()
+    #expect(store2.definitions.isEmpty)
+  }
+
+  @Test func deleteUnknownIDThrows() async throws {
+    let store = try makeStore()
+    await #expect(throws: (any Error).self) {
+      try await store.delete(id: UUID())
     }
+  }
 
-    @Test func createPersistsToFile() async throws {
-        let store = try makeStore()
-        try await store.create(name: "Bandit Camp")
+  // MARK: duplicate
 
-        let store2 = EncounterStore(directory: store.directory)
-        await store2.load()
-        #expect(store2.definitions.count == 1)
-        #expect(store2.definitions[0].name == "Bandit Camp")
+  @Test func duplicateCreatesIndependentCopy() async throws {
+    let store = try makeStore()
+    try await store.create(name: "Original")
+    var def = store.definitions[0]
+    def.gmNotes = "Some notes."
+    try await store.save(def)
+
+    try await store.duplicate(id: def.id)
+    #expect(store.definitions.count == 2)
+
+    let copy = try #require(store.definitions.first(where: { $0.id != def.id }))
+    #expect(copy.name == "Original (Copy)")
+    #expect(copy.gmNotes == "Some notes.")
+    #expect(copy.createdAt >= def.createdAt)
+  }
+
+  @Test func duplicateMutationDoesNotAffectOriginal() async throws {
+    let store = try makeStore()
+    try await store.create(name: "Original")
+    let originalID = store.definitions[0].id
+
+    try await store.duplicate(id: originalID)
+    let copyID = try #require(store.definitions.first(where: { $0.id != originalID })).id
+
+    var copy = try #require(store.definitions.first(where: { $0.id == copyID }))
+    copy.name = "Mutated Copy"
+    try await store.save(copy)
+
+    let original = try #require(store.definitions.first(where: { $0.id == originalID }))
+    #expect(original.name == "Original")
+  }
+
+  @Test func duplicateUnknownIDThrows() async throws {
+    let store = try makeStore()
+    await #expect(throws: (any Error).self) {
+      try await store.duplicate(id: UUID())
     }
+  }
 
-    @Test func createMultipleProducesDistinctDefinitions() async throws {
-        let store = try makeStore()
-        try await store.create(name: "Encounter A")
-        try await store.create(name: "Encounter B")
-        #expect(store.definitions.count == 2)
-        let ids = store.definitions.map(\.id)
-        #expect(Set(ids).count == 2)
+  // MARK: load
+
+  @Test func loadReconstitutesFromFiles() async throws {
+    let store = try makeStore()
+    let def = EncounterDefinition(name: "From File")
+    try JSONEncoder().encode(def).write(
+      to: store.directory.appending(path: "\(def.id.uuidString).encounter.json")
+    )
+    await store.load()
+    #expect(store.definitions.count == 1)
+    #expect(store.definitions[0].name == "From File")
+    #expect(store.definitions[0].id == def.id)
+  }
+
+  @Test func loadIgnoresNonEncounterFiles() async throws {
+    let store = try makeStore()
+    try Data("noise".utf8).write(to: store.directory.appending(path: "readme.txt"))
+    await store.load()
+    #expect(store.definitions.isEmpty)
+  }
+
+  @Test func loadIgnoresCorruptFiles() async throws {
+    let store = try makeStore()
+    let def = EncounterDefinition(name: "Good Encounter")
+    try JSONEncoder().encode(def).write(
+      to: store.directory.appending(path: "\(def.id.uuidString).encounter.json")
+    )
+    try Data("not valid json".utf8).write(
+      to: store.directory.appending(path: "corrupt.encounter.json")
+    )
+    await store.load()
+    #expect(store.definitions.count == 1)
+    #expect(store.definitions[0].name == "Good Encounter")
+  }
+
+  // MARK: sort order
+
+  @Test func definitionsSortedByModifiedAtDescending() async throws {
+    let store = try makeStore()
+    try await store.create(name: "Alpha")
+
+    // Force different modifiedAt timestamps by saving with explicit dates
+    var alpha = store.definitions[0]
+    let now = Date.now
+    let earlier = EncounterDefinition(
+      id: UUID(), name: "Beta",
+      createdAt: now.addingTimeInterval(-60),
+      modifiedAt: now.addingTimeInterval(-60)
+    )
+    let latest = EncounterDefinition(
+      id: UUID(), name: "Gamma",
+      createdAt: now.addingTimeInterval(-10),
+      modifiedAt: now.addingTimeInterval(-10)
+    )
+    // Write directly to the store's directory to seed known timestamps
+    let encoder = JSONEncoder()
+    try encoder.encode(earlier).write(
+      to: store.directory.appending(path: "\(earlier.id.uuidString).encounter.json")
+    )
+    try encoder.encode(latest).write(
+      to: store.directory.appending(path: "\(latest.id.uuidString).encounter.json")
+    )
+    alpha.gmNotes = "touched last"  // bump modifiedAt via save() stamp
+    try await store.save(alpha)
+
+    await store.load()
+
+    // Verify specific order: alpha (just saved = most recent),
+    // Gamma (now-10s), Beta (now-60s)
+    #expect(store.definitions.count == 3)
+    #expect(store.definitions[0].name == "Alpha")
+    #expect(store.definitions[0].gmNotes == "touched last")
+    #expect(store.definitions[1].name == "Gamma")
+    #expect(store.definitions[2].name == "Beta")
+
+    let dates = store.definitions.map(\.modifiedAt)
+    for i in 0..<(dates.count - 1) {
+      #expect(dates[i] >= dates[i + 1], "definitions[\(i)] should be >= definitions[\(i+1)]")
     }
-
-    // MARK: save
-
-    @Test func savePersistsMutations() async throws {
-        let store = try makeStore()
-        try await store.create(name: "Original")
-        var def = store.definitions[0]
-        def.name = "Updated"
-        def.gmNotes = "Remember the trap."
-        try await store.save(def)
-
-        let store2 = EncounterStore(directory: store.directory)
-        await store2.load()
-        #expect(store2.definitions.count == 1)
-        #expect(store2.definitions[0].name == "Updated")
-        #expect(store2.definitions[0].gmNotes == "Remember the trap.")
-    }
-
-    @Test func saveUpdatesInMemoryDefinition() async throws {
-        let store = try makeStore()
-        try await store.create(name: "Original")
-        var def = store.definitions[0]
-        def.name = "Renamed"
-        try await store.save(def)
-        #expect(store.definitions[0].name == "Renamed")
-    }
-
-    @Test func saveUnknownIDThrows() async throws {
-        let store = try makeStore()
-        let orphan = EncounterDefinition(name: "Ghost")
-        await #expect(throws: (any Error).self) {
-            try await store.save(orphan)
-        }
-    }
-
-    // MARK: delete
-
-    @Test func deleteRemovesFromDefinitions() async throws {
-        let store = try makeStore()
-        try await store.create(name: "Encounter A")
-        try await store.create(name: "Encounter B")
-        let idToDelete = try #require(store.definitions.first(where: { $0.name == "Encounter A" })).id
-
-        try await store.delete(id: idToDelete)
-        #expect(store.definitions.count == 1)
-        #expect(store.definitions[0].name == "Encounter B")
-    }
-
-    @Test func deleteRemovesFileFromDisk() async throws {
-        let store = try makeStore()
-        try await store.create(name: "Temp")
-        let id = store.definitions[0].id
-        try await store.delete(id: id)
-
-        let store2 = EncounterStore(directory: store.directory)
-        await store2.load()
-        #expect(store2.definitions.isEmpty)
-    }
-
-    @Test func deleteUnknownIDThrows() async throws {
-        let store = try makeStore()
-        await #expect(throws: (any Error).self) {
-            try await store.delete(id: UUID())
-        }
-    }
-
-    // MARK: duplicate
-
-    @Test func duplicateCreatesIndependentCopy() async throws {
-        let store = try makeStore()
-        try await store.create(name: "Original")
-        var def = store.definitions[0]
-        def.gmNotes = "Some notes."
-        try await store.save(def)
-
-        try await store.duplicate(id: def.id)
-        #expect(store.definitions.count == 2)
-
-        let copy = try #require(store.definitions.first(where: { $0.id != def.id }))
-        #expect(copy.name == "Original (Copy)")
-        #expect(copy.gmNotes == "Some notes.")
-        #expect(copy.createdAt >= def.createdAt)
-    }
-
-    @Test func duplicateMutationDoesNotAffectOriginal() async throws {
-        let store = try makeStore()
-        try await store.create(name: "Original")
-        let originalID = store.definitions[0].id
-
-        try await store.duplicate(id: originalID)
-        let copyID = try #require(store.definitions.first(where: { $0.id != originalID })).id
-
-        var copy = try #require(store.definitions.first(where: { $0.id == copyID }))
-        copy.name = "Mutated Copy"
-        try await store.save(copy)
-
-        let original = try #require(store.definitions.first(where: { $0.id == originalID }))
-        #expect(original.name == "Original")
-    }
-
-    @Test func duplicateUnknownIDThrows() async throws {
-        let store = try makeStore()
-        await #expect(throws: (any Error).self) {
-            try await store.duplicate(id: UUID())
-        }
-    }
-
-    // MARK: load
-
-    @Test func loadReconstitutesFromFiles() async throws {
-        let store = try makeStore()
-        let def = EncounterDefinition(name: "From File")
-        try JSONEncoder().encode(def).write(
-            to: store.directory.appending(path: "\(def.id.uuidString).encounter.json")
-        )
-        await store.load()
-        #expect(store.definitions.count == 1)
-        #expect(store.definitions[0].name == "From File")
-        #expect(store.definitions[0].id == def.id)
-    }
-
-    @Test func loadIgnoresNonEncounterFiles() async throws {
-        let store = try makeStore()
-        try Data("noise".utf8).write(to: store.directory.appending(path: "readme.txt"))
-        await store.load()
-        #expect(store.definitions.isEmpty)
-    }
-
-    @Test func loadIgnoresCorruptFiles() async throws {
-        let store = try makeStore()
-        let def = EncounterDefinition(name: "Good Encounter")
-        try JSONEncoder().encode(def).write(
-            to: store.directory.appending(path: "\(def.id.uuidString).encounter.json")
-        )
-        try Data("not valid json".utf8).write(
-            to: store.directory.appending(path: "corrupt.encounter.json")
-        )
-        await store.load()
-        #expect(store.definitions.count == 1)
-        #expect(store.definitions[0].name == "Good Encounter")
-    }
-
-    // MARK: sort order
-
-    @Test func definitionsSortedByModifiedAtDescending() async throws {
-        let store = try makeStore()
-        try await store.create(name: "Alpha")
-
-        // Force different modifiedAt timestamps by saving with explicit dates
-        var alpha = store.definitions[0]
-        let now = Date.now
-        let earlier = EncounterDefinition(
-            id: UUID(), name: "Beta",
-            createdAt: now.addingTimeInterval(-60),
-            modifiedAt: now.addingTimeInterval(-60)
-        )
-        let latest = EncounterDefinition(
-            id: UUID(), name: "Gamma",
-            createdAt: now.addingTimeInterval(-10),
-            modifiedAt: now.addingTimeInterval(-10)
-        )
-        // Write directly to the store's directory to seed known timestamps
-        let encoder = JSONEncoder()
-        try encoder.encode(earlier).write(
-            to: store.directory.appending(path: "\(earlier.id.uuidString).encounter.json")
-        )
-        try encoder.encode(latest).write(
-            to: store.directory.appending(path: "\(latest.id.uuidString).encounter.json")
-        )
-        alpha.gmNotes = "touched last" // bump modifiedAt via save() stamp
-        try await store.save(alpha)
-
-        await store.load()
-
-        // Verify specific order: alpha (just saved = most recent),
-        // Gamma (now-10s), Beta (now-60s)
-        #expect(store.definitions.count == 3)
-        #expect(store.definitions[0].name == "Alpha")
-        #expect(store.definitions[0].gmNotes == "touched last")
-        #expect(store.definitions[1].name == "Gamma")
-        #expect(store.definitions[2].name == "Beta")
-
-        let dates = store.definitions.map(\.modifiedAt)
-        for i in 0..<(dates.count - 1) {
-            #expect(dates[i] >= dates[i + 1], "definitions[\(i)] should be >= definitions[\(i+1)]")
-        }
-    }
+  }
 }
 
 // MARK: - EncounterStoreError
 
 struct EncounterStoreErrorTests {
 
-    @Test func notFoundDescription() {
-        let id = UUID()
-        let error = EncounterStoreError.notFound(id)
-        #expect(error.errorDescription == "No encounter definition found with ID \(id).")
-    }
+  @Test func notFoundDescription() {
+    let id = UUID()
+    let error = EncounterStoreError.notFound(id)
+    #expect(error.errorDescription == "No encounter definition found with ID \(id).")
+  }
 
-    @Test func saveFailedDescription() {
-        let id = UUID()
-        let underlying = CocoaError(.fileWriteNoPermission)
-        let error = EncounterStoreError.saveFailed(id, underlying)
-        #expect(error.errorDescription?.hasPrefix("Failed to save encounter \(id):") == true)
-    }
+  @Test func saveFailedDescription() {
+    let id = UUID()
+    let underlying = CocoaError(.fileWriteNoPermission)
+    let error = EncounterStoreError.saveFailed(id, underlying)
+    #expect(error.errorDescription?.hasPrefix("Failed to save encounter \(id):") == true)
+  }
 
-    @Test func deleteFailedDescription() {
-        let id = UUID()
-        let underlying = CocoaError(.fileNoSuchFile)
-        let error = EncounterStoreError.deleteFailed(id, underlying)
-        #expect(error.errorDescription?.hasPrefix("Failed to delete encounter \(id):") == true)
-    }
+  @Test func deleteFailedDescription() {
+    let id = UUID()
+    let underlying = CocoaError(.fileNoSuchFile)
+    let error = EncounterStoreError.deleteFailed(id, underlying)
+    #expect(error.errorDescription?.hasPrefix("Failed to delete encounter \(id):") == true)
+  }
 }
 
 // MARK: - Full SRD JSON Decode Verification
@@ -1423,94 +1427,98 @@ struct EncounterStoreErrorTests {
 /// and verifies that every entry decodes without error.
 struct SRDDecodeTests {
 
-    /// URL to `Encounter/Resources/` relative to this source file.
-    private static var resourcesURL: URL {
-        URL(filePath: #filePath)          // .../EncounterTests/EncounterTests.swift
-            .deletingLastPathComponent()  // .../EncounterTests/
-            .deletingLastPathComponent()  // .../Encounter/  (repo root)
-            .appending(path: "Encounter/Resources")
-    }
+  /// URL to `Encounter/Resources/` relative to this source file.
+  private static var resourcesURL: URL {
+    URL(filePath: #filePath)  // .../EncounterTests/EncounterTests.swift
+      .deletingLastPathComponent()  // .../EncounterTests/
+      .deletingLastPathComponent()  // .../Encounter/  (repo root)
+      .appending(path: "Encounter/Resources")
+  }
 
-    @Test func allSRDAdversariesDecodeWithoutError() throws {
-        let url = Self.resourcesURL.appending(path: "adversaries.json")
-        let data = try Data(contentsOf: url)
-        let adversaries = try JSONDecoder().decode([Adversary].self, from: data)
-        #expect(adversaries.isEmpty == false)
-        // Spot-check: every entry has a non-empty name and valid tier
-        for adversary in adversaries {
-            #expect(!adversary.name.isEmpty, "Adversary id=\(adversary.id) has empty name")
-            #expect((1...4).contains(adversary.tier), "Adversary \(adversary.name) has unexpected tier \(adversary.tier)")
-        }
+  @Test func allSRDAdversariesDecodeWithoutError() throws {
+    let url = Self.resourcesURL.appending(path: "adversaries.json")
+    let data = try Data(contentsOf: url)
+    let adversaries = try JSONDecoder().decode([Adversary].self, from: data)
+    #expect(adversaries.isEmpty == false)
+    // Spot-check: every entry has a non-empty name and valid tier
+    for adversary in adversaries {
+      #expect(!adversary.name.isEmpty, "Adversary id=\(adversary.id) has empty name")
+      #expect(
+        (1...4).contains(adversary.tier),
+        "Adversary \(adversary.name) has unexpected tier \(adversary.tier)")
     }
+  }
 
-    @Test func allSRDEnvironmentsDecodeWithoutError() throws {
-        let url = Self.resourcesURL.appending(path: "environments.json")
-        let data = try Data(contentsOf: url)
-        let environments = try JSONDecoder().decode([DaggerheartEnvironment].self, from: data)
-        #expect(environments.isEmpty == false)
-        for environment in environments {
-            #expect(!environment.name.isEmpty, "Environment id=\(environment.id) has empty name")
-        }
+  @Test func allSRDEnvironmentsDecodeWithoutError() throws {
+    let url = Self.resourcesURL.appending(path: "environments.json")
+    let data = try Data(contentsOf: url)
+    let environments = try JSONDecoder().decode([DaggerheartEnvironment].self, from: data)
+    #expect(environments.isEmpty == false)
+    for environment in environments {
+      #expect(!environment.name.isEmpty, "Environment id=\(environment.id) has empty name")
     }
+  }
 
-    @Test func srdAdversaryCountMatchesExpected() throws {
-        let url = Self.resourcesURL.appending(path: "adversaries.json")
-        let data = try Data(contentsOf: url)
-        let adversaries = try JSONDecoder().decode([Adversary].self, from: data)
-        // SRD export from seansbox/daggerheart-srd contains 129 adversaries.
-        #expect(adversaries.count == 129)
-    }
+  @Test func srdAdversaryCountMatchesExpected() throws {
+    let url = Self.resourcesURL.appending(path: "adversaries.json")
+    let data = try Data(contentsOf: url)
+    let adversaries = try JSONDecoder().decode([Adversary].self, from: data)
+    // SRD export from seansbox/daggerheart-srd contains 129 adversaries.
+    #expect(adversaries.count == 129)
+  }
 
-    @Test func srdEnvironmentCountMatchesExpected() throws {
-        let url = Self.resourcesURL.appending(path: "environments.json")
-        let data = try Data(contentsOf: url)
-        let environments = try JSONDecoder().decode([DaggerheartEnvironment].self, from: data)
-        // SRD export from seansbox/daggerheart-srd contains 19 environments.
-        #expect(environments.count == 19)
-    }
+  @Test func srdEnvironmentCountMatchesExpected() throws {
+    let url = Self.resourcesURL.appending(path: "environments.json")
+    let data = try Data(contentsOf: url)
+    let environments = try JSONDecoder().decode([DaggerheartEnvironment].self, from: data)
+    // SRD export from seansbox/daggerheart-srd contains 19 environments.
+    #expect(environments.count == 19)
+  }
 
-    @Test func srdAdversaryIDsAreUnique() throws {
-        let url = Self.resourcesURL.appending(path: "adversaries.json")
-        let data = try Data(contentsOf: url)
-        let adversaries = try JSONDecoder().decode([Adversary].self, from: data)
-        let ids = adversaries.map(\.id)
-        let unique = Set(ids)
-        #expect(unique.count == ids.count, "Duplicate adversary IDs found: \(ids.count - unique.count) duplicates")
-    }
+  @Test func srdAdversaryIDsAreUnique() throws {
+    let url = Self.resourcesURL.appending(path: "adversaries.json")
+    let data = try Data(contentsOf: url)
+    let adversaries = try JSONDecoder().decode([Adversary].self, from: data)
+    let ids = adversaries.map(\.id)
+    let unique = Set(ids)
+    #expect(
+      unique.count == ids.count,
+      "Duplicate adversary IDs found: \(ids.count - unique.count) duplicates")
+  }
 
-    @Test func srdAdversariesHaveNonEmptyFeatureText() throws {
-        let url = Self.resourcesURL.appending(path: "adversaries.json")
-        let data = try Data(contentsOf: url)
-        let adversaries = try JSONDecoder().decode([Adversary].self, from: data)
-        for adversary in adversaries {
-            for feature in adversary.features {
-                #expect(!feature.name.isEmpty, "\(adversary.name) has a feature with empty name")
-                #expect(!feature.text.isEmpty, "\(adversary.name) feature '\(feature.name)' has empty text")
-            }
-        }
+  @Test func srdAdversariesHaveNonEmptyFeatureText() throws {
+    let url = Self.resourcesURL.appending(path: "adversaries.json")
+    let data = try Data(contentsOf: url)
+    let adversaries = try JSONDecoder().decode([Adversary].self, from: data)
+    for adversary in adversaries {
+      for feature in adversary.features {
+        #expect(!feature.name.isEmpty, "\(adversary.name) has a feature with empty name")
+        #expect(!feature.text.isEmpty, "\(adversary.name) feature '\(feature.name)' has empty text")
+      }
     }
+  }
 }
 
 // MARK: - Environment
 
 struct EnvironmentModelTests {
 
-    @Test func decodesFromJSON() throws {
-        let json = """
-        {
-          "id": "arcane-storm",
-          "name": "Arcane Storm",
-          "source": "SRD",
-          "description": "A tempest of wild magic.",
-          "feature": [
-            { "name": "Wild Discharge", "text": "Deals damage at random.", "feat_type": "passive" }
-          ]
-        }
-        """.data(using: .utf8)!
+  @Test func decodesFromJSON() throws {
+    let json = """
+      {
+        "id": "arcane-storm",
+        "name": "Arcane Storm",
+        "source": "SRD",
+        "description": "A tempest of wild magic.",
+        "feature": [
+          { "name": "Wild Discharge", "text": "Deals damage at random.", "feat_type": "passive" }
+        ]
+      }
+      """.data(using: .utf8)!
 
-        let env = try JSONDecoder().decode(DaggerheartEnvironment.self, from: json)
-        #expect(env.id == "arcane-storm")
-        #expect(env.features.count == 1)
-        #expect(env.features[0].featType == FeatureType.passive)
-    }
+    let env = try JSONDecoder().decode(DaggerheartEnvironment.self, from: json)
+    #expect(env.id == "arcane-storm")
+    #expect(env.features.count == 1)
+    #expect(env.features[0].featType == FeatureType.passive)
+  }
 }
