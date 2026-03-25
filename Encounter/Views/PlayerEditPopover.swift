@@ -65,6 +65,9 @@ struct PlayerEditPopover: View {
         .font(.title3)
         .buttonStyle(.borderless)
         .disabled(current <= 0)
+        .accessibilityIdentifier(
+          "runner.player-edit.\(label.lowercased()).decrement"
+        )
 
       Text("\(current) / \(maximum)")
         .font(.body)
@@ -76,6 +79,9 @@ struct PlayerEditPopover: View {
         .font(.title3)
         .buttonStyle(.borderless)
         .disabled(current >= maximum)
+        .accessibilityIdentifier(
+          "runner.player-edit.\(label.lowercased()).increment"
+        )
     }
   }
 }

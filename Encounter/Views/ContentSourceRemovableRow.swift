@@ -29,6 +29,7 @@ struct ContentSourceRemovableRow: View {
         } label: {
           Label("Remove", systemImage: "trash")
         }
+        .accessibilityIdentifier("sources.row.remove-button")
       }
   }
 }

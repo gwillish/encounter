@@ -103,6 +103,9 @@ struct DifficultyAssessorView: View {
           ForEach(Self.manualCases, id: \.self) { adj in
             Toggle(adj.label, isOn: toggleBinding(for: adj))
               .font(.caption)
+              .accessibilityIdentifier(
+                "builder.difficulty.toggle.\(String(describing: adj))"
+              )
           }
         }
       }

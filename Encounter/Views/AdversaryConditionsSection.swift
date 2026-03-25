@@ -33,6 +33,9 @@ struct AdversaryConditionsSection: View {
           .font(.caption)
           .buttonStyle(.bordered)
           .tint(active ? .orange : nil)
+          .accessibilityIdentifier(
+            "runner.adversary-card.condition.\(condition.displayName.lowercased())"
+          )
         }
       }
     }
