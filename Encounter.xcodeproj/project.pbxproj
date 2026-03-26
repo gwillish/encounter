@@ -6,6 +6,12 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		1AD61A3B2F74D3F900296F39 /* InMemoryLogging in Frameworks */ = {isa = PBXBuildFile; productRef = 1AD61A3A2F74D3F900296F39 /* InMemoryLogging */; };
+		1AD61A3D2F74D3F900296F39 /* Logging in Frameworks */ = {isa = PBXBuildFile; productRef = 1AD61A3C2F74D3F900296F39 /* Logging */; };
+		1AD61A402F74D40B00296F39 /* OSLogging in Frameworks */ = {isa = PBXBuildFile; productRef = 1AD61A3F2F74D40B00296F39 /* OSLogging */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		1A8F7BA82F660D3900548E3A /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -65,6 +71,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1AD61A402F74D40B00296F39 /* OSLogging in Frameworks */,
+				1AD61A3D2F74D3F900296F39 /* Logging in Frameworks */,
+				1AD61A3B2F74D3F900296F39 /* InMemoryLogging in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -125,6 +134,9 @@
 			);
 			name = Encounter;
 			packageProductDependencies = (
+				1AD61A3A2F74D3F900296F39 /* InMemoryLogging */,
+				1AD61A3C2F74D3F900296F39 /* Logging */,
+				1AD61A3F2F74D40B00296F39 /* OSLogging */,
 			);
 			productName = Encounter;
 			productReference = 1A8F7B9A2F660D3800548E3A /* Encounter.app */;
@@ -184,7 +196,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 2630;
-				LastUpgradeCheck = 2630;
+				LastUpgradeCheck = 2640;
 				TargetAttributes = {
 					1A8F7B992F660D3800548E3A = {
 						CreatedOnToolsVersion = 26.3;
@@ -213,6 +225,10 @@
 			);
 			mainGroup = 1A8F7B912F660D3800548E3A;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				1AD61A392F74D3F900296F39 /* XCRemoteSwiftPackageReference "swift-log" */,
+				1AD61A3E2F74D40B00296F39 /* XCRemoteSwiftPackageReference "swift-oslog" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 1A8F7B9B2F660D3800548E3A /* Products */;
 			projectDirPath = "";
@@ -321,6 +337,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
@@ -343,6 +360,7 @@
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 6.0;
@@ -383,6 +401,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -398,6 +417,7 @@
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_VERSION = 6.0;
 			};
@@ -410,6 +430,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_PREVIEWS = YES;
@@ -454,6 +475,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_PREVIEWS = YES;
@@ -497,6 +519,7 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
 				MACOSX_DEPLOYMENT_TARGET = 26.2;
@@ -522,6 +545,7 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
 				MACOSX_DEPLOYMENT_TARGET = 26.2;
@@ -546,6 +570,7 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
 				MACOSX_DEPLOYMENT_TARGET = 26.2;
@@ -570,6 +595,7 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
 				MACOSX_DEPLOYMENT_TARGET = 26.2;
@@ -629,6 +655,43 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		1AD61A392F74D3F900296F39 /* XCRemoteSwiftPackageReference "swift-log" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-log";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.10.1;
+			};
+		};
+		1AD61A3E2F74D40B00296F39 /* XCRemoteSwiftPackageReference "swift-oslog" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/danielctull/swift-oslog";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		1AD61A3A2F74D3F900296F39 /* InMemoryLogging */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1AD61A392F74D3F900296F39 /* XCRemoteSwiftPackageReference "swift-log" */;
+			productName = InMemoryLogging;
+		};
+		1AD61A3C2F74D3F900296F39 /* Logging */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1AD61A392F74D3F900296F39 /* XCRemoteSwiftPackageReference "swift-log" */;
+			productName = Logging;
+		};
+		1AD61A3F2F74D40B00296F39 /* OSLogging */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1AD61A3E2F74D40B00296F39 /* XCRemoteSwiftPackageReference "swift-oslog" */;
+			productName = OSLogging;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 1A8F7B922F660D3800548E3A /* Project object */;
 }
