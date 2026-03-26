@@ -5,10 +5,19 @@
 //  Created by Joe Heck on 3/14/26.
 //
 
+import Logging
+import OSLogging
 import SwiftUI
 
 @main
 struct EncounterApp: App {
+
+  init() {
+    LoggingSystem.bootstrap { label in
+      OSLogHandler(subsystem: "gwillish.Encounter", category: label)
+    }
+  }
+
   @State private var compendium = Compendium()
   @State private var store = EncounterStore(directory: EncounterStore.localDirectory)
   @State private var sessionRegistry = SessionRegistry()

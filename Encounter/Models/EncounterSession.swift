@@ -16,7 +16,7 @@
 //
 
 import Foundation
-import OSLog
+import Logging
 import Observation
 
 // MARK: - AdversarySlot
@@ -137,7 +137,7 @@ public final class EncounterSession: Identifiable, Hashable {
   }
   public nonisolated func hash(into hasher: inout Hasher) { hasher.combine(id) }
 
-  private let logger = Logger(subsystem: "gwillish.Encounter", category: "EncounterSession")
+  private let logger = Logger(label: "EncounterSession")
 
   // MARK: Identity
   public let id: UUID

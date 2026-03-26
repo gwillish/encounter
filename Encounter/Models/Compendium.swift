@@ -14,7 +14,7 @@
 //
 
 import Foundation
-import OSLog
+import Logging
 import Observation
 
 // MARK: - CompendiumError
@@ -66,7 +66,7 @@ nonisolated public enum CompendiumError: Error, LocalizedError {
 @Observable
 public final class Compendium {
 
-  private let logger = Logger(subsystem: "gwillish.Encounter", category: "Compendium")
+  private let logger = Logger(label: "Compendium")
 
   // MARK: Published State
 
