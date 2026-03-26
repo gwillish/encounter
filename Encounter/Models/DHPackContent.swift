@@ -8,24 +8,31 @@
 //
 
 import Foundation
-import UniformTypeIdentifiers
 
-// MARK: - UTType
+#if canImport(UniformTypeIdentifiers)
+  import UniformTypeIdentifiers
 
-extension UTType {
-  /// The `.dhpack` file type: a JSON content pack for Encounter.
-  ///
-  /// Declared in `Info.plist` as `gwillish.Encounter.dhpack`, conforming to
-  /// `public.json → public.text → public.data`. The `public.json` conformance
-  /// allows text editors and Quick Look to preview the file, and lets the OS
-  /// route AirDrop and Files-app opens to Encounter (see ADR-0016).
-  ///
-  /// Use `static let` (not `var`) because the type is exported by this app's
-  /// bundle and is stable for the app's lifetime.
-  public static let dhpack: UTType = UTType(
-    exportedAs: "gwillish.Encounter.dhpack",
-    conformingTo: .json)
-}
+  // MARK: - UTType
+
+  extension UTType {
+    /// The `.dhpack` file type: a JSON content pack for Encounter.
+    ///
+    /// Declared in `Info.plist` as `gwillish.Encounter.dhpack`, conforming to
+    /// `public.json → public.text → public.data`. The `public.json` conformance
+    /// allows text editors and Quick Look to preview the file, and lets the OS
+    /// route AirDrop and Files-app opens to Encounter (see ADR-0016).
+    ///
+    /// > Note: The UTI is *declared* here as a Swift constant; the OS-level
+    /// > registration that enables file-open routing lives in the app's `Info.plist`
+    /// > and cannot be moved into a Swift Package.
+    ///
+    /// Use `static let` (not `var`) because the type is exported by this app's
+    /// bundle and is stable for the app's lifetime.
+    public static let dhpack: UTType = UTType(
+      exportedAs: "gwillish.Encounter.dhpack",
+      conformingTo: .json)
+  }
+#endif
 
 /// The decoded contents of a `.dhpack` file.
 ///
