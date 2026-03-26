@@ -77,7 +77,7 @@ autocomplete:
 
 ```json
 {
-  "$schema": "https://raw.githubusercontent.com/gwillish/DaggerheartModels/main/schemas/dhpack.schema.json",
+  "$schema": "https://cdn.jsdelivr.net/gh/gwillish/DaggerheartModels@main/schemas/dhpack.schema.json",
   "adversaries": [ ... ]
 }
 ```
