@@ -24,9 +24,10 @@ plain JSON file containing adversaries, environments, or both.
 - [Authoring a pack](https://gwillish.github.io/encounter/documentation/encounter/authoringapack) — three paths: text editor, in-app export, or programmatic generation
 - [Sharing and hosting](https://gwillish.github.io/encounter/documentation/encounter/sharingandhostingpacks) — AirDrop, URL sources, GitHub Releases, jsDelivr, Gist
 
-The JSON Schema for `.dhpack` is at [`schemas/dhpack.schema.json`](schemas/dhpack.schema.json).
-Add `"$schema": "https://gwillish.github.io/encounter/schemas/dhpack.schema.json"` to
-your pack file to enable validation and autocomplete in VS Code.
+The JSON Schema for `.dhpack` is maintained in the
+[DaggerheartModels](https://github.com/gwillish/DaggerheartModels) repository.
+Add `"$schema": "https://raw.githubusercontent.com/gwillish/DaggerheartModels/main/schemas/dhpack.schema.json"`
+to your pack file to enable validation and autocomplete in VS Code.
 
 ## Architecture Decision Records
 

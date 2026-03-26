@@ -239,15 +239,16 @@ Save as `my-pack.dhpack` and the file is ready to import or share.
 
 ## JSON Schema
 
-A machine-readable JSON Schema (draft 2020-12) for the `.dhpack` format is available
-in the repository at `schemas/dhpack.schema.json`. It can be used with VS Code's
-built-in JSON validation, `ajv`, or any other JSON Schema-aware tool.
+A machine-readable JSON Schema (draft 2020-12) for the `.dhpack` format is maintained
+in the [DaggerheartModels](https://github.com/gwillish/DaggerheartModels) repository
+at `schemas/dhpack.schema.json`. It can be used with VS Code's built-in JSON
+validation, `ajv`, or any other JSON Schema-aware tool.
 
 To enable VS Code validation, add a `$schema` field to your pack:
 
 ```json
 {
-  "$schema": "https://gwillish.github.io/encounter/schemas/dhpack.schema.json",
+  "$schema": "https://raw.githubusercontent.com/gwillish/DaggerheartModels/main/schemas/dhpack.schema.json",
   "adversaries": [ ... ]
 }
 ```
