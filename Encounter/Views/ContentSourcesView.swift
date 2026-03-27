@@ -5,6 +5,8 @@
 //  Lists all registered content sources and lets the GM remove any of them.
 //
 
+import DaggerheartKit
+import DaggerheartModels
 import SwiftUI
 
 struct ContentSourcesView: View {

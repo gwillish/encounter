@@ -16,6 +16,8 @@
 //  as read-only labels. GM-discretionary adjustments are Toggle rows.
 //
 
+import DaggerheartKit
+import DaggerheartModels
 import SwiftUI
 
 struct DifficultyAssessorView: View {
@@ -123,14 +125,14 @@ struct DifficultyAssessorView: View {
 #Preview("On Budget — 4 players, 14 BP spent") {
   @Previewable @State var manual: Set<DifficultyBudget.Adjustment> = []
   let rating = DifficultyBudget.Rating(budget: 14, totalCost: 14, remaining: 0)
-  return DifficultyAssessorView(rating: rating, autoAdjustments: [], manualAdjustments: $manual)
+  DifficultyAssessorView(rating: rating, autoAdjustments: [], manualAdjustments: $manual)
     .padding()
 }
 
 #Preview("Dangerous — over budget") {
   @Previewable @State var manual: Set<DifficultyBudget.Adjustment> = []
   let rating = DifficultyBudget.Rating(budget: 14, totalCost: 19, remaining: -5)
-  return DifficultyAssessorView(
+  DifficultyAssessorView(
     rating: rating,
     autoAdjustments: [.multipleSolos],
     manualAdjustments: $manual

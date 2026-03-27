@@ -5,6 +5,8 @@
 //  Unit tests for Daggerheart data models.
 //
 
+import DaggerheartKit
+import DaggerheartModels
 import Foundation
 import Testing
 

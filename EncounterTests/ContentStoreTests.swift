@@ -6,6 +6,8 @@
 //  configure(compendium:), and relocate(to:) async behavior.
 //
 
+import DaggerheartKit
+import DaggerheartModels
 import Foundation
 import Testing
 

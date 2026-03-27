@@ -8,6 +8,7 @@
 //
 
 import CryptoKit
+import DaggerheartModels
 import Foundation
 import OSLog
 

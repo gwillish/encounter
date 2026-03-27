@@ -10,15 +10,15 @@ Built with SwiftUI, targeting Xcode 26.3 / Swift 6.
 ```
 Encounter/
 ├── Encounter/                  # App target (auto-synced with Xcode file system)
-│   ├── Models/                 # Data model layer — start here
-│   │   ├── Adversary.swift         # Catalog types: Adversary, AdversaryType, AttackRange, FeatureType, AdversaryFeature
-│   │   ├── DaggerheartEnvironment.swift  # Catalog type: DaggerheartEnvironment
-│   │   ├── EncounterSession.swift  # Runtime types: EncounterSession, AdversarySlot, EnvironmentSlot
-│   │   └── Compendium.swift        # @Observable data store; loads JSON from bundle
+│   ├── Models/                 # (empty) — all model types live in DaggerheartModels package
+│   ├── Services/
+│   │   ├── ContentFetcher.swift    # Fetches .dhpack files from remote URLs
+│   │   ├── ContentStore.swift      # @Observable coordinator: source mgmt + Compendium reload
+│   │   └── ContentWriter.swift     # Reads/writes .dhpack files in App Support directory
+│   ├── Views/                  # SwiftUI views
 │   ├── Resources/
-│   │   ├── adversaries.json    # SRD adversary data (seansbox/daggerheart-srd format)
-│   │   └── environments.json   # SRD environment data
-│   ├── ContentView.swift       # Root view (stub)
+│   │   # (adversaries.json and environments.json now bundled inside DaggerheartKit)
+│   ├── ContentView.swift       # Root view
 │   └── EncounterApp.swift      # App entry point
 ├── EncounterTests/             # Swift Testing unit tests
 ├── EncounterUITests/           # XCUITest UI tests
@@ -31,6 +31,19 @@ Encounter/
 ├── CONTRIBUTING.md             # Contributor guidelines, scope boundaries, PR process
 └── CLAUDE.md                   # This file
 ```
+
+### DaggerheartModels package (gwillish/DaggerheartModels)
+
+The app imports two products from this package:
+
+| Product | Import | Contents |
+|---|---|---|
+| **DaggerheartModels** | `import DaggerheartModels` | Value types: `Adversary`, `DaggerheartEnvironment`, `EncounterDefinition`, `PlayerSlot`, `DHPackContent`, `ContentSource`, `ContentFingerprint`, `ContentStoreError`, `DifficultyBudget`, `Condition` |
+| **DaggerheartKit** | `import DaggerheartKit` | `@Observable` stores: `Compendium`, `EncounterStore`, `EncounterSession`, `SessionRegistry`; also re-depends on DaggerheartModels |
+
+**Import rule:** Any file that references value types needs `import DaggerheartModels`; any file
+that uses the observable stores needs `import DaggerheartKit`. With `MemberImportVisibility`
+active, both must be explicit — `import DaggerheartKit` alone does not expose DaggerheartModels types.
 
 **Important:** The Xcode project uses `PBXFileSystemSynchronizedRootGroup` (Xcode 16+).
 Any `.swift` file added to `Encounter/` or its subdirectories is **automatically included**
@@ -68,28 +81,36 @@ add `nonisolated` without a specific reason.
 The data layer has two distinct concerns:
 
 - **Catalog models** (`Adversary`, `DaggerheartEnvironment`) — immutable value types
-  loaded from JSON. These are the static SRD/homebrew definitions.
+  loaded from JSON. These are the static SRD/homebrew definitions. Defined in **DaggerheartModels**.
 - **Runtime models** (`EncounterSession`, `AdversarySlot`, `EnvironmentSlot`) — mutable
-  state for a live encounter being run at the table.
+  state for a live encounter being run at the table. Defined in **DaggerheartKit**.
 
 `Compendium` bridges the two: it loads catalog data and provides lookups so the session
-can resolve `adversaryID` slugs to full `Adversary` structs when needed.
+can resolve `adversaryID` slugs to full `Adversary` structs when needed. Defined in **DaggerheartKit**.
 
 ### SwiftUI integration (intended pattern)
 
 ```swift
 // EncounterApp.swift
+import DaggerheartKit
+
 @State private var compendium = Compendium()
+@State private var store = EncounterStore(directory: EncounterStore.localDirectory)
+@State private var sessionRegistry = SessionRegistry()
 
 WindowGroup {
     ContentView()
         .environment(compendium)
+        .environment(store)
+        .environment(sessionRegistry)
         .task { try? await compendium.load() }
 }
 
 // In a view:
+import DaggerheartKit
+import DaggerheartModels
+
 @Environment(Compendium.self) var compendium
-@State private var session = EncounterSession(name: "New Encounter")
 ```
 
 ---
@@ -218,8 +239,8 @@ was learned worth preserving, don't bring the ADR to `main`.
 
 - **File naming:** One primary type per file, filename matches type name.
   Exception: `EncounterSession.swift` contains `AdversarySlot` and `EnvironmentSlot`.
-- **Access control:** `public` on all model types/properties (anticipates potential
-  future Swift Package extraction). Views should be `internal`.
+- **Access control:** `public` on all model types/properties in DaggerheartModels/DaggerheartKit.
+  Views in the Encounter app target should be `internal`.
 - **No force-unwrap** in model or view code. Use `guard let` or optional chaining.
 - **No UIKit imports** — SwiftUI only, using `#if os(iOS)` / `#if os(macOS)` for
   platform-specific adaptations.
@@ -241,6 +262,5 @@ was learned worth preserving, don't bring the ADR to `main`.
 - LLM-assisted ad-hoc encounter generation from description
 - Continuity/Handoff between Mac and iPhone mid-session
 - Player companion app with live GM sync
-- Swift Package extraction — when a second app exists that needs the models
 - Hope tracking per player — pending playtesting to determine GM visibility needs
 - In-app rules/condition tooltips — pending licensing clarity

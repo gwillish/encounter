@@ -6,6 +6,8 @@
 //  and Armor Slots during a live encounter.
 //
 
+import DaggerheartKit
+import DaggerheartModels
 import SwiftUI
 
 struct PlayerEditPopover: View {

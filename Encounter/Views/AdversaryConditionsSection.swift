@@ -5,6 +5,8 @@
 //  Condition toggle strip for an adversary slot in the live encounter runner.
 //
 
+import DaggerheartKit
+import DaggerheartModels
 import SwiftUI
 
 /// Displays toggleable condition buttons for an adversary slot.

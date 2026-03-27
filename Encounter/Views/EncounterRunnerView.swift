@@ -11,6 +11,8 @@
 //   - PlayerStrip pinned to bottom via .safeAreaInset
 //
 
+import DaggerheartKit
+import DaggerheartModels
 import SwiftUI
 
 struct EncounterRunnerView: View {

@@ -7,6 +7,8 @@
 //  card can be open at a time by design (single UUID stored).
 //
 
+import DaggerheartKit
+import DaggerheartModels
 import SwiftUI
 
 struct AdversaryRunnerSection: View {

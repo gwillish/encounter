@@ -6,6 +6,8 @@
 //  Tapping opens a compact popover with +1 / −1 / −2 / −3 controls.
 //
 
+import DaggerheartKit
+import DaggerheartModels
 import SwiftUI
 
 struct FearTrackerButton: View {

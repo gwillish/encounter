@@ -5,6 +5,8 @@
 //  The populated list of encounter definitions with swipe and context menu actions.
 //
 
+import DaggerheartKit
+import DaggerheartModels
 import SwiftUI
 
 struct EncounterLibraryList: View {

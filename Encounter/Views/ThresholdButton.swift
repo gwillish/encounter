@@ -6,6 +6,8 @@
 //  HP mark count to an adversary slot.
 //
 
+import DaggerheartKit
+import DaggerheartModels
 import SwiftUI
 
 /// Applies a Daggerheart hit threshold (Minor/Major/Severe) to an adversary slot.

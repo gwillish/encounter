@@ -5,6 +5,8 @@
 //  A single row in the adversary list: name, type/tier/difficulty, homebrew badge.
 //
 
+import DaggerheartKit
+import DaggerheartModels
 import SwiftUI
 
 struct AdversaryRow: View {

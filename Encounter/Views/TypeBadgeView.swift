@@ -5,6 +5,8 @@
 //  Capsule badge showing an adversary's role type (e.g. "Minion", "Bruiser").
 //
 
+import DaggerheartKit
+import DaggerheartModels
 import SwiftUI
 
 /// A small capsule badge displaying an adversary's role type.

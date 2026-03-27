@@ -7,6 +7,8 @@
 //  Tapping expands to AdversaryRunnerCard (managed by AdversaryRunnerSection).
 //
 
+import DaggerheartKit
+import DaggerheartModels
 import SwiftUI
 
 struct AdversaryRunnerRow: View {

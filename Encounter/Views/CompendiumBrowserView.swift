@@ -10,6 +10,8 @@
 //  and dismisses the sheet.
 //
 
+import DaggerheartKit
+import DaggerheartModels
 import SwiftUI
 
 struct CompendiumBrowserView: View {

@@ -6,6 +6,8 @@
 //  as List sections. Used by AdversaryDetailView and EnvironmentDetailView.
 //
 
+import DaggerheartKit
+import DaggerheartModels
 import SwiftUI
 
 /// Renders a list of adversary features as grouped `Section` rows.

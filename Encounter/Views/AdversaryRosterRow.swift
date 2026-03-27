@@ -6,6 +6,8 @@
 //  Looks up the adversary by ID for display; shows a fallback if unresolvable.
 //
 
+import DaggerheartKit
+import DaggerheartModels
 import SwiftUI
 
 struct AdversaryRosterRow: View {

@@ -5,6 +5,8 @@
 //  Browse, create, rename, and delete encounter definitions.
 //
 
+import DaggerheartKit
+import DaggerheartModels
 import SwiftUI
 
 struct EncounterLibraryView: View {
