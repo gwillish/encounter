@@ -83,6 +83,14 @@ struct EncounterBuilderView: View {
         isExpanded: $notesExpanded,
         onChange: saveDebounced
       )
+      Section {
+        DifficultyAssessorView(
+          rating: difficultyRating,
+          autoAdjustments: autoAdjustments,
+          manualAdjustments: $manualAdjustments
+        )
+        .listRowInsets(EdgeInsets())
+      }
     }
     .navigationTitle($draft.name)
     #if os(iOS)
@@ -90,13 +98,6 @@ struct EncounterBuilderView: View {
       .toolbarRole(.editor)
     #endif
     .toolbar { toolbarContent }
-    .safeAreaInset(edge: .bottom) {
-      DifficultyAssessorView(
-        rating: difficultyRating,
-        autoAdjustments: autoAdjustments,
-        manualAdjustments: $manualAdjustments
-      )
-    }
     .safeAreaInset(edge: .top) {
       if let error = saveError {
         EncounterErrorBanner(message: error, onDismiss: { saveError = nil })
@@ -150,7 +151,7 @@ struct EncounterBuilderView: View {
           compendium: compendium
         )
       }
-      .disabled(draft.adversaryIDs.isEmpty)
+      .disabled(draft.adversaryIDs.isEmpty || draft.playerConfigs.isEmpty)
       .accessibilityIdentifier("builder.run-button")
     }
     ToolbarItem(placement: .primaryAction) {
