@@ -12,6 +12,8 @@
 //    Severe hit (at/above Severe threshold): mark 3 HP
 //
 
+import DaggerheartKit
+import DaggerheartModels
 import SwiftUI
 
 struct AdversaryRunnerCard: View {

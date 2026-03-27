@@ -6,6 +6,8 @@
 //  Includes core stats, attack info, and the adversary's feature list.
 //
 
+import DaggerheartKit
+import DaggerheartModels
 import SwiftUI
 
 /// Compact stat reference shown in the expanded adversary runner card.

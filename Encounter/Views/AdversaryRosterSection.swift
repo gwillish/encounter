@@ -6,6 +6,8 @@
 //  Uses index-based identity to support duplicate adversary IDs; onDelete receives a position-based IndexSet.
 //
 
+import DaggerheartKit
+import DaggerheartModels
 import SwiftUI
 
 struct AdversaryRosterSection: View {

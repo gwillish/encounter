@@ -6,6 +6,8 @@
 //  Used in both AdversaryDetailView and EnvironmentDetailView.
 //
 
+import DaggerheartKit
+import DaggerheartModels
 import SwiftUI
 
 struct AdversaryFeatureRow: View {

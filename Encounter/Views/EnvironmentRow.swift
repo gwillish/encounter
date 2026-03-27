@@ -5,6 +5,8 @@
 //  A single row in the environment list: name, description preview, homebrew badge.
 //
 
+import DaggerheartKit
+import DaggerheartModels
 import SwiftUI
 
 struct EnvironmentRow: View {

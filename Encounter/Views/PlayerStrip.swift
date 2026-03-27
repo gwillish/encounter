@@ -6,6 +6,8 @@
 //  via .safeAreaInset(edge: .bottom). Shows all player slots.
 //
 
+import DaggerheartKit
+import DaggerheartModels
 import SwiftUI
 
 struct PlayerStrip: View {

@@ -7,6 +7,8 @@
 //  (player count drives the difficulty budget calculation).
 //
 
+import DaggerheartKit
+import DaggerheartModels
 import SwiftUI
 
 struct PlayerRosterSection: View {

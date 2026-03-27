@@ -6,6 +6,8 @@
 //  When onSelect is provided, an "Add to Encounter" toolbar button is shown.
 //
 
+import DaggerheartKit
+import DaggerheartModels
 import SwiftUI
 
 struct EnvironmentDetailView: View {

@@ -10,6 +10,8 @@
 //  and pushes EncounterRunnerView.
 //
 
+import DaggerheartKit
+import DaggerheartModels
 import SwiftUI
 
 struct EncounterBuilderView: View {
@@ -82,7 +84,11 @@ struct EncounterBuilderView: View {
         onChange: saveDebounced
       )
     }
-    .navigationTitle(draft.name)
+    .navigationTitle($draft.name)
+    #if os(iOS)
+      .navigationBarTitleDisplayMode(.inline)
+      .toolbarRole(.editor)
+    #endif
     .toolbar { toolbarContent }
     .safeAreaInset(edge: .bottom) {
       DifficultyAssessorView(
@@ -126,6 +132,9 @@ struct EncounterBuilderView: View {
       if newDefinition.modifiedAt > draft.modifiedAt {
         draft = newDefinition
       }
+    }
+    .onChange(of: draft.name) { _, _ in
+      saveDebounced()
     }
   }
 

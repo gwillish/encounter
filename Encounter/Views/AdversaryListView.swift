@@ -6,6 +6,8 @@
 //  on the parent CompendiumBrowserView so they persist across tab switches.
 //
 
+import DaggerheartKit
+import DaggerheartModels
 import SwiftUI
 
 struct AdversaryListView: View {

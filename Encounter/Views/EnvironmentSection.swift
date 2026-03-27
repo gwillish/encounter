@@ -7,6 +7,8 @@
 //  when empty and a replace button when one is set.
 //
 
+import DaggerheartKit
+import DaggerheartModels
 import SwiftUI
 
 struct EnvironmentSection: View {

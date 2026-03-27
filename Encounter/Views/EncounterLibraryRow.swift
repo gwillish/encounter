@@ -5,6 +5,8 @@
 //  A single row in the encounter library list.
 //
 
+import DaggerheartKit
+import DaggerheartModels
 import SwiftUI
 
 struct EncounterLibraryRow: View {

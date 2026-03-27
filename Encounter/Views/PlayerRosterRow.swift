@@ -6,6 +6,8 @@
 //  Shows name, HP, Stress, and Evasion.
 //
 
+import DaggerheartKit
+import DaggerheartModels
 import SwiftUI
 
 struct PlayerRosterRow: View {
