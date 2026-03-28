@@ -5,8 +5,8 @@
 //  A single row in the content sources list showing a registered ContentSource.
 //
 
-import DaggerheartKit
-import DaggerheartModels
+import DHKit
+import DHModels
 import SwiftUI
 
 struct ContentSourceRow: View {

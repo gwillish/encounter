@@ -6,8 +6,8 @@
 //  remove action, used in ContentSourcesView.
 //
 
-import DaggerheartKit
-import DaggerheartModels
+import DHKit
+import DHModels
 import SwiftUI
 
 struct ContentSourceRemovableRow: View {

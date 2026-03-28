@@ -7,8 +7,8 @@
 //  Tapping expands to AdversaryRunnerCard (managed by AdversaryRunnerSection).
 //
 
-import DaggerheartKit
-import DaggerheartModels
+import DHKit
+import DHModels
 import SwiftUI
 
 struct AdversaryRunnerRow: View {
@@ -30,7 +30,7 @@ struct AdversaryRunnerRow: View {
           .fontWeight(.medium)
         Spacer()
         if let adversary {
-          Text("\(adversary.type.rawValue) · T\(adversary.tier)")
+          Text("\(adversary.role.rawValue) · T\(adversary.tier)")
             .font(.caption2)
             .foregroundStyle(.secondary)
             .padding(.horizontal, 6)
@@ -62,8 +62,8 @@ struct AdversaryRunnerRow: View {
   let compendium = Compendium()
   compendium.addAdversary(
     Adversary(
-      id: "goblin", name: "Goblin", tier: 1, type: .minion,
-      description: "Small and cunning.", difficulty: 10,
+      id: "goblin", name: "Goblin", tier: 1, role: .minion,
+      flavorText: "Small and cunning.", difficulty: 10,
       thresholdMajor: 5, thresholdSevere: 10, hp: 3, stress: 2,
       attackModifier: "+2", attackName: "Rusty Blade",
       attackRange: .veryClose, damage: "1d4 phy"

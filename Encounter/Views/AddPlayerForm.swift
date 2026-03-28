@@ -7,8 +7,8 @@
 //  all fields pass validation.
 //
 
-import DaggerheartKit
-import DaggerheartModels
+import DHKit
+import DHModels
 import SwiftUI
 
 struct AddPlayerForm: View {

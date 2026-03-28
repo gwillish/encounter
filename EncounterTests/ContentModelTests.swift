@@ -7,8 +7,8 @@
 //  All tested types are pure value types with no I/O dependencies.
 //
 
-import DaggerheartKit
-import DaggerheartModels
+import DHKit
+import DHModels
 import Foundation
 import Testing
 

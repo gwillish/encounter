@@ -5,8 +5,8 @@
 //  Condition toggle strip for an adversary slot in the live encounter runner.
 //
 
-import DaggerheartKit
-import DaggerheartModels
+import DHKit
+import DHModels
 import SwiftUI
 
 /// Displays toggleable condition buttons for an adversary slot.
@@ -27,9 +27,9 @@ struct AdversaryConditionsSection: View {
           let active = slot.conditions.contains(condition)
           Button(condition.displayName) {
             if active {
-              session.removeCondition(condition, from: slot.id)
+              session.removeCondition(condition, from: slot)
             } else {
-              session.applyCondition(condition, to: slot.id)
+              session.applyCondition(condition, to: slot)
             }
           }
           .font(.caption)

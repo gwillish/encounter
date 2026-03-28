@@ -8,8 +8,8 @@
 //  on the main actor.
 //
 
-import DaggerheartKit
-import DaggerheartModels
+import DHKit
+import DHModels
 import Foundation
 import OSLog
 import Observation

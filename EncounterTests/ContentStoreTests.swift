@@ -6,8 +6,8 @@
 //  configure(compendium:), and relocate(to:) async behavior.
 //
 
-import DaggerheartKit
-import DaggerheartModels
+import DHKit
+import DHModels
 import Foundation
 import Testing
 
@@ -32,8 +32,8 @@ import Testing
     // Add an adversary to the real compendium.
     real.addAdversary(
       Adversary(
-        id: "goblin", name: "Goblin", tier: 1, type: .minion,
-        description: "Small and cunning.", difficulty: 10,
+        id: "goblin", name: "Goblin", tier: 1, role: .minion,
+        flavorText: "Small and cunning.", difficulty: 10,
         thresholdMajor: 5, thresholdSevere: 10, hp: 3, stress: 2,
         attackModifier: "+2", attackName: "Rusty Blade",
         attackRange: .veryClose, damage: "1d4 phy"

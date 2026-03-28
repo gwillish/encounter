@@ -6,12 +6,12 @@
 //  Used in both AdversaryDetailView and EnvironmentDetailView.
 //
 
-import DaggerheartKit
-import DaggerheartModels
+import DHKit
+import DHModels
 import SwiftUI
 
 struct AdversaryFeatureRow: View {
-  let feature: AdversaryFeature
+  let feature: EncounterFeature
 
   var body: some View {
     VStack(alignment: .leading, spacing: 4) {
@@ -19,7 +19,7 @@ struct AdversaryFeatureRow: View {
         Text(feature.name)
           .font(.subheadline)
           .fontWeight(.semibold)
-        Text(feature.featType.rawValue.capitalized)
+        Text(feature.kind.rawValue.capitalized)
           .font(.caption2)
           .foregroundStyle(.secondary)
           .padding(.horizontal, 5)
@@ -37,10 +37,10 @@ struct AdversaryFeatureRow: View {
 
 #Preview {
   AdversaryFeatureRow(
-    feature: AdversaryFeature(
+    feature: EncounterFeature(
       name: "Pack Tactics",
       text: "Deal +1 damage for each ally adjacent to the target.",
-      featType: .passive
+      kind: .passive
     )
   )
   .padding()

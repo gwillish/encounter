@@ -2,7 +2,6 @@
 //  EncounterUITests.swift
 //  EncounterUITests
 //
-//  Created by Joe Heck on 3/14/26.
 //
 
 import XCTest

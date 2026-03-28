@@ -2,10 +2,9 @@
 //  EncounterApp.swift
 //  Encounter
 //
-//  Created by Joe Heck on 3/14/26.
 //
 
-import DaggerheartKit
+import DHKit
 import Logging
 import OSLogging
 import SwiftUI
@@ -29,6 +28,8 @@ struct EncounterApp: App {
     contentDirectory: ContentStore.localContentDirectory,
     compendium: Compendium()  // placeholder; replaced by the real compendium below
   )
+
+  @State private var isShowingAbout = false
 
   var body: some Scene {
     WindowGroup {
@@ -62,6 +63,9 @@ struct EncounterApp: App {
         // onOpenURL on the root view handles .dhpack file opens on both
         // iOS and macOS. contentStore is non-nil from first render, so
         // there is no startup race.
+        .sheet(isPresented: $isShowingAbout) {
+          AboutView()
+        }
         .onOpenURL { url in
           guard url.pathExtension.lowercased() == "dhpack" else { return }
           guard url.startAccessingSecurityScopedResource() else { return }
@@ -71,5 +75,14 @@ struct EncounterApp: App {
           }
         }
     }
+    #if os(macOS)
+      .commands {
+        CommandGroup(replacing: .appInfo) {
+          Button("About Encounter") {
+            isShowingAbout = true
+          }
+        }
+      }
+    #endif
   }
 }

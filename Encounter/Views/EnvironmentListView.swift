@@ -6,8 +6,8 @@
 //  on the parent CompendiumBrowserView so they persist across tab switches.
 //
 
-import DaggerheartKit
-import DaggerheartModels
+import DHKit
+import DHModels
 import SwiftUI
 
 struct EnvironmentListView: View {
@@ -38,10 +38,10 @@ struct EnvironmentListView: View {
     EnvironmentListView(environments: [
       DaggerheartEnvironment(
         id: "collapsing-cavern", name: "Collapsing Cavern",
-        description: "The ceiling threatens to fall with every heavy blow."),
+        flavorText: "The ceiling threatens to fall with every heavy blow."),
       DaggerheartEnvironment(
         id: "burning-bridge", name: "Burning Bridge",
-        description: "The planks crumble underfoot as flames spread."),
+        flavorText: "The planks crumble underfoot as flames spread."),
     ])
   }
 }

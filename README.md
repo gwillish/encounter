@@ -25,8 +25,8 @@ plain JSON file containing adversaries, environments, or both.
 - [Sharing and hosting](https://gwillish.github.io/encounter/documentation/encounter/sharingandhostingpacks) — AirDrop, URL sources, GitHub Releases, jsDelivr, Gist
 
 The JSON Schema for `.dhpack` is maintained in the
-[DaggerheartModels](https://github.com/gwillish/DaggerheartModels) repository.
-Add `"$schema": "https://raw.githubusercontent.com/gwillish/DaggerheartModels/main/schemas/dhpack.schema.json"`
+[DHModels](https://github.com/gwillish/DHModels) repository.
+Add `"$schema": "https://raw.githubusercontent.com/gwillish/DHModels/main/schemas/dhpack.schema.json"`
 to your pack file to enable validation and autocomplete in VS Code.
 
 ## Architecture Decision Records
@@ -39,3 +39,22 @@ When a decision turns out to be wrong or needs to change, a new ADR is written
 that supersedes the original. The original is never edited or deleted — the
 reasoning history is preserved. See `docs/decisions/README.md` for the full
 process.
+
+## License & Attribution
+
+The Encounter app source code is licensed under the [MIT License](LICENSE).
+
+This app bundles content from the Daggerheart System Reference Document 1.0,
+used under the Darrington Press Community Gaming License (DPCGL):
+
+> This product includes materials from the Daggerheart System Reference Document 1.0,
+> © Critical Role, LLC. under the terms of the Darrington Press Community Gaming (DPCGL)
+> License. More information can be found at https://www.daggerheart.com. There are no
+> previous modifications by others.
+
+Full DPCGL license text: https://darringtonpress.com/license/
+
+See [NOTICE](NOTICE) for the complete dual-license breakdown.
+
+This project is not affiliated with, endorsed by, or sponsored by Darrington Press, LLC
+or Critical Role, LLC. Daggerheart is a trademark of Critical Role, LLC.

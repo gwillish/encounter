@@ -7,8 +7,8 @@
 //  Tapping opens PlayerEditPopover for HP/Stress/Armor stepper controls.
 //
 
-import DaggerheartKit
-import DaggerheartModels
+import DHKit
+import DHModels
 import SwiftUI
 
 struct PlayerStripRow: View {

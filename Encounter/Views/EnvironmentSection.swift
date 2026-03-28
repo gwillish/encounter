@@ -7,8 +7,8 @@
 //  when empty and a replace button when one is set.
 //
 
-import DaggerheartKit
-import DaggerheartModels
+import DHKit
+import DHModels
 import SwiftUI
 
 struct EnvironmentSection: View {
@@ -79,7 +79,7 @@ struct EnvironmentSection: View {
   compendium.addEnvironment(
     DaggerheartEnvironment(
       id: "collapsing-cavern", name: "Collapsing Cavern",
-      description: "The ceiling threatens to fall with every heavy blow."
+      flavorText: "The ceiling threatens to fall with every heavy blow."
     ))
   return Form {
     EnvironmentSection(

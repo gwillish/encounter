@@ -6,8 +6,8 @@
 //  and resetSession behavior.
 //
 
-import DaggerheartKit
-import DaggerheartModels
+import DHKit
+import DHModels
 import Foundation
 import Testing
 
@@ -19,8 +19,8 @@ import Testing
     let c = Compendium()
     c.addAdversary(
       Adversary(
-        id: "goblin", name: "Goblin", tier: 1, type: .minion,
-        description: "Small and cunning.", difficulty: 10,
+        id: "goblin", name: "Goblin", tier: 1, role: .minion,
+        flavorText: "Small and cunning.", difficulty: 10,
         thresholdMajor: 5, thresholdSevere: 10, hp: 3, stress: 2,
         attackModifier: "+2", attackName: "Rusty Blade",
         attackRange: .veryClose, damage: "1d4 phy"
@@ -72,7 +72,7 @@ import Testing
 
     let s1 = registry.session(for: def1.id, definition: def1, compendium: compendium)
     // Apply damage so s1 has mutated state.
-    s1.applyDamage(2, to: s1.adversarySlots[0].id)
+    s1.applyDamage(2, to: s1.adversarySlots[0])
     #expect(s1.adversarySlots[0].currentHP == 1)
 
     let s2 = registry.resetSession(for: def1.id, definition: def1, compendium: compendium)

@@ -6,8 +6,8 @@
 //  Tapping opens a compact popover with +1 / −1 / −2 / −3 controls.
 //
 
-import DaggerheartKit
-import DaggerheartModels
+import DHKit
+import DHModels
 import SwiftUI
 
 struct FearTrackerButton: View {
@@ -36,15 +36,15 @@ struct FearTrackerButton: View {
           Button("+1") { session.incrementFear(by: 1) }
             .buttonStyle(.bordered)
             .accessibilityIdentifier("runner.fear.increment")
-          Button("−1") { session.spendFear(1) }
+          Button("−1") { session.spendFear(by: 1) }
             .buttonStyle(.bordered)
             .disabled(session.fearPool < 1)
             .accessibilityIdentifier("runner.fear.spend-1")
-          Button("−2") { session.spendFear(2) }
+          Button("−2") { session.spendFear(by: 2) }
             .buttonStyle(.bordered)
             .disabled(session.fearPool < 2)
             .accessibilityIdentifier("runner.fear.spend-2")
-          Button("−3") { session.spendFear(3) }
+          Button("−3") { session.spendFear(by: 3) }
             .buttonStyle(.bordered)
             .disabled(session.fearPool < 3)
             .accessibilityIdentifier("runner.fear.spend-3")

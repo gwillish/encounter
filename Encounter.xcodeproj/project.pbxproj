@@ -10,8 +10,8 @@
 		1AD61A3B2F74D3F900296F39 /* InMemoryLogging in Frameworks */ = {isa = PBXBuildFile; productRef = 1AD61A3A2F74D3F900296F39 /* InMemoryLogging */; };
 		1AD61A3D2F74D3F900296F39 /* Logging in Frameworks */ = {isa = PBXBuildFile; productRef = 1AD61A3C2F74D3F900296F39 /* Logging */; };
 		1AD61A402F74D40B00296F39 /* OSLogging in Frameworks */ = {isa = PBXBuildFile; productRef = 1AD61A3F2F74D40B00296F39 /* OSLogging */; };
-		5B67DAEC49BC4CA58D0F68CB /* DaggerheartKit in Frameworks */ = {isa = PBXBuildFile; productRef = 696E5A197EC643C8822586E5 /* DaggerheartKit */; };
-		720CFEA27FDB4C618D811F30 /* DaggerheartModels in Frameworks */ = {isa = PBXBuildFile; productRef = 372D78F7B37E42698659576B /* DaggerheartModels */; };
+		5B67DAEC49BC4CA58D0F68CB /* DHKit in Frameworks */ = {isa = PBXBuildFile; productRef = 696E5A197EC643C8822586E5 /* DHKit */; };
+		720CFEA27FDB4C618D811F30 /* DHModels in Frameworks */ = {isa = PBXBuildFile; productRef = 372D78F7B37E42698659576B /* DHModels */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -76,8 +76,8 @@
 				1AD61A402F74D40B00296F39 /* OSLogging in Frameworks */,
 				1AD61A3D2F74D3F900296F39 /* Logging in Frameworks */,
 				1AD61A3B2F74D3F900296F39 /* InMemoryLogging in Frameworks */,
-				720CFEA27FDB4C618D811F30 /* DaggerheartModels in Frameworks */,
-				5B67DAEC49BC4CA58D0F68CB /* DaggerheartKit in Frameworks */,
+				720CFEA27FDB4C618D811F30 /* DHModels in Frameworks */,
+				5B67DAEC49BC4CA58D0F68CB /* DHKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -141,8 +141,8 @@
 				1AD61A3A2F74D3F900296F39 /* InMemoryLogging */,
 				1AD61A3C2F74D3F900296F39 /* Logging */,
 				1AD61A3F2F74D40B00296F39 /* OSLogging */,
-				372D78F7B37E42698659576B /* DaggerheartModels */,
-				696E5A197EC643C8822586E5 /* DaggerheartKit */,
+				372D78F7B37E42698659576B /* DHModels */,
+				696E5A197EC643C8822586E5 /* DHKit */,
 			);
 			productName = Encounter;
 			productReference = 1A8F7B9A2F660D3800548E3A /* Encounter.app */;
@@ -234,7 +234,7 @@
 			packageReferences = (
 				1AD61A392F74D3F900296F39 /* XCRemoteSwiftPackageReference "swift-log" */,
 				1AD61A3E2F74D40B00296F39 /* XCRemoteSwiftPackageReference "swift-oslog" */,
-				6E36C5CB9EA54972BB735840 /* XCRemoteSwiftPackageReference "DaggerheartModels" */,
+				6E36C5CB9EA54972BB735840 /* XCRemoteSwiftPackageReference "DHModels" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 1A8F7B9B2F660D3800548E3A /* Products */;
@@ -680,9 +680,9 @@
 				minimumVersion = 1.0.0;
 			};
 		};
-		6E36C5CB9EA54972BB735840 /* XCRemoteSwiftPackageReference "DaggerheartModels" */ = {
+		6E36C5CB9EA54972BB735840 /* XCRemoteSwiftPackageReference "DHModels" */ = {
 			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/gwillish/DaggerheartModels";
+			repositoryURL = "https://github.com/gwillish/DHModels";
 			requirement = {
 				kind = upToNextMajorVersion;
 				minimumVersion = 0.1.0;
@@ -706,15 +706,15 @@
 			package = 1AD61A3E2F74D40B00296F39 /* XCRemoteSwiftPackageReference "swift-oslog" */;
 			productName = OSLogging;
 		};
-		372D78F7B37E42698659576B /* DaggerheartModels */ = {
+		372D78F7B37E42698659576B /* DHModels */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 6E36C5CB9EA54972BB735840 /* XCRemoteSwiftPackageReference "DaggerheartModels" */;
-			productName = DaggerheartModels;
+			package = 6E36C5CB9EA54972BB735840 /* XCRemoteSwiftPackageReference "DHModels" */;
+			productName = DHModels;
 		};
-		696E5A197EC643C8822586E5 /* DaggerheartKit */ = {
+		696E5A197EC643C8822586E5 /* DHKit */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 6E36C5CB9EA54972BB735840 /* XCRemoteSwiftPackageReference "DaggerheartModels" */;
-			productName = DaggerheartKit;
+			package = 6E36C5CB9EA54972BB735840 /* XCRemoteSwiftPackageReference "DHModels" */;
+			productName = DHKit;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

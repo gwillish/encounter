@@ -6,8 +6,8 @@
 //  the sample-homebrew.dhpack fixture in EncounterTests/Fixtures/.
 //
 
-import DaggerheartKit
-import DaggerheartModels
+import DHKit
+import DHModels
 import Foundation
 import Testing
 
