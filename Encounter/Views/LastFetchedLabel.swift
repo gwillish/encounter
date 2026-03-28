@@ -5,8 +5,8 @@
 //  Caption-sized label showing when a ContentSource was last fetched.
 //
 
-import DaggerheartKit
-import DaggerheartModels
+import DHKit
+import DHModels
 import SwiftUI
 
 struct LastFetchedLabel: View {

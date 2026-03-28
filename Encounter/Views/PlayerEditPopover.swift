@@ -6,8 +6,8 @@
 //  and Armor Slots during a live encounter.
 //
 
-import DaggerheartKit
-import DaggerheartModels
+import DHKit
+import DHModels
 import SwiftUI
 
 struct PlayerEditPopover: View {
@@ -23,16 +23,16 @@ struct PlayerEditPopover: View {
         label: "HP",
         current: player.currentHP,
         maximum: player.maxHP,
-        onDecrement: { session.applyPlayerDamage(1, to: player.id) },
-        onIncrement: { session.healPlayer(1, slotID: player.id) }
+        onDecrement: { session.applyDamage(1, to: player) },
+        onIncrement: { session.heal(1, to: player) }
       )
 
       statRow(
         label: "Stress",
         current: player.currentStress,
         maximum: player.maxStress,
-        onDecrement: { session.clearPlayerStress(1, slotID: player.id) },
-        onIncrement: { session.applyPlayerStress(1, to: player.id) }
+        onDecrement: { session.reduceStress(1, from: player) },
+        onIncrement: { session.applyStress(1, to: player) }
       )
 
       if player.armorSlots > 0 {
@@ -40,8 +40,8 @@ struct PlayerEditPopover: View {
           label: "Armor",
           current: player.currentArmorSlots,
           maximum: player.armorSlots,
-          onDecrement: { session.markPlayerArmorSlot(player.id) },
-          onIncrement: { session.restorePlayerArmorSlot(player.id) }
+          onDecrement: { session.markArmorSlot(for: player.id) },
+          onIncrement: { session.restoreArmorSlot(for: player.id) }
         )
       }
     }
@@ -90,8 +90,7 @@ struct PlayerEditPopover: View {
 
 #Preview {
   let session = EncounterSession(name: "Test")
-  session.addPlayer(
-    PlayerSlot(
+  session.add(player: PlayerSlot(
       name: "Aric Stonehammer",
       maxHP: 6, maxStress: 6, evasion: 12,
       thresholdMajor: 5, thresholdSevere: 10, armorSlots: 3

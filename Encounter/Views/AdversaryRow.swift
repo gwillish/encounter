@@ -5,8 +5,8 @@
 //  A single row in the adversary list: name, type/tier/difficulty, homebrew badge.
 //
 
-import DaggerheartKit
-import DaggerheartModels
+import DHKit
+import DHModels
 import SwiftUI
 
 struct AdversaryRow: View {
@@ -27,7 +27,7 @@ struct AdversaryRow: View {
             .clipShape(.capsule)
         }
       }
-      Text("\(adversary.type.rawValue) · Tier \(adversary.tier) · DC \(adversary.difficulty)")
+      Text("\(adversary.role.rawValue) · Tier \(adversary.tier) · DC \(adversary.difficulty)")
         .font(.caption)
         .foregroundStyle(.secondary)
     }
@@ -41,8 +41,8 @@ struct AdversaryRow: View {
       id: "goblin",
       name: "Goblin",
       tier: 1,
-      type: .minion,
-      description: "Small and cunning.",
+      role: .minion,
+      flavorText: "Small and cunning.",
       difficulty: 10,
       thresholdMajor: 5,
       thresholdSevere: 10,

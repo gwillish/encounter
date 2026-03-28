@@ -6,8 +6,8 @@
 //  When onSelect is provided, an "Add to Encounter" toolbar button is shown.
 //
 
-import DaggerheartKit
-import DaggerheartModels
+import DHKit
+import DHModels
 import SwiftUI
 
 struct EnvironmentDetailView: View {
@@ -70,14 +70,14 @@ struct EnvironmentDetailView: View {
       environment: DaggerheartEnvironment(
         id: "collapsing-cavern",
         name: "Collapsing Cavern",
-        description:
+        flavorText:
           "The ceiling threatens to fall with every heavy blow. Whenever a Severe hit is dealt, roll 1d6 — on a 1–3, a section collapses.",
         features: [
-          AdversaryFeature(
+          EncounterFeature(
             name: "Cave-In",
             text:
               "When a Severe hit is dealt, roll 1d6. On 1–3, creatures in the area make an Agility roll against DC 14 or take 2d8 physical damage.",
-            featType: .reaction)
+            kind: .reaction)
         ]
       ))
   }

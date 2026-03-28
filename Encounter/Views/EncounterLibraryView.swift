@@ -5,8 +5,8 @@
 //  Browse, create, rename, and delete encounter definitions.
 //
 
-import DaggerheartKit
-import DaggerheartModels
+import DHKit
+import DHModels
 import SwiftUI
 
 struct EncounterLibraryView: View {
@@ -23,6 +23,7 @@ struct EncounterLibraryView: View {
   @State private var actionError: String?
   @State private var loadErrorDismissed = false
   @State private var isShowingSources = false
+  @State private var isShowingAbout = false
 
   var body: some View {
     Group {
@@ -76,6 +77,9 @@ struct EncounterLibraryView: View {
         ContentSourcesView()
       }
     }
+    .sheet(isPresented: $isShowingAbout) {
+      AboutView()
+    }
     // Error banners
     .safeAreaInset(edge: .top) {
       if let error = store.loadError, !loadErrorDismissed {
@@ -104,6 +108,14 @@ struct EncounterLibraryView: View {
       }
       .accessibilityIdentifier("library.sources-button")
     }
+    #if os(iOS) || os(visionOS)
+      ToolbarItem(placement: .secondaryAction) {
+        Button("About", systemImage: "info.circle") {
+          isShowingAbout = true
+        }
+        .accessibilityIdentifier("library.about-button")
+      }
+    #endif
   }
 
   // MARK: - Actions

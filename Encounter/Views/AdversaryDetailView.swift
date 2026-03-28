@@ -7,8 +7,8 @@
 //  an "Add to Encounter" toolbar button is shown.
 //
 
-import DaggerheartKit
-import DaggerheartModels
+import DHKit
+import DHModels
 import SwiftUI
 
 struct AdversaryDetailView: View {
@@ -28,7 +28,7 @@ struct AdversaryDetailView: View {
       Section {
         VStack(alignment: .leading, spacing: 6) {
           HStack(spacing: 6) {
-            TypeBadgeView(type: adversary.type)
+            TypeBadgeView(type: adversary.role)
             Text("Tier \(adversary.tier)")
               .font(.caption)
               .foregroundStyle(.secondary)
@@ -112,8 +112,8 @@ struct AdversaryDetailView: View {
         id: "goblin",
         name: "Goblin",
         tier: 1,
-        type: .minion,
-        description: "Small, cunning, and cowardly alone but dangerous in numbers.",
+        role: .minion,
+        flavorText: "Small, cunning, and cowardly alone but dangerous in numbers.",
         motivesAndTactics: "Goblins mob weak targets and flee from strong ones.",
         difficulty: 10,
         thresholdMajor: 5,
@@ -125,12 +125,12 @@ struct AdversaryDetailView: View {
         attackRange: .veryClose,
         damage: "1d4 phy",
         features: [
-          AdversaryFeature(
+          EncounterFeature(
             name: "Pack Tactics", text: "Deal +1 damage for each ally adjacent to the target.",
-            featType: .passive),
-          AdversaryFeature(
+            kind: .passive),
+          EncounterFeature(
             name: "Sneak Attack", text: "Once per round, deal +1d6 damage when hidden.",
-            featType: .action),
+            kind: .action),
         ]
       ))
   }

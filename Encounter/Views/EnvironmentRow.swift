@@ -5,8 +5,8 @@
 //  A single row in the environment list: name, description preview, homebrew badge.
 //
 
-import DaggerheartKit
-import DaggerheartModels
+import DHKit
+import DHModels
 import SwiftUI
 
 struct EnvironmentRow: View {
@@ -41,7 +41,7 @@ struct EnvironmentRow: View {
     environment: DaggerheartEnvironment(
       id: "collapsing-cavern",
       name: "Collapsing Cavern",
-      description: "The ceiling threatens to fall with every heavy blow."
+      flavorText: "The ceiling threatens to fall with every heavy blow."
     )
   )
   .padding()

@@ -32,18 +32,22 @@ Encounter/
 └── CLAUDE.md                   # This file
 ```
 
-### DaggerheartModels package (gwillish/DaggerheartModels)
+### DHModels package (gwillish/DHModels)
+
+The package repo was formerly named `gwillish/DaggerheartModels`. It was renamed to
+`DHModels`/`DHKit` to avoid using the DAGGERHEART Name Mark (DPCGL §2.5) in a
+title-like position.
 
 The app imports two products from this package:
 
 | Product | Import | Contents |
 |---|---|---|
-| **DaggerheartModels** | `import DaggerheartModels` | Value types: `Adversary`, `DaggerheartEnvironment`, `EncounterDefinition`, `PlayerSlot`, `DHPackContent`, `ContentSource`, `ContentFingerprint`, `ContentStoreError`, `DifficultyBudget`, `Condition` |
-| **DaggerheartKit** | `import DaggerheartKit` | `@Observable` stores: `Compendium`, `EncounterStore`, `EncounterSession`, `SessionRegistry`; also re-depends on DaggerheartModels |
+| **DHModels** | `import DHModels` | Value types: `Adversary`, `DaggerheartEnvironment`, `EncounterDefinition`, `PlayerSlot`, `DHPackContent`, `ContentSource`, `ContentFingerprint`, `ContentStoreError`, `DifficultyBudget`, `Condition` |
+| **DHKit** | `import DHKit` | `@Observable` stores: `Compendium`, `EncounterStore`, `EncounterSession`, `SessionRegistry`; also re-depends on DHModels |
 
-**Import rule:** Any file that references value types needs `import DaggerheartModels`; any file
-that uses the observable stores needs `import DaggerheartKit`. With `MemberImportVisibility`
-active, both must be explicit — `import DaggerheartKit` alone does not expose DaggerheartModels types.
+**Import rule:** Any file that references value types needs `import DHModels`; any file
+that uses the observable stores needs `import DHKit`. With `MemberImportVisibility`
+active, both must be explicit — `import DHKit` alone does not expose DHModels types.
 
 **Important:** The Xcode project uses `PBXFileSystemSynchronizedRootGroup` (Xcode 16+).
 Any `.swift` file added to `Encounter/` or its subdirectories is **automatically included**
@@ -92,7 +96,7 @@ can resolve `adversaryID` slugs to full `Adversary` structs when needed. Defined
 
 ```swift
 // EncounterApp.swift
-import DaggerheartKit
+import DHKit
 
 @State private var compendium = Compendium()
 @State private var store = EncounterStore(directory: EncounterStore.localDirectory)
@@ -107,8 +111,8 @@ WindowGroup {
 }
 
 // In a view:
-import DaggerheartKit
-import DaggerheartModels
+import DHKit
+import DHModels
 
 @Environment(Compendium.self) var compendium
 ```

@@ -6,8 +6,8 @@
 //  as List sections. Used by AdversaryDetailView and EnvironmentDetailView.
 //
 
-import DaggerheartKit
-import DaggerheartModels
+import DHKit
+import DHModels
 import SwiftUI
 
 /// Renders a list of adversary features as grouped `Section` rows.
@@ -15,12 +15,12 @@ import SwiftUI
 /// Sections are shown only if at least one feature of that type exists.
 /// Intended for use inside a `List`.
 struct FeatureSectionsView: View {
-  let features: [AdversaryFeature]
+  let features: [EncounterFeature]
 
   var body: some View {
-    let passives = features.filter { $0.featType == .passive }
-    let actions = features.filter { $0.featType == .action }
-    let reactions = features.filter { $0.featType == .reaction }
+    let passives = features.filter { $0.kind == .passive }
+    let actions = features.filter { $0.kind == .action }
+    let reactions = features.filter { $0.kind == .reaction }
 
     if !passives.isEmpty {
       Section("Passives") {

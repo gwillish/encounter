@@ -6,8 +6,8 @@
 //  HP mark count to an adversary slot.
 //
 
-import DaggerheartKit
-import DaggerheartModels
+import DHKit
+import DHModels
 import SwiftUI
 
 /// Applies a Daggerheart hit threshold (Minor/Major/Severe) to an adversary slot.
@@ -20,11 +20,11 @@ struct ThresholdButton: View {
   let marks: Int
   let isDefeated: Bool
   let session: EncounterSession
-  let slotID: UUID
+  let slot: AdversarySlot
 
   var body: some View {
     Button {
-      session.applyDamage(marks, to: slotID)
+      session.applyDamage(marks, to: slot)
     } label: {
       VStack(spacing: 2) {
         Text(label)

@@ -16,8 +16,8 @@
 //  as read-only labels. GM-discretionary adjustments are Toggle rows.
 //
 
-import DaggerheartKit
-import DaggerheartModels
+import DHKit
+import DHModels
 import SwiftUI
 
 struct DifficultyAssessorView: View {
@@ -93,7 +93,7 @@ struct DifficultyAssessorView: View {
         if !autoAdjustments.isEmpty {
           VStack(alignment: .leading, spacing: 2) {
             ForEach(Array(autoAdjustments), id: \.self) { adj in
-              Label(adj.label, systemImage: "checkmark.circle.fill")
+              Label(adj.displayName, systemImage: "checkmark.circle.fill")
                 .font(.caption)
                 .foregroundStyle(.secondary)
             }
@@ -103,7 +103,7 @@ struct DifficultyAssessorView: View {
         // Manual GM-discretionary toggles
         VStack(alignment: .leading, spacing: 2) {
           ForEach(Self.manualCases, id: \.self) { adj in
-            Toggle(adj.label, isOn: toggleBinding(for: adj))
+            Toggle(adj.displayName, isOn: toggleBinding(for: adj))
               .font(.caption)
               .accessibilityIdentifier(
                 "builder.difficulty.toggle.\(String(describing: adj))"

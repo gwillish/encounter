@@ -12,8 +12,8 @@
 //    Severe hit (at/above Severe threshold): mark 3 HP
 //
 
-import DaggerheartKit
-import DaggerheartModels
+import DHKit
+import DHModels
 import SwiftUI
 
 struct AdversaryRunnerCard: View {
@@ -66,18 +66,18 @@ struct AdversaryRunnerCard: View {
       HStack(spacing: 8) {
         ThresholdButton(
           label: "Minor", subtitle: "< \(major)", marks: 1, isDefeated: slot.isDefeated,
-          session: session, slotID: slot.id)
+          session: session, slot: slot)
         ThresholdButton(
           label: "Major", subtitle: "≥ \(major)", marks: 2, isDefeated: slot.isDefeated,
-          session: session, slotID: slot.id)
+          session: session, slot: slot)
         ThresholdButton(
           label: "Severe", subtitle: "≥ \(severe)", marks: 3, isDefeated: slot.isDefeated,
-          session: session, slotID: slot.id)
+          session: session, slot: slot)
       }
 
       // Stress
       Button("+1 Stress (\(slot.currentStress)/\(slot.maxStress))") {
-        session.applyStress(1, to: slot.id)
+        session.applyStress(1, to: slot)
       }
       .buttonStyle(.bordered)
       .disabled(slot.currentStress >= slot.maxStress || slot.isDefeated)
@@ -99,13 +99,13 @@ struct AdversaryRunnerCard: View {
   let compendium = Compendium()
   compendium.addAdversary(
     Adversary(
-      id: "goblin", name: "Goblin", tier: 1, type: .minion,
-      description: "Small and cunning.", difficulty: 10,
+      id: "goblin", name: "Goblin", tier: 1, role: .minion,
+      flavorText: "Small and cunning.", difficulty: 10,
       thresholdMajor: 5, thresholdSevere: 10, hp: 3, stress: 2,
       attackModifier: "+2", attackName: "Rusty Blade",
       attackRange: .veryClose, damage: "1d4 phy",
       features: [
-        AdversaryFeature(name: "Sneak", text: "Can hide as a free action.", featType: .passive)
+        EncounterFeature(name: "Sneak", text: "Can hide as a free action.", kind: .passive)
       ]
     ))
   let session = EncounterSession(name: "Test")
