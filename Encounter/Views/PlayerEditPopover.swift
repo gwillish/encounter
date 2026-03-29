@@ -23,16 +23,16 @@ struct PlayerEditPopover: View {
         label: "HP",
         current: player.currentHP,
         maximum: player.maxHP,
-        onDecrement: { session.applyDamage(1, to: player) },
-        onIncrement: { session.heal(1, to: player) }
+        onDecrement: { session.applyDamage(1, to: player.id) },
+        onIncrement: { session.applyHealing(1, to: player.id) }
       )
 
       statRow(
         label: "Stress",
         current: player.currentStress,
         maximum: player.maxStress,
-        onDecrement: { session.reduceStress(1, from: player) },
-        onIncrement: { session.applyStress(1, to: player) }
+        onDecrement: { session.reduceStress(1, from: player.id) },
+        onIncrement: { session.applyStress(1, to: player.id) }
       )
 
       if player.armorSlots > 0 {

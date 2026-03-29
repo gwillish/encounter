@@ -24,7 +24,7 @@ struct ThresholdButton: View {
 
   var body: some View {
     Button {
-      session.applyDamage(marks, to: slot)
+      session.applyDamage(marks, to: slot.id)
     } label: {
       VStack(spacing: 2) {
         Text(label)

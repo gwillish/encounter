@@ -83,7 +83,7 @@ struct DifficultyAssessorView: View {
               value: animating
             )
           Spacer()
-          Text("\(rating.totalCost) / \(rating.budget) BP")
+          Text("\(rating.cost) / \(rating.budget) BP")
             .font(.subheadline)
             .monospacedDigit()
             .foregroundStyle(.secondary)
@@ -124,14 +124,14 @@ struct DifficultyAssessorView: View {
 
 #Preview("On Budget — 4 players, 14 BP spent") {
   @Previewable @State var manual: Set<DifficultyBudget.Adjustment> = []
-  let rating = DifficultyBudget.Rating(budget: 14, totalCost: 14, remaining: 0)
+  let rating = DifficultyBudget.Rating(budget: 14, cost: 14, remaining: 0)
   DifficultyAssessorView(rating: rating, autoAdjustments: [], manualAdjustments: $manual)
     .padding()
 }
 
 #Preview("Dangerous — over budget") {
   @Previewable @State var manual: Set<DifficultyBudget.Adjustment> = []
-  let rating = DifficultyBudget.Rating(budget: 14, totalCost: 19, remaining: -5)
+  let rating = DifficultyBudget.Rating(budget: 14, cost: 19, remaining: -5)
   DifficultyAssessorView(
     rating: rating,
     autoAdjustments: [.multipleSolos],

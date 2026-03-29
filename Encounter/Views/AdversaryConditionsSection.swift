@@ -27,9 +27,9 @@ struct AdversaryConditionsSection: View {
           let active = slot.conditions.contains(condition)
           Button(condition.displayName) {
             if active {
-              session.removeCondition(condition, from: slot)
+              session.removeCondition(condition, from: slot.id)
             } else {
-              session.applyCondition(condition, to: slot)
+              session.applyCondition(condition, to: slot.id)
             }
           }
           .font(.caption)

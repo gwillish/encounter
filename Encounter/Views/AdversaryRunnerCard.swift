@@ -77,7 +77,7 @@ struct AdversaryRunnerCard: View {
 
       // Stress
       Button("+1 Stress (\(slot.currentStress)/\(slot.maxStress))") {
-        session.applyStress(1, to: slot)
+        session.applyStress(1, to: slot.id)
       }
       .buttonStyle(.bordered)
       .disabled(slot.currentStress >= slot.maxStress || slot.isDefeated)
