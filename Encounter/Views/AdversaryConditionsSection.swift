@@ -14,7 +14,7 @@ import SwiftUI
 /// Active conditions are highlighted in orange. Tapping a condition applies
 /// or removes it from the slot via the session.
 struct AdversaryConditionsSection: View {
-  let slot: AdversarySlot
+  let slot: AdversaryState
   let session: EncounterSession
 
   var body: some View {

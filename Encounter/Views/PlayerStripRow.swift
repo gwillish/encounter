@@ -12,7 +12,7 @@ import DHModels
 import SwiftUI
 
 struct PlayerStripRow: View {
-  let player: PlayerSlot
+  let player: PlayerState
   let session: EncounterSession
   @State private var showPopover = false
 
@@ -71,11 +71,11 @@ struct PlayerStripRow: View {
   let session = EncounterSession(
     name: "Test",
     playerSlots: [
-      PlayerSlot(
+      PlayerState(
         name: "Aric Stonehammer",
         maxHP: 6, maxStress: 6, evasion: 12,
         thresholdMajor: 5, thresholdSevere: 10, armorSlots: 3),
-      PlayerSlot(
+      PlayerState(
         name: "Lira Dawnwhisper",
         maxHP: 5, currentHP: 3, maxStress: 7, currentStress: 2,
         evasion: 14, thresholdMajor: 4, thresholdSevere: 8, armorSlots: 2),

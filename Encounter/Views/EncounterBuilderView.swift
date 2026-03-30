@@ -146,8 +146,7 @@ struct EncounterBuilderView: View {
     ToolbarItem(placement: .primaryAction) {
       Button("Run Encounter") {
         runSession = sessionRegistry.session(
-          for: draft.id,
-          definition: draft,
+          for: draft,
           compendium: compendium
         )
       }

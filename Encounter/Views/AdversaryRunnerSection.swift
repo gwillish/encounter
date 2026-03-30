@@ -12,7 +12,7 @@ import DHModels
 import SwiftUI
 
 struct AdversaryRunnerSection: View {
-  let slots: [AdversarySlot]
+  let slots: [AdversaryState]
   @Binding var expandedSlotID: UUID?
   let session: EncounterSession
   let compendium: Compendium

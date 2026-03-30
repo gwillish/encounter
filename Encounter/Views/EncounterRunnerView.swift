@@ -26,7 +26,7 @@ struct EncounterRunnerView: View {
   // MARK: - Sorted slots (computed, non-mutating)
   // Active adversaries preserve original insertion order (stable sort).
   // Defeated adversaries accumulate at the bottom in defeat order.
-  private var sortedAdversarySlots: [AdversarySlot] {
+  private var sortedAdversarySlots: [AdversaryState] {
     session.adversarySlots.sorted { !$0.isDefeated && $1.isDefeated }
   }
 
@@ -52,8 +52,7 @@ struct EncounterRunnerView: View {
       ToolbarItem(placement: .secondaryAction) {
         Button("Reset Session") {
           sessionRegistry.resetSession(
-            for: definition.id,
-            definition: definition,
+            for: definition,
             compendium: compendium
           )
         }

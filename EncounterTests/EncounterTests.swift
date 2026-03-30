@@ -268,7 +268,7 @@ struct ConditionTests {
     let soldier = makeSoldier()
     session.add(adversary: soldier)
 
-    session.applyDamage(4, to: session.adversarySlots[0])
+    session.applyDamage(4, to: session.adversarySlots[0].id)
     #expect(session.adversarySlots[0].currentHP == 2)
   }
 
@@ -277,7 +277,7 @@ struct ConditionTests {
     let soldier = makeSoldier()
     session.add(adversary: soldier)
 
-    session.applyDamage(100, to: session.adversarySlots[0])
+    session.applyDamage(100, to: session.adversarySlots[0].id)
     #expect(session.adversarySlots[0].currentHP == 0)
     #expect(session.adversarySlots[0].isDefeated == true)
     #expect(session.activeAdversaries.isEmpty)
@@ -305,7 +305,7 @@ struct ConditionTests {
     session.add(adversary: soldier)
     #expect(session.isOver == false)
 
-    session.applyDamage(999, to: session.adversarySlots[0])
+    session.applyDamage(999, to: session.adversarySlots[0].id)
     #expect(session.isOver == true)
   }
 
@@ -321,7 +321,7 @@ struct ConditionTests {
     let session = makeSession()
     session.add(adversary: makeSoldier())
 
-    session.applyCondition(.restrained, to: session.adversarySlots[0])
+    session.applyCondition(.restrained, to: session.adversarySlots[0].id)
     #expect(session.adversarySlots[0].conditions.contains(.restrained))
   }
 
@@ -329,8 +329,8 @@ struct ConditionTests {
     let session = makeSession()
     session.add(adversary: makeSoldier())
 
-    session.applyCondition(.hidden, to: session.adversarySlots[0])
-    session.removeCondition(.hidden, from: session.adversarySlots[0])
+    session.applyCondition(.hidden, to: session.adversarySlots[0].id)
+    session.removeCondition(.hidden, from: session.adversarySlots[0].id)
     #expect(!session.adversarySlots[0].conditions.contains(.hidden))
   }
 
@@ -338,8 +338,8 @@ struct ConditionTests {
     let session = makeSession()
     session.add(adversary: makeSoldier())
 
-    session.applyCondition(.vulnerable, to: session.adversarySlots[0])
-    session.applyCondition(.vulnerable, to: session.adversarySlots[0])
+    session.applyCondition(.vulnerable, to: session.adversarySlots[0].id)
+    session.applyCondition(.vulnerable, to: session.adversarySlots[0].id)
     #expect(session.adversarySlots[0].conditions.count == 1)
   }
 
@@ -347,7 +347,7 @@ struct ConditionTests {
     let session = makeSession()
     session.add(adversary: makeSoldier())
 
-    session.applyCondition(.custom(""), to: session.adversarySlots[0])
+    session.applyCondition(.custom(""), to: session.adversarySlots[0].id)
     #expect(session.adversarySlots[0].conditions.isEmpty)
   }
 
@@ -355,7 +355,7 @@ struct ConditionTests {
     let session = makeSession()
     session.add(adversary: makeSoldier())
 
-    session.applyCondition(.custom("   "), to: session.adversarySlots[0])
+    session.applyCondition(.custom("   "), to: session.adversarySlots[0].id)
     #expect(session.adversarySlots[0].conditions.isEmpty)
   }
 
@@ -363,19 +363,19 @@ struct ConditionTests {
     let session = makeSession()
     session.add(adversary: makeSoldier())
 
-    session.applyCondition(.custom("Enraged"), to: session.adversarySlots[0])
+    session.applyCondition(.custom("Enraged"), to: session.adversarySlots[0].id)
     #expect(session.adversarySlots[0].conditions.contains(.custom("Enraged")))
   }
 
 
 }
 
-// MARK: - PlayerSlot
+// MARK: - PlayerState
 
-struct PlayerSlotTests {
+struct PlayerStateTests {
 
   @Test func playerSlotInitializesWithCorrectDefaults() {
-    let slot = PlayerSlot(
+    let slot = PlayerState(
       name: "Aldric",
       maxHP: 6,
       maxStress: 6,
@@ -393,11 +393,11 @@ struct PlayerSlotTests {
 
   @Test func playerSlotEquality() {
     let id = UUID()
-    let slot1 = PlayerSlot(
+    let slot1 = PlayerState(
       id: id, name: "A", maxHP: 6, maxStress: 6,
       evasion: 10, thresholdMajor: 5, thresholdSevere: 10, armorSlots: 2
     )
-    let slot2 = PlayerSlot(
+    let slot2 = PlayerState(
       id: id, name: "A", maxHP: 6, maxStress: 6,
       evasion: 10, thresholdMajor: 5, thresholdSevere: 10, armorSlots: 2
     )
@@ -405,9 +405,9 @@ struct PlayerSlotTests {
   }
 }
 
-// MARK: - PlayerSlot Session Integration
+// MARK: - PlayerState Session Integration
 
-@MainActor struct PlayerSlotSessionTests {
+@MainActor struct PlayerStateSessionTests {
 
   private func makeSession() -> EncounterSession {
     EncounterSession(name: "Test Encounter")
@@ -432,8 +432,8 @@ struct PlayerSlotTests {
     )
   }
 
-  private func makePlayer() -> PlayerSlot {
-    PlayerSlot(
+  private func makePlayer() -> PlayerState {
+    PlayerState(
       name: "Aldric",
       maxHP: 6,
       maxStress: 6,
@@ -455,7 +455,7 @@ struct PlayerSlotTests {
     let session = makeSession()
     session.add(player: makePlayer())
 
-    session.applyDamage(2, to: session.playerSlots[0])
+    session.applyDamage(2, to: session.playerSlots[0].id)
     #expect(session.playerSlots[0].currentHP == 4)
   }
 
@@ -463,7 +463,7 @@ struct PlayerSlotTests {
     let session = makeSession()
     session.add(player: makePlayer())
 
-    session.applyDamage(100, to: session.playerSlots[0])
+    session.applyDamage(100, to: session.playerSlots[0].id)
     #expect(session.playerSlots[0].currentHP == 0)
   }
 
@@ -471,7 +471,7 @@ struct PlayerSlotTests {
     let session = makeSession()
     session.add(player: makePlayer())
 
-    session.applyStress(3, to: session.playerSlots[0])
+    session.applyStress(3, to: session.playerSlots[0].id)
     #expect(session.playerSlots[0].currentStress == 3)
   }
 
@@ -479,7 +479,7 @@ struct PlayerSlotTests {
     let session = makeSession()
     session.add(player: makePlayer())
 
-    session.applyStress(100, to: session.playerSlots[0])
+    session.applyStress(100, to: session.playerSlots[0].id)
     #expect(session.playerSlots[0].currentStress == 6)
   }
 
@@ -487,8 +487,8 @@ struct PlayerSlotTests {
     let session = makeSession()
     session.add(player: makePlayer())
 
-    session.applyDamage(4, to: session.playerSlots[0])
-    session.heal(2, to: session.playerSlots[0])
+    session.applyDamage(4, to: session.playerSlots[0].id)
+    session.applyHealing(2, to: session.playerSlots[0].id)
     #expect(session.playerSlots[0].currentHP == 4)
   }
 
@@ -496,8 +496,8 @@ struct PlayerSlotTests {
     let session = makeSession()
     session.add(player: makePlayer())
 
-    session.applyDamage(2, to: session.playerSlots[0])
-    session.heal(100, to: session.playerSlots[0])
+    session.applyDamage(2, to: session.playerSlots[0].id)
+    session.applyHealing(100, to: session.playerSlots[0].id)
     #expect(session.playerSlots[0].currentHP == 6)
   }
 
@@ -505,8 +505,8 @@ struct PlayerSlotTests {
     let session = makeSession()
     session.add(player: makePlayer())
 
-    session.applyStress(4, to: session.playerSlots[0])
-    session.reduceStress(2, from: session.playerSlots[0])
+    session.applyStress(4, to: session.playerSlots[0].id)
+    session.reduceStress(2, for: session.playerSlots[0].id)
     #expect(session.playerSlots[0].currentStress == 2)
   }
 
@@ -522,7 +522,7 @@ struct PlayerSlotTests {
   @Test func markArmorSlotClampsToZero() {
     let session = makeSession()
     var player = makePlayer()
-    player = PlayerSlot(
+    player = PlayerState(
       name: player.name, maxHP: player.maxHP, maxStress: player.maxStress,
       evasion: player.evasion, thresholdMajor: player.thresholdMajor,
       thresholdSevere: player.thresholdSevere, armorSlots: 1
@@ -539,7 +539,7 @@ struct PlayerSlotTests {
     let session = makeSession()
     session.add(player: makePlayer())
 
-    session.applyCondition(.custom(""), to: session.playerSlots[0])
+    session.applyCondition(.custom(""), to: session.playerSlots[0].id)
     #expect(session.playerSlots[0].conditions.isEmpty)
   }
 
@@ -547,7 +547,7 @@ struct PlayerSlotTests {
     let session = makeSession()
     session.add(player: makePlayer())
 
-    session.applyCondition(.vulnerable, to: session.playerSlots[0])
+    session.applyCondition(.vulnerable, to: session.playerSlots[0].id)
     #expect(session.playerSlots[0].conditions.contains(.vulnerable))
   }
 
@@ -555,8 +555,8 @@ struct PlayerSlotTests {
     let session = makeSession()
     session.add(player: makePlayer())
 
-    session.applyCondition(.hidden, to: session.playerSlots[0])
-    session.removeCondition(.hidden, from: session.playerSlots[0])
+    session.applyCondition(.hidden, to: session.playerSlots[0].id)
+    session.removeCondition(.hidden, from: session.playerSlots[0].id)
     #expect(!session.playerSlots[0].conditions.contains(.hidden))
   }
 
@@ -565,7 +565,7 @@ struct PlayerSlotTests {
     session.add(player: makePlayer())
     let slotID = session.playerSlots[0].id
 
-    session.removePlayer(id: slotID)
+    session.removePlayer(withID: slotID)
     #expect(session.playerSlots.isEmpty)
   }
 }
@@ -777,7 +777,7 @@ struct DifficultyBudgetTests {
       adversaryTypes: [.standard, .standard, .minion],
       playerCount: 4
     )
-    #expect(rating.totalCost == 5)
+    #expect(rating.cost == 5)
     #expect(rating.budget == 14)
     #expect(rating.remaining == 9)
   }
@@ -787,7 +787,7 @@ struct DifficultyBudgetTests {
       adversaryTypes: [.solo, .solo, .bruiser],
       playerCount: 3
     )
-    #expect(rating.totalCost == 14)
+    #expect(rating.cost == 14)
     #expect(rating.budget == 11)
     #expect(rating.remaining == -3)
   }
@@ -799,7 +799,7 @@ struct DifficultyBudgetTests {
       budgetAdjustment: -2
     )
     #expect(rating.budget == 12)
-    #expect(rating.totalCost == 2)
+    #expect(rating.cost == 2)
     #expect(rating.remaining == 10)
   }
 
@@ -987,9 +987,9 @@ struct DifficultyBudgetTests {
   }
 }
 
-// MARK: - GAP-9: AdversarySlot stat snapshot
+// MARK: - GAP-9: AdversaryState stat snapshot
 
-@MainActor struct AdversarySlotSnapshotTests {
+@MainActor struct AdversaryStateSnapshotTests {
 
   private func makeSoldier() -> Adversary {
     Adversary(
@@ -1002,7 +1002,7 @@ struct DifficultyBudgetTests {
   }
 
   @Test func slotSnapshotsMaxHPAndMaxStress() {
-    let slot = AdversarySlot.make(from: makeSoldier())
+    let slot = AdversaryState(from: makeSoldier())
     #expect(slot.maxHP == 6)
     #expect(slot.maxStress == 3)
   }
@@ -1011,7 +1011,7 @@ struct DifficultyBudgetTests {
     let session = EncounterSession(name: "Test")
     session.add(adversary: makeSoldier())
 
-    session.applyStress(100, to: session.adversarySlots[0])
+    session.applyStress(100, to: session.adversarySlots[0].id)
     #expect(session.adversarySlots[0].currentStress == 3)
   }
 
@@ -1019,8 +1019,8 @@ struct DifficultyBudgetTests {
     let session = EncounterSession(name: "Test")
     session.add(adversary: makeSoldier())
 
-    session.applyStress(1, to: session.adversarySlots[0])
-    session.applyStress(1, to: session.adversarySlots[0])
+    session.applyStress(1, to: session.adversarySlots[0].id)
+    session.applyStress(1, to: session.adversarySlots[0].id)
     #expect(session.adversarySlots[0].currentStress == 2)
   }
 
@@ -1028,8 +1028,8 @@ struct DifficultyBudgetTests {
     let session = EncounterSession(name: "Test")
     session.add(adversary: makeSoldier())
 
-    session.applyDamage(4, to: session.adversarySlots[0])
-    session.heal(100, to: session.adversarySlots[0])
+    session.applyDamage(4, to: session.adversarySlots[0].id)
+    session.applyHealing(100, to: session.adversarySlots[0].id)
     #expect(session.adversarySlots[0].currentHP == 6)
   }
 
@@ -1037,9 +1037,9 @@ struct DifficultyBudgetTests {
     let session = EncounterSession(name: "Test")
     session.add(adversary: makeSoldier())
 
-    session.applyDamage(999, to: session.adversarySlots[0])
+    session.applyDamage(999, to: session.adversarySlots[0].id)
     #expect(session.adversarySlots[0].isDefeated == true)
-    session.heal(6, to: session.adversarySlots[0])
+    session.applyHealing(6, to: session.adversarySlots[0].id)
     #expect(session.adversarySlots[0].isDefeated == false)
     #expect(session.adversarySlots[0].currentHP == 6)
   }
@@ -1286,14 +1286,14 @@ struct EncounterStoreErrorTests {
   @Test func saveFailedDescription() {
     let id = UUID()
     let underlying = CocoaError(.fileWriteNoPermission)
-    let error = EncounterStoreError.saveFailed(id, underlying)
+    let error = EncounterStoreError.saveFailed(id, underlying.localizedDescription)
     #expect(error.errorDescription?.hasPrefix("Failed to save encounter \(id):") == true)
   }
 
   @Test func deleteFailedDescription() {
     let id = UUID()
     let underlying = CocoaError(.fileNoSuchFile)
-    let error = EncounterStoreError.deleteFailed(id, underlying)
+    let error = EncounterStoreError.deleteFailed(id, underlying.localizedDescription)
     #expect(error.errorDescription?.hasPrefix("Failed to delete encounter \(id):") == true)
   }
 }

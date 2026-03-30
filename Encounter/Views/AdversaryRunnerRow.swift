@@ -12,7 +12,7 @@ import DHModels
 import SwiftUI
 
 struct AdversaryRunnerRow: View {
-  let slot: AdversarySlot
+  let slot: AdversaryState
   let compendium: Compendium
 
   private var displayName: String {
@@ -70,11 +70,11 @@ struct AdversaryRunnerRow: View {
     ))
   return List {
     AdversaryRunnerRow(
-      slot: AdversarySlot(adversaryID: "goblin", maxHP: 3, maxStress: 2, currentHP: 2),
+      slot: AdversaryState(adversaryID: "goblin", maxHP: 3, maxStress: 2, currentHP: 2),
       compendium: compendium
     )
     AdversaryRunnerRow(
-      slot: AdversarySlot(
+      slot: AdversaryState(
         adversaryID: "goblin", maxHP: 3, maxStress: 2, currentHP: 0, isDefeated: true),
       compendium: compendium
     )

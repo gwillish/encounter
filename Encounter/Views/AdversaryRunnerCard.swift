@@ -17,7 +17,7 @@ import DHModels
 import SwiftUI
 
 struct AdversaryRunnerCard: View {
-  let slot: AdversarySlot
+  let slot: AdversaryState
   let session: EncounterSession
   let compendium: Compendium
   let onCollapse: () -> Void

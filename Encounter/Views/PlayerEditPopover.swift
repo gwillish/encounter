@@ -11,7 +11,7 @@ import DHModels
 import SwiftUI
 
 struct PlayerEditPopover: View {
-  let player: PlayerSlot
+  let player: PlayerState
   let session: EncounterSession
 
   var body: some View {
@@ -31,7 +31,7 @@ struct PlayerEditPopover: View {
         label: "Stress",
         current: player.currentStress,
         maximum: player.maxStress,
-        onDecrement: { session.reduceStress(1, from: player.id) },
+        onDecrement: { session.reduceStress(1, for: player.id) },
         onIncrement: { session.applyStress(1, to: player.id) }
       )
 
@@ -90,7 +90,7 @@ struct PlayerEditPopover: View {
 
 #Preview {
   let session = EncounterSession(name: "Test")
-  session.add(player: PlayerSlot(
+  session.add(player: PlayerState(
       name: "Aric Stonehammer",
       maxHP: 6, maxStress: 6, evasion: 12,
       thresholdMajor: 5, thresholdSevere: 10, armorSlots: 3

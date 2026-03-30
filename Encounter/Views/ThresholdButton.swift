@@ -20,7 +20,7 @@ struct ThresholdButton: View {
   let marks: Int
   let isDefeated: Bool
   let session: EncounterSession
-  let slot: AdversarySlot
+  let slot: AdversaryState
 
   var body: some View {
     Button {
