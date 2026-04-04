@@ -28,6 +28,7 @@ struct EncounterApp: App {
     contentDirectory: ContentStore.localContentDirectory,
     compendium: Compendium()  // placeholder; replaced by the real compendium below
   )
+  @State private var playerStore = PlayerStore(directory: PlayerStore.localDirectory)
 
   @State private var isShowingAbout = false
 
@@ -38,6 +39,7 @@ struct EncounterApp: App {
         .environment(store)
         .environment(sessionRegistry)
         .environment(contentStore)
+        .environment(playerStore)
         .task {
           let dir = await EncounterStore.defaultDirectory()
           store.relocate(to: dir)
@@ -52,13 +54,19 @@ struct EncounterApp: App {
           contentStore.configure(compendium: compendium)
           await contentStore.relocate(to: contentDir)
 
-          // All three loads are independent — run concurrently.
+          let playersDir = dir.deletingLastPathComponent()
+            .appending(path: "Players", directoryHint: .isDirectory)
+          playerStore.relocate(to: playersDir)
+
+          // All loads are independent — run concurrently.
           async let compendiumLoad: Void = compendium.load()
           async let storeLoad: Void = store.load()
           async let contentLoad: Void = contentStore.loadOnStartup()
+          async let playerLoad: Void = playerStore.load()
           do { try await compendiumLoad } catch {}
           await storeLoad
           await contentLoad
+          await playerLoad
         }
         // onOpenURL on the root view handles .dhpack file opens on both
         // iOS and macOS. contentStore is non-nil from first render, so
