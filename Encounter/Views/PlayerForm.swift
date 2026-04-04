@@ -1,0 +1,210 @@
+//
+//  PlayerForm.swift
+//  Encounter
+//
+//  Sheet presenting a Player entry form in either add or edit mode.
+//  All 7 stat fields are required; the commit button stays disabled until
+//  all fields pass validation.
+//
+//  In add mode an "Add Another" button resets fields without dismissing
+//  the sheet, allowing rapid sequential entry.
+//
+
+import DHModels
+import SwiftUI
+
+struct PlayerForm: View {
+  enum Mode {
+    case add
+    case edit(Player)
+  }
+
+  let mode: Mode
+  let onCommit: (Player) -> Void
+
+  @Environment(\.dismiss) private var dismiss
+
+  @State private var name: String
+  @State private var maxHP: String
+  @State private var maxStress: String
+  @State private var evasion: String
+  @State private var thresholdMajor: String
+  @State private var thresholdSevere: String
+  @State private var armorSlots: String
+
+  // Preserve the original ID in edit mode so the update targets the right record.
+  private let editingID: UUID
+
+  init(mode: Mode, onCommit: @escaping (Player) -> Void) {
+    self.mode = mode
+    self.onCommit = onCommit
+    switch mode {
+    case .add:
+      editingID = UUID()
+      _name = State(initialValue: "")
+      _maxHP = State(initialValue: "")
+      _maxStress = State(initialValue: "")
+      _evasion = State(initialValue: "")
+      _thresholdMajor = State(initialValue: "")
+      _thresholdSevere = State(initialValue: "")
+      _armorSlots = State(initialValue: "")
+    case .edit(let player):
+      editingID = player.id
+      _name = State(initialValue: player.name)
+      _maxHP = State(initialValue: "\(player.maxHP)")
+      _maxStress = State(initialValue: "\(player.maxStress)")
+      _evasion = State(initialValue: "\(player.evasion)")
+      _thresholdMajor = State(initialValue: "\(player.thresholdMajor)")
+      _thresholdSevere = State(initialValue: "\(player.thresholdSevere)")
+      _armorSlots = State(initialValue: "\(player.armorSlots)")
+    }
+  }
+
+  private var isValid: Bool {
+    !name.trimmingCharacters(in: .whitespaces).isEmpty
+      && Int(maxHP).map { $0 > 0 } ?? false
+      && Int(maxStress).map { $0 > 0 } ?? false
+      && Int(evasion).map { $0 > 0 } ?? false
+      && Int(thresholdMajor).map { $0 > 0 } ?? false
+      && Int(thresholdSevere).map { $0 > 0 } ?? false
+      && Int(armorSlots).map { $0 >= 0 } ?? false
+  }
+
+  private var navigationTitle: String {
+    switch mode {
+    case .add: return "Add Player"
+    case .edit: return "Edit Player"
+    }
+  }
+
+  private var commitLabel: String {
+    switch mode {
+    case .add: return "Add"
+    case .edit: return "Save"
+    }
+  }
+
+  var body: some View {
+    NavigationStack {
+      Form {
+        Section("Character") {
+          TextField("Name", text: $name)
+            .accessibilityIdentifier("party.form.name-field")
+        }
+        Section("Stats") {
+          TextField("Max HP", text: $maxHP)
+            #if os(iOS)
+              .keyboardType(.numberPad)
+            #endif
+            .accessibilityIdentifier("party.form.max-hp-field")
+          TextField("Max Stress", text: $maxStress)
+            #if os(iOS)
+              .keyboardType(.numberPad)
+            #endif
+            .accessibilityIdentifier("party.form.max-stress-field")
+          TextField("Evasion", text: $evasion)
+            #if os(iOS)
+              .keyboardType(.numberPad)
+            #endif
+            .accessibilityIdentifier("party.form.evasion-field")
+        }
+        Section("Damage Thresholds") {
+          TextField("Major Threshold", text: $thresholdMajor)
+            #if os(iOS)
+              .keyboardType(.numberPad)
+            #endif
+            .accessibilityIdentifier("party.form.threshold-major-field")
+          TextField("Severe Threshold", text: $thresholdSevere)
+            #if os(iOS)
+              .keyboardType(.numberPad)
+            #endif
+            .accessibilityIdentifier("party.form.threshold-severe-field")
+        }
+        Section("Armor") {
+          TextField("Armor Slots", text: $armorSlots)
+            #if os(iOS)
+              .keyboardType(.numberPad)
+            #endif
+            .accessibilityIdentifier("party.form.armor-slots-field")
+        }
+        if case .add = mode {
+          Section {
+            Button("Add Another Player") {
+              commitPlayer()
+              resetFields()
+            }
+            .disabled(!isValid)
+            .frame(maxWidth: .infinity, alignment: .center)
+            .accessibilityIdentifier("party.form.add-another-button")
+          }
+        }
+      }
+      .navigationTitle(navigationTitle)
+      #if os(iOS)
+        .navigationBarTitleDisplayMode(.inline)
+      #endif
+      .toolbar {
+        ToolbarItem(placement: .cancellationAction) {
+          Button("Cancel") { dismiss() }
+            .accessibilityIdentifier("party.form.cancel-button")
+        }
+        ToolbarItem(placement: .confirmationAction) {
+          Button(commitLabel) {
+            commitPlayer()
+            dismiss()
+          }
+          .disabled(!isValid)
+          .accessibilityIdentifier("party.form.commit-button")
+        }
+      }
+    }
+  }
+
+  private func commitPlayer() {
+    guard isValid,
+      let hp = Int(maxHP),
+      let str = Int(maxStress),
+      let ev = Int(evasion),
+      let tmaj = Int(thresholdMajor),
+      let tsev = Int(thresholdSevere),
+      let armor = Int(armorSlots)
+    else { return }
+    onCommit(
+      Player(
+        id: editingID,
+        name: name.trimmingCharacters(in: .whitespaces),
+        maxHP: hp, maxStress: str, evasion: ev,
+        thresholdMajor: tmaj, thresholdSevere: tsev,
+        armorSlots: armor
+      ))
+  }
+
+  private func resetFields() {
+    name = ""
+    maxHP = ""
+    maxStress = ""
+    evasion = ""
+    thresholdMajor = ""
+    thresholdSevere = ""
+    armorSlots = ""
+  }
+}
+
+#Preview("Add mode") {
+  PlayerForm(mode: .add) { player in
+    print("Added: \(player.name)")
+  }
+}
+
+#Preview("Edit mode") {
+  PlayerForm(
+    mode: .edit(
+      Player(
+        name: "Aric Stonehammer",
+        maxHP: 6, maxStress: 6, evasion: 12,
+        thresholdMajor: 5, thresholdSevere: 10, armorSlots: 3
+      ))
+  ) { player in
+    print("Saved: \(player.name)")
+  }
+}
