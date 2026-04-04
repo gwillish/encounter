@@ -6,7 +6,7 @@
 //  when the GM taps "Run Encounter".
 //
 //  Layout:
-//   - Nav bar: "<name> · R<round>" + FearTrackerButton (trailing)
+//   - Nav bar: encounter name + FearTrackerButton (trailing)
 //   - Scrollable adversary list (active first, defeated greyed at bottom)
 //   - PlayerStrip pinned to bottom via .safeAreaInset
 //
