@@ -6,8 +6,8 @@
 //  Manages a local draft copy of the EncounterDefinition and auto-saves
 //  after every mutation via EncounterStore.
 //
-//  Step 4: Run Encounter button creates or resumes a session via SessionRegistry
-//  and pushes EncounterRunnerView.
+//  Run Encounter snapshots the active party from PlayerStore into the
+//  session at start time; the builder player roster is read-only.
 //
 
 import DHKit
@@ -21,9 +21,9 @@ struct EncounterBuilderView: View {
   @Environment(EncounterStore.self) private var store
   @Environment(Compendium.self) private var compendium
   @Environment(SessionRegistry.self) private var sessionRegistry
+  @Environment(PlayerStore.self) private var playerStore
 
   @State private var showCompendium = false
-  @State private var showAddPlayer = false
   @State private var notesExpanded = false
   @State private var manualAdjustments: Set<DifficultyBudget.Adjustment> = []
   @State private var saveError: String?
@@ -52,7 +52,7 @@ struct EncounterBuilderView: View {
   private var difficultyRating: DifficultyBudget.Rating {
     DifficultyBudget.rating(
       adversaryTypes: adversaryTypes,
-      playerCount: draft.playerConfigs.count,
+      playerCount: playerStore.activePartyPlayers.count,
       budgetAdjustment: budgetAdjustment
     )
   }
@@ -73,11 +73,7 @@ struct EncounterBuilderView: View {
         onBrowse: { showCompendium = true },
         onRemove: removeEnvironment(at:)
       )
-      PlayerRosterSection(
-        playerConfigs: draft.playerConfigs,
-        onAddPlayer: { showAddPlayer = true },
-        onRemove: removePlayer(at:)
-      )
+      PlayerRosterSection(players: playerStore.activePartyPlayers)
       BuilderNotesSection(
         notes: $draft.gmNotes,
         isExpanded: $notesExpanded,
@@ -121,11 +117,6 @@ struct EncounterBuilderView: View {
       #endif
       .environment(compendium)
     }
-    .sheet(isPresented: $showAddPlayer) {
-      AddPlayerForm { config in
-        addPlayer(config)
-      }
-    }
     .navigationDestination(item: $runSession) { session in
       EncounterRunnerView(session: session, definition: draft)
     }
@@ -145,12 +136,14 @@ struct EncounterBuilderView: View {
   private var toolbarContent: some ToolbarContent {
     ToolbarItem(placement: .primaryAction) {
       Button("Run Encounter") {
-        runSession = sessionRegistry.session(
-          for: draft,
-          compendium: compendium
-        )
+        // Snapshot the active party into the definition at run time.
+        // EncounterDefinition.playerConfigs is not persisted from the builder;
+        // it is populated here as a point-in-time copy for session creation only.
+        var defWithParty = draft
+        defWithParty.playerConfigs = playerStore.activePartyPlayers.map { $0.asConfig() }
+        runSession = sessionRegistry.session(for: defWithParty, compendium: compendium)
       }
-      .disabled(draft.adversaryIDs.isEmpty || draft.playerConfigs.isEmpty)
+      .disabled(draft.adversaryIDs.isEmpty || playerStore.party.playerIDs.isEmpty)
       .accessibilityIdentifier("builder.run-button")
     }
     ToolbarItem(placement: .primaryAction) {
@@ -180,16 +173,6 @@ struct EncounterBuilderView: View {
 
   private func removeEnvironment(at offsets: IndexSet) {
     draft.environmentIDs.remove(atOffsets: offsets)
-    save()
-  }
-
-  private func addPlayer(_ config: PlayerConfig) {
-    draft.playerConfigs.append(config)
-    save()
-  }
-
-  private func removePlayer(at offsets: IndexSet) {
-    draft.playerConfigs.remove(atOffsets: offsets)
     save()
   }
 
@@ -239,6 +222,7 @@ struct EncounterBuilderView: View {
       attackModifier: "+5", attackName: "Great Axe",
       attackRange: .veryClose, damage: "2d10+4 phy"
     ))
+  let playerStore = PlayerStore(directory: .temporaryDirectory)
   return NavigationStack {
     // Create and inject a matching definition so auto-save succeeds in preview
     EncounterBuilderPreviewWrapper()
@@ -246,6 +230,7 @@ struct EncounterBuilderView: View {
   .environment(store)
   .environment(compendium)
   .environment(SessionRegistry())
+  .environment(playerStore)
 }
 
 /// Preview wrapper that creates a definition in the store before showing the builder.
