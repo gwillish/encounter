@@ -17,6 +17,7 @@ struct PlayerRosterSection: View {
     Section {
       ForEach(players) { player in
         PlayerPartyRow(player: player)
+          .accessibilityIdentifier("builder.player-row")
       }
     } header: {
       Text("Players")
