@@ -16,11 +16,25 @@
 import DHModels
 import SwiftUI
 
+// Sheet destinations for player form presentation.
+// Using a single .sheet(item:) avoids the two-sheet-on-same-view bug on iOS 16+
+// where having two .sheet() modifiers causes the first to dismiss on re-render.
+private enum PlayerFormDestination: Identifiable {
+  case add
+  case edit(Player)
+
+  var id: String {
+    switch self {
+    case .add: "add"
+    case .edit(let p): p.id.uuidString
+    }
+  }
+}
+
 struct PartyOverviewView: View {
   @Environment(PlayerStore.self) private var playerStore
 
-  @State private var showAddPlayer = false
-  @State private var editingPlayer: Player?
+  @State private var playerFormDestination: PlayerFormDestination?
   @State private var deleteTarget: Player?
   @State private var isConfirmingDelete = false
   @State private var isConfirmingReset = false
@@ -47,17 +61,19 @@ struct PartyOverviewView: View {
         emptyState
       }
     }
-    .sheet(isPresented: $showAddPlayer) {
-      PlayerForm(mode: .add) { player in
-        Task {
-          await playerStore.addPlayer(player)
-          await playerStore.addToParty(id: player.id)
+    .sheet(item: $playerFormDestination) { destination in
+      switch destination {
+      case .add:
+        PlayerForm(mode: .add) { player in
+          Task {
+            await playerStore.addPlayer(player)
+            await playerStore.addToParty(id: player.id)
+          }
         }
-      }
-    }
-    .sheet(item: $editingPlayer) { player in
-      PlayerForm(mode: .edit(player)) { updated in
-        Task { await playerStore.updatePlayer(updated) }
+      case .edit(let player):
+        PlayerForm(mode: .edit(player)) { updated in
+          Task { await playerStore.updatePlayer(updated) }
+        }
       }
     }
     .confirmationDialog(
@@ -96,31 +112,31 @@ struct PartyOverviewView: View {
           .accessibilityIdentifier("party.empty-party-label")
       } else {
         ForEach(playerStore.activePartyPlayers) { player in
-          PlayerPartyRow(player: player)
-            .accessibilityIdentifier("party.active-row")
-            .contentShape(Rectangle())
-            .onTapGesture { editingPlayer = player }
-            .swipeActions(edge: .leading) {
-              Button("Edit") { editingPlayer = player }
-                .tint(.blue)
+          Button { playerFormDestination = .edit(player) } label: {
+            PlayerPartyRow(player: player)
+          }
+          .accessibilityIdentifier("party.active-row")
+          .swipeActions(edge: .leading) {
+            Button("Edit") { playerFormDestination = .edit(player) }
+              .tint(.blue)
+          }
+          .swipeActions(edge: .trailing) {
+            Button("Remove") {
+              Task { await playerStore.removeFromParty(id: player.id) }
             }
-            .swipeActions(edge: .trailing) {
-              Button("Remove") {
-                Task { await playerStore.removeFromParty(id: player.id) }
-              }
-              .tint(.orange)
+            .tint(.orange)
+          }
+          .contextMenu {
+            Button("Edit") { playerFormDestination = .edit(player) }
+            Button("Remove from Party") {
+              Task { await playerStore.removeFromParty(id: player.id) }
             }
-            .contextMenu {
-              Button("Edit") { editingPlayer = player }
-              Button("Remove from Party") {
-                Task { await playerStore.removeFromParty(id: player.id) }
-              }
-              Divider()
-              Button("Delete \"\(player.name)\"", role: .destructive) {
-                deleteTarget = player
-                isConfirmingDelete = true
-              }
+            Divider()
+            Button("Delete \"\(player.name)\"", role: .destructive) {
+              deleteTarget = player
+              isConfirmingDelete = true
             }
+          }
         }
       }
     } header: {
@@ -132,33 +148,33 @@ struct PartyOverviewView: View {
   private var rosterSection: some View {
     Section {
       ForEach(nonPartyPlayers) { player in
-        PlayerPartyRow(player: player)
-          .accessibilityIdentifier("party.roster-row")
-          .contentShape(Rectangle())
-          .onTapGesture { editingPlayer = player }
-          .swipeActions(edge: .leading) {
-            Button("Add to Party") {
-              Task { await playerStore.addToParty(id: player.id) }
-            }
-            .tint(.green)
+        Button { playerFormDestination = .edit(player) } label: {
+          PlayerPartyRow(player: player)
+        }
+        .accessibilityIdentifier("party.roster-row")
+        .swipeActions(edge: .leading) {
+          Button("Add to Party") {
+            Task { await playerStore.addToParty(id: player.id) }
           }
-          .swipeActions(edge: .trailing) {
-            Button("Delete", role: .destructive) {
-              deleteTarget = player
-              isConfirmingDelete = true
-            }
+          .tint(.green)
+        }
+        .swipeActions(edge: .trailing) {
+          Button("Delete", role: .destructive) {
+            deleteTarget = player
+            isConfirmingDelete = true
           }
-          .contextMenu {
-            Button("Add to Party") {
-              Task { await playerStore.addToParty(id: player.id) }
-            }
-            Button("Edit") { editingPlayer = player }
-            Divider()
-            Button("Delete \"\(player.name)\"", role: .destructive) {
-              deleteTarget = player
-              isConfirmingDelete = true
-            }
+        }
+        .contextMenu {
+          Button("Add to Party") {
+            Task { await playerStore.addToParty(id: player.id) }
           }
+          Button("Edit") { playerFormDestination = .edit(player) }
+          Divider()
+          Button("Delete \"\(player.name)\"", role: .destructive) {
+            deleteTarget = player
+            isConfirmingDelete = true
+          }
+        }
       }
     } header: {
       Text("Roster")
@@ -171,7 +187,7 @@ struct PartyOverviewView: View {
   private var toolbarContent: some ToolbarContent {
     ToolbarItem(placement: .primaryAction) {
       Button("Add Player", systemImage: "person.badge.plus") {
-        showAddPlayer = true
+        playerFormDestination = .add
       }
       .accessibilityIdentifier("party.add-player-button")
     }
@@ -192,7 +208,7 @@ struct PartyOverviewView: View {
     } description: {
       Text("Add your party members to track them across encounters.")
     } actions: {
-      Button("Add Player") { showAddPlayer = true }
+      Button("Add Player") { playerFormDestination = .add }
         .buttonStyle(.borderedProminent)
         .accessibilityIdentifier("party.empty-add-button")
     }

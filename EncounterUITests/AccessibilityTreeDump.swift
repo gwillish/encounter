@@ -7,6 +7,11 @@
 //  Output appears in the test log — use `xcodebuild test -only-testing:...`
 //  and grep for "AX TREE" to extract.
 //
+//  Note: tests that navigate to the Encounters tab (testDumpBuilderScreen,
+//  testToggleDifficultyAdjustments, testDumpCompendiumBrowser) require at
+//  least one encounter to exist in the app. Run them manually after creating
+//  an encounter, not in an automated clean-state CI run.
+//
 
 import XCTest
 
@@ -22,19 +27,25 @@ final class AccessibilityTreeDump: XCTestCase {
 
   // MARK: - Library screen
 
-  /// Dumps the accessibility tree of the initial library screen.
+  /// Dumps the accessibility tree of the initial Party screen.
   @MainActor
   func testDumpLibraryScreen() throws {
-    // Allow the library to settle
-    _ = app.navigationBars["Encounters"].waitForExistence(timeout: 3)
+    // Party tab is the first screen since the navigation restructure in PR #64.
+    _ = app.navigationBars["Party"].waitForExistence(timeout: 5)
     printTree("Library screen")
   }
 
   // MARK: - Builder screen
 
   /// Opens the first encounter and dumps the builder screen tree.
+  /// Requires an encounter to exist — create one manually before running.
   @MainActor
   func testDumpBuilderScreen() throws {
+    // Wait for the app to finish loading and the tab bar to be ready.
+    _ = app.navigationBars["Party"].waitForExistence(timeout: 5)
+    _ = app.tabBars.buttons["Encounters"].waitForExistence(timeout: 3)
+    // Navigate to Encounters — Party tab is first since PR #64.
+    app.tabBars.buttons["Encounters"].tap()
     _ = app.navigationBars["Encounters"].waitForExistence(timeout: 3)
     // Tap the first row if one exists
     let firstRow = app.buttons.matching(identifier: "library.row").firstMatch
@@ -50,12 +61,18 @@ final class AccessibilityTreeDump: XCTestCase {
   /// Attempts to toggle the difficulty adjustments from within XCUITest.
   /// Tests whether XCUITest's .tap() can activate Toggles in the safeAreaInset
   /// that AXe's HID simulation cannot.
+  /// Requires an encounter to exist — create one manually before running.
   @MainActor
   func testToggleDifficultyAdjustments() throws {
+    // Wait for the app to finish loading and the tab bar to be ready.
+    _ = app.navigationBars["Party"].waitForExistence(timeout: 5)
+    _ = app.tabBars.buttons["Encounters"].waitForExistence(timeout: 3)
+    // Navigate to Encounters — Party tab is first since PR #64.
+    app.tabBars.buttons["Encounters"].tap()
     _ = app.navigationBars["Encounters"].waitForExistence(timeout: 3)
     let firstRow = app.buttons.matching(identifier: "library.row").firstMatch
     guard firstRow.waitForExistence(timeout: 2) else {
-      XCTFail("No encounter row found"); return
+      throw XCTSkip("No encounter row found — create one first for this diagnostic test")
     }
     firstRow.tap()
     sleep(1)
@@ -81,8 +98,14 @@ final class AccessibilityTreeDump: XCTestCase {
   /// Verifies the library 'New Encounter' button is accessible and tappable via XCUITest.
   @MainActor
   func testLibraryCreateButton() throws {
+    // Wait for the app to finish loading and the tab bar to be ready.
+    _ = app.navigationBars["Party"].waitForExistence(timeout: 5)
+    _ = app.tabBars.buttons["Encounters"].waitForExistence(timeout: 3)
+    // Navigate to Encounters — Party tab is first since PR #64.
+    app.tabBars.buttons["Encounters"].tap()
     _ = app.navigationBars["Encounters"].waitForExistence(timeout: 3)
-    let createButton = app.buttons["library.create-button"]
+    // Use firstMatch — both the toolbar and empty-state CTA share this identifier.
+    let createButton = app.buttons.matching(identifier: "library.create-button").firstMatch
     XCTAssertTrue(createButton.waitForExistence(timeout: 3), "library.create-button not found")
     XCTAssertTrue(createButton.isEnabled, "Create button should be enabled")
     let result = "library.create-button found: true, enabled: \(createButton.isEnabled), frame: \(createButton.frame)\n"
@@ -92,13 +115,18 @@ final class AccessibilityTreeDump: XCTestCase {
   // MARK: - Compendium browser
 
   /// Opens the compendium browser from the builder and dumps its tree.
+  /// Requires an encounter to exist — create one manually before running.
   @MainActor
   func testDumpCompendiumBrowser() throws {
+    // Wait for the app to finish loading and the tab bar to be ready.
+    _ = app.navigationBars["Party"].waitForExistence(timeout: 5)
+    _ = app.tabBars.buttons["Encounters"].waitForExistence(timeout: 3)
+    // Navigate to Encounters — Party tab is first since PR #64.
+    app.tabBars.buttons["Encounters"].tap()
     _ = app.navigationBars["Encounters"].waitForExistence(timeout: 3)
     let firstRow = app.buttons.matching(identifier: "library.row").firstMatch
     guard firstRow.waitForExistence(timeout: 2) else {
-      XCTFail("No encounter row found — create one first")
-      return
+      throw XCTSkip("No encounter row found — create one first for this diagnostic test")
     }
     firstRow.tap()
     sleep(1)

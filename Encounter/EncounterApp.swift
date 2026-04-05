@@ -16,6 +16,15 @@ struct EncounterApp: App {
     LoggingSystem.bootstrap { label in
       OSLogHandler(subsystem: "gwillish.Encounter", category: label)
     }
+    // Wipe persisted state for XCUITest runs. Both stores are initialized with
+    // localDirectory as a placeholder URL and perform no I/O until load() is
+    // called in .task, so this runs before any data is read or written.
+    // On the iOS simulator iCloud is unavailable, so defaultDirectory() falls
+    // back to localDirectory — the wipe covers the real storage path.
+    if CommandLine.arguments.contains("-UITestResetState") {
+      try? FileManager.default.removeItem(at: EncounterStore.localDirectory)
+      try? FileManager.default.removeItem(at: PlayerStore.localDirectory)
+    }
   }
 
   @State private var compendium = Compendium()
