@@ -44,10 +44,10 @@ struct PlayerRosterSection: View {
     PlayerRosterSection(
       players: [
         Player(
-          name: "Aric", maxHP: 6, maxStress: 6, evasion: 12,
+          name: "Aric", level: 3, maxHP: 6, maxStress: 6, evasion: 12,
           thresholdMajor: 5, thresholdSevere: 10, armorSlots: 3),
         Player(
-          name: "Lira", maxHP: 5, maxStress: 7, evasion: 14,
+          name: "Lira", level: 5, maxHP: 5, maxStress: 7, evasion: 14,
           thresholdMajor: 4, thresholdSevere: 8, armorSlots: 2),
       ])
   }

@@ -15,8 +15,16 @@ struct PlayerRosterRow: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: 2) {
-      Text(config.name)
-        .font(.body)
+      HStack {
+        Text(config.name)
+          .font(.body)
+        Spacer()
+        let tier = DifficultyBudget.tier(forLevel: config.level)
+        Text("Lv \(config.level) · T\(tier)")
+          .font(.caption)
+          .foregroundStyle(.secondary)
+          .accessibilityLabel("Level \(config.level), Tier \(tier)")
+      }
       Text("HP: \(config.maxHP)  Stress: \(config.maxStress)  Evasion: \(config.evasion)")
         .font(.caption)
         .foregroundStyle(.secondary)
@@ -30,12 +38,14 @@ struct PlayerRosterRow: View {
     PlayerRosterRow(
       config: PlayerConfig(
         name: "Aric Stonehammer",
+        level: 3,
         maxHP: 6, maxStress: 6, evasion: 12,
         thresholdMajor: 5, thresholdSevere: 10, armorSlots: 3
       ))
     PlayerRosterRow(
       config: PlayerConfig(
         name: "Lira Dawnwhisper",
+        level: 5,
         maxHP: 5, maxStress: 7, evasion: 14,
         thresholdMajor: 4, thresholdSevere: 8, armorSlots: 2
       ))

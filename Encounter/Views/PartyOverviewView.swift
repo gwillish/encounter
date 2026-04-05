@@ -112,7 +112,9 @@ struct PartyOverviewView: View {
           .accessibilityIdentifier("party.empty-party-label")
       } else {
         ForEach(playerStore.activePartyPlayers) { player in
-          Button { playerFormDestination = .edit(player) } label: {
+          Button {
+            playerFormDestination = .edit(player)
+          } label: {
             PlayerPartyRow(player: player)
           }
           .accessibilityIdentifier("party.active-row")
@@ -148,7 +150,9 @@ struct PartyOverviewView: View {
   private var rosterSection: some View {
     Section {
       ForEach(nonPartyPlayers) { player in
-        Button { playerFormDestination = .edit(player) } label: {
+        Button {
+          playerFormDestination = .edit(player)
+        } label: {
           PlayerPartyRow(player: player)
         }
         .accessibilityIdentifier("party.roster-row")

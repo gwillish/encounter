@@ -11,6 +11,8 @@
 //    - Launch → Party tab first, empty-state CTA visible
 //    - Add Another flow → form resets without dismissing, two distinct players added
 //    - Add player → switch to Encounters → open builder → roster row visible
+//    - Level stepper: defaults to 1, increments update value, non-default level
+//      shows correct tier badge in party row, edit form preserves saved level
 //
 //  Test plan items covered by unit tests (not duplicated here):
 //    - Remove from party / Run Encounter disables:
@@ -49,6 +51,84 @@ final class PartyManagementUITests: XCTestCase {
     XCTAssertTrue(
       app.tabBars.buttons["Encounters"].waitForExistence(timeout: 3),
       "Encounters tab should be present in the tab bar")
+  }
+
+  // MARK: - Level stepper
+
+  /// The level stepper appears in the form and defaults to 1.
+  @MainActor
+  func testLevelStepperPresentWithDefault() throws {
+    app.buttons["party.add-player-button"].tap()
+    XCTAssertTrue(
+      app.textFields["party.form.name-field"].waitForExistence(timeout: 3),
+      "Player form should appear")
+    let stepper = app.steppers["party.form.level-stepper"]
+    XCTAssertTrue(stepper.waitForExistence(timeout: 3), "Level stepper should be visible")
+    XCTAssertEqual(stepper.value as? String, "1", "Level stepper should default to 1")
+  }
+
+  /// Incrementing the stepper updates its reported value.
+  @MainActor
+  func testLevelStepperIncrementUpdatesValue() throws {
+    app.buttons["party.add-player-button"].tap()
+    let stepper = app.steppers["party.form.level-stepper"]
+    XCTAssertTrue(stepper.waitForExistence(timeout: 3), "Level stepper should be visible")
+
+    incrementLevel(by: 2)
+
+    XCTAssertEqual(stepper.value as? String, "3", "Level should be 3 after two increments")
+  }
+
+  /// A player committed with level 3 shows a Tier 2 badge in the party row.
+  /// Level 3 maps to Tier 2 (SRD: levels 2–4 → Tier 2).
+  @MainActor
+  func testPlayerWithNonDefaultLevelShowsCorrectTierBadge() throws {
+    app.buttons["party.add-player-button"].tap()
+    XCTAssertTrue(
+      app.textFields["party.form.name-field"].waitForExistence(timeout: 3),
+      "Player form should appear")
+
+    // Increment level to 3 (Tier 2) before filling text fields, so the
+    // stepper is still on-screen and the number-pad keyboard is not yet showing.
+    incrementLevel(by: 2)
+
+    fillForm(name: "Aric", hp: "6", stress: "6", evasion: "12",
+             major: "5", severe: "10", armor: "3")
+    app.buttons["party.form.commit-button"].tap()
+
+    // The active-party row Button's accessibility label is the concatenation of
+    // all child text accessibility labels, including the tier badge's explicit
+    // accessibilityLabel("Level 3, Tier 2").
+    let partyRow = app.buttons.matching(identifier: "party.active-row").firstMatch
+    XCTAssertTrue(partyRow.waitForExistence(timeout: 5), "Player row should appear in active party")
+    XCTAssertTrue(
+      partyRow.label.contains("Level 3, Tier 2"),
+      "Party row label '\(partyRow.label)' should contain 'Level 3, Tier 2'")
+  }
+
+  /// Opening the edit form for a player with level 5 shows the stepper at 5.
+  @MainActor
+  func testEditFormPreservesPlayerLevel() throws {
+    app.buttons["party.add-player-button"].tap()
+    XCTAssertTrue(
+      app.textFields["party.form.name-field"].waitForExistence(timeout: 3),
+      "Player form should appear")
+
+    // Set level to 5 (Tier 3) before filling text fields.
+    incrementLevel(by: 4)
+    fillForm(name: "Lira", hp: "5", stress: "7", evasion: "14",
+             major: "4", severe: "8", armor: "2")
+    app.buttons["party.form.commit-button"].tap()
+
+    // Open the edit form by tapping the party row.
+    let partyRow = app.buttons.matching(identifier: "party.active-row").firstMatch
+    XCTAssertTrue(partyRow.waitForExistence(timeout: 5), "Player row should appear in active party")
+    partyRow.tap()
+
+    // Verify the edit form shows level 5.
+    let stepper = app.steppers["party.form.level-stepper"]
+    XCTAssertTrue(stepper.waitForExistence(timeout: 3), "Level stepper should be visible in edit form")
+    XCTAssertEqual(stepper.value as? String, "5", "Edit form should show the saved level of 5")
   }
 
   // MARK: - Add Another flow
@@ -162,7 +242,8 @@ final class PartyManagementUITests: XCTestCase {
 
   // MARK: - Helpers
 
-  /// Fills all seven PlayerForm fields. Expects the form sheet to be open.
+  /// Fills all PlayerForm fields. Expects the form sheet to be open.
+  /// Level is a Stepper defaulting to 1; pass nil to leave it unchanged.
   private func fillForm(
     name: String, hp: String, stress: String, evasion: String,
     major: String, severe: String, armor: String
@@ -181,6 +262,14 @@ final class PartyManagementUITests: XCTestCase {
       field.tap()
       field.typeText(value)
     }
+  }
+
+  /// Increments the level stepper by `steps` taps on its increment button.
+  private func incrementLevel(by steps: Int = 1) {
+    let stepper = app.steppers["party.form.level-stepper"]
+    XCTAssertTrue(stepper.waitForExistence(timeout: 3), "Level stepper should be visible")
+    let increment = stepper.buttons["Increment"]
+    for _ in 0..<steps { increment.tap() }
   }
 
   /// Adds one player via the form and waits for their row to appear in the

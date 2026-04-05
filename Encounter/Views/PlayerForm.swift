@@ -25,6 +25,7 @@ struct PlayerForm: View {
   @Environment(\.dismiss) private var dismiss
 
   @State private var name: String
+  @State private var level: Int
   @State private var maxHP: String
   @State private var maxStress: String
   @State private var evasion: String
@@ -44,6 +45,7 @@ struct PlayerForm: View {
     case .add:
       _editingID = State(initialValue: UUID())
       _name = State(initialValue: "")
+      _level = State(initialValue: 1)
       _maxHP = State(initialValue: "")
       _maxStress = State(initialValue: "")
       _evasion = State(initialValue: "")
@@ -53,6 +55,7 @@ struct PlayerForm: View {
     case .edit(let player):
       _editingID = State(initialValue: player.id)
       _name = State(initialValue: player.name)
+      _level = State(initialValue: player.level)
       _maxHP = State(initialValue: "\(player.maxHP)")
       _maxStress = State(initialValue: "\(player.maxStress)")
       _evasion = State(initialValue: "\(player.evasion)")
@@ -92,6 +95,8 @@ struct PlayerForm: View {
         Section("Character") {
           TextField("Name", text: $name)
             .accessibilityIdentifier("party.form.name-field")
+          Stepper("Level: \(level)", value: $level, in: 1...10)
+            .accessibilityIdentifier("party.form.level-stepper")
         }
         Section("Stats") {
           TextField("Max HP", text: $maxHP)
@@ -179,6 +184,7 @@ struct PlayerForm: View {
       Player(
         id: editingID,
         name: name.trimmingCharacters(in: .whitespaces),
+        level: level,
         maxHP: hp, maxStress: str, evasion: ev,
         thresholdMajor: tmaj, thresholdSevere: tsev,
         armorSlots: armor
@@ -188,6 +194,7 @@ struct PlayerForm: View {
   private func resetFields() {
     editingID = UUID()
     name = ""
+    level = 1
     maxHP = ""
     maxStress = ""
     evasion = ""
@@ -208,6 +215,7 @@ struct PlayerForm: View {
     mode: .edit(
       Player(
         name: "Aric Stonehammer",
+        level: 3,
         maxHP: 6, maxStress: 6, evasion: 12,
         thresholdMajor: 5, thresholdSevere: 10, armorSlots: 3
       ))

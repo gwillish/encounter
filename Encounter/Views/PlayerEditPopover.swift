@@ -90,7 +90,8 @@ struct PlayerEditPopover: View {
 
 #Preview {
   let session = EncounterSession(name: "Test")
-  session.add(player: PlayerState(
+  session.add(
+    player: PlayerState(
       name: "Aric Stonehammer",
       maxHP: 6, maxStress: 6, evasion: 12,
       thresholdMajor: 5, thresholdSevere: 10, armorSlots: 3

@@ -6,6 +6,7 @@
 //  Shows name and key stats: HP, Stress, Evasion, and Armor.
 //
 
+import DHKit
 import DHModels
 import SwiftUI
 
@@ -14,8 +15,16 @@ struct PlayerPartyRow: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: 2) {
-      Text(player.name)
-        .font(.body)
+      HStack {
+        Text(player.name)
+          .font(.body)
+        Spacer()
+        let tier = DifficultyBudget.tier(forLevel: player.level)
+        Text("Lv \(player.level) · T\(tier)")
+          .font(.caption)
+          .foregroundStyle(.secondary)
+          .accessibilityLabel("Level \(player.level), Tier \(tier)")
+      }
       HStack(spacing: 12) {
         statLabel("HP", value: player.maxHP)
         statLabel("Stress", value: player.maxStress)
@@ -40,12 +49,14 @@ struct PlayerPartyRow: View {
     PlayerPartyRow(
       player: Player(
         name: "Aric Stonehammer",
+        level: 3,
         maxHP: 6, maxStress: 6, evasion: 12,
         thresholdMajor: 5, thresholdSevere: 10, armorSlots: 3
       ))
     PlayerPartyRow(
       player: Player(
         name: "Lira Dawnwhisper",
+        level: 5,
         maxHP: 5, maxStress: 7, evasion: 14,
         thresholdMajor: 4, thresholdSevere: 8, armorSlots: 0
       ))
