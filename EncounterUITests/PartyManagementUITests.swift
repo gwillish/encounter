@@ -265,10 +265,11 @@ final class PartyManagementUITests: XCTestCase {
   }
 
   /// Increments the level stepper by `steps` taps on its increment button.
+  /// SwiftUI names stepper sub-buttons as "{stepper-id}-Increment" / "{stepper-id}-Decrement".
   private func incrementLevel(by steps: Int = 1) {
     let stepper = app.steppers["party.form.level-stepper"]
     XCTAssertTrue(stepper.waitForExistence(timeout: 3), "Level stepper should be visible")
-    let increment = stepper.buttons["Increment"]
+    let increment = app.buttons["party.form.level-stepper-Increment"]
     for _ in 0..<steps { increment.tap() }
   }
 
