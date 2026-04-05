@@ -22,9 +22,9 @@ import Testing
     return PlayerStore(directory: dir)
   }
 
-  private func makePlayer(name: String = "Aric") -> Player {
+  private func makePlayer(name: String = "Aric", level: Int = 1) -> Player {
     Player(
-      name: name, maxHP: 6, maxStress: 6, evasion: 12,
+      name: name, level: level, maxHP: 6, maxStress: 6, evasion: 12,
       thresholdMajor: 5, thresholdSevere: 10, armorSlots: 3
     )
   }
@@ -199,6 +199,18 @@ import Testing
     #expect(store2.players.count == 1)
     #expect(store2.players[0].name == "Aric")
     #expect(store2.players[0].id == player.id)
+  }
+
+  @Test func persistAndReloadPlayerLevel() async throws {
+    let dir = FileManager.default.temporaryDirectory
+      .appending(path: UUID().uuidString, directoryHint: .isDirectory)
+    let store1 = PlayerStore(directory: dir)
+    await store1.addPlayer(makePlayer(name: "Aric", level: 5))
+
+    let store2 = PlayerStore(directory: dir)
+    await store2.load()
+    let player = try #require(store2.players.first, "Player should have persisted")
+    #expect(player.level == 5)
   }
 
   @Test func persistAndReloadParty() async {
