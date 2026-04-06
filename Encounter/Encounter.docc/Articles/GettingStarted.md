@@ -15,7 +15,7 @@ bar to filter by name or description. Tap any entry to see its full stat block, 
 and GM notes.
 
 The compendium is pre-loaded with the Daggerheart SRD. Install content packs to add
-homebrew or third-party adversaries — see <doc:SharingAndHostingPacks> for how to find
+homebrew or third-party adversaries — see the DaggerheartModels documentation for how to find
 and add packs.
 
 ## Building an encounter
@@ -46,4 +46,4 @@ Open **Settings → Content Sources** to view and manage installed packs. Remote
 show a **Refresh** button; tap it to fetch the latest version of the pack. Locally
 imported packs can be removed here if you no longer need them.
 
-See <doc:SharingAndHostingPacks> for how to install a pack by URL.
+See the DaggerheartModels documentation for how to install a pack by URL.

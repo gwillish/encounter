@@ -17,9 +17,7 @@ Encounter supports community and homebrew content through the `.dhpack` format �
 plain JSON file containing adversaries, environments, or both. Packs can be imported
 from Files or AirDrop, or added as a live URL source that the app keeps up to date.
 
-- <doc:DHPackFormat> — the complete file format reference
-- <doc:AuthoringAPack> — step-by-step guide to creating your own pack
-- <doc:SharingAndHostingPacks> — how to distribute and host a pack
+See the [DaggerheartModels](https://swiftpackageindex.com/gwillish/DHModels/documentation/daggerheartmodels) documentation for the complete `.dhpack` format reference, authoring guide, and sharing options.
 
 ### Getting started
 
@@ -30,12 +28,6 @@ from Files or AirDrop, or added as a live URL source that the app keeps up to da
 ### App Usage
 
 - <doc:GettingStarted>
-
-### Content Packs
-
-- <doc:DHPackFormat>
-- <doc:AuthoringAPack>
-- <doc:SharingAndHostingPacks>
 
 ### Catalog Models
 
