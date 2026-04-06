@@ -114,8 +114,8 @@ is simpler and deterministic.
 
 ## Consequences
 
-- `Player` and `PlayerConfig` gain a `level` field; `AddPlayerForm` and `PlayerForm`
-  gain a level input (1–10).
+- `Player` and `PlayerConfig` gain a `level` field; `PlayerForm` gains a level
+  input (1–10).
 - `DifficultyBudget` gains `tier(forLevel:)` and `partyTier(levels:)` static functions.
 - `DifficultyAssessorView` reads player levels from `playerConfigs` and passes party
   tier to `suggestedAdjustments`; `lowerTierAdversary` moves from purely manual to
