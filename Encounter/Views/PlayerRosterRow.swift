@@ -19,11 +19,7 @@ struct PlayerRosterRow: View {
         Text(config.name)
           .font(.body)
         Spacer()
-        let tier = DifficultyBudget.tier(forLevel: config.level)
-        Text("Lv \(config.level) · T\(tier)")
-          .font(.caption)
-          .foregroundStyle(.secondary)
-          .accessibilityLabel("Level \(config.level), Tier \(tier)")
+        LevelTierBadge(level: config.level)
       }
       Text("HP: \(config.maxHP)  Stress: \(config.maxStress)  Evasion: \(config.evasion)")
         .font(.caption)

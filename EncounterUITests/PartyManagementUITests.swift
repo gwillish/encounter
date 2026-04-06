@@ -242,8 +242,8 @@ final class PartyManagementUITests: XCTestCase {
 
   // MARK: - Helpers
 
-  /// Fills all PlayerForm fields. Expects the form sheet to be open.
-  /// Level is a Stepper defaulting to 1; pass nil to leave it unchanged.
+  /// Fills all PlayerForm text fields. Expects the form sheet to be open.
+  /// Level is a Stepper that defaults to 1; use incrementLevel(by:) to change it.
   private func fillForm(
     name: String, hp: String, stress: String, evasion: String,
     major: String, severe: String, armor: String
