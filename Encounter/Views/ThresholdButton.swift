@@ -31,7 +31,7 @@ struct ThresholdButton: View {
           .font(.subheadline)
           .bold()
         Text(subtitle)
-          .font(.caption2)
+          .font(.caption)
           .foregroundStyle(.secondary)
       }
       .frame(maxWidth: .infinity)

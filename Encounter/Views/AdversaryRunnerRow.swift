@@ -31,7 +31,7 @@ struct AdversaryRunnerRow: View {
         Spacer()
         if let adversary {
           Text("\(adversary.role.rawValue) · T\(adversary.tier)")
-            .font(.caption2)
+            .font(.caption)
             .foregroundStyle(.secondary)
             .padding(.horizontal, 6)
             .padding(.vertical, 2)
@@ -42,16 +42,38 @@ struct AdversaryRunnerRow: View {
       HStack(spacing: 16) {
         HStack(spacing: 4) {
           Text("HP")
-            .font(.caption2)
+            .font(.caption)
             .foregroundStyle(.secondary)
           PipTrack(current: slot.currentHP, maximum: slot.maxHP)
         }
         HStack(spacing: 4) {
           Text("St")
-            .font(.caption2)
+            .font(.caption)
             .foregroundStyle(.secondary)
           PipTrack(current: slot.currentStress, maximum: slot.maxStress)
         }
+      }
+      if !slot.conditions.isEmpty {
+        ScrollView(.horizontal, showsIndicators: false) {
+          HStack(spacing: 6) {
+            ForEach(
+              slot.conditions.sorted { $0.displayName < $1.displayName }, id: \.self
+            ) { condition in
+              Text(condition.displayName)
+                .font(.caption)
+                .padding(.horizontal, 6)
+                .padding(.vertical, 2)
+                .background(.orange.opacity(0.15))
+                .foregroundStyle(.orange)
+                .clipShape(.capsule)
+            }
+          }
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(
+          "Conditions: "
+            + slot.conditions.map(\.displayName).sorted().joined(separator: ", ")
+        )
       }
     }
     .padding(.vertical, 4)
