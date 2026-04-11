@@ -38,7 +38,12 @@ struct AdversaryRunnerSection: View {
         .buttonStyle(.plain)
         .disabled(slot.isDefeated)
         .accessibilityIdentifier("runner.adversary-row")
-        .accessibilityValue(slot.customName ?? slot.adversaryID)
+        .accessibilityLabel(
+          slot.isDefeated
+            ? "\(slot.customName ?? slot.adversaryID), defeated"
+            : (slot.customName ?? slot.adversaryID)
+        )
+        .accessibilityHint(slot.isDefeated ? "" : "Tap to expand")
       }
     }
   }
