@@ -19,14 +19,13 @@ struct AdversaryRunnerSection: View {
 
   var body: some View {
     ForEach(slots) { slot in
-      if expandedSlotID == slot.id {
+      if expandedSlotID == slot.id && !slot.isDefeated {
         AdversaryRunnerCard(
           slot: slot,
           session: session,
           compendium: compendium,
           onCollapse: { expandedSlotID = nil }
         )
-        .opacity(slot.isDefeated ? 0.4 : 1.0)
         .listRowSeparator(.hidden)
       } else {
         Button {
@@ -37,8 +36,14 @@ struct AdversaryRunnerSection: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .disabled(slot.isDefeated)
         .accessibilityIdentifier("runner.adversary-row")
-        .accessibilityValue(slot.customName ?? slot.adversaryID)
+        .accessibilityLabel(
+          slot.isDefeated
+            ? "\(slot.customName ?? slot.adversaryID), defeated"
+            : (slot.customName ?? slot.adversaryID)
+        )
+        .accessibilityHint(slot.isDefeated ? "" : "Tap to expand")
       }
     }
   }
