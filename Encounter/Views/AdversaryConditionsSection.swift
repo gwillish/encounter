@@ -22,22 +22,24 @@ struct AdversaryConditionsSection: View {
       Text("Conditions")
         .font(.caption)
         .foregroundStyle(.secondary)
-      HStack(spacing: 6) {
-        ForEach(Condition.standardConditions, id: \.self) { condition in
-          let active = slot.conditions.contains(condition)
-          Button(condition.displayName) {
-            if active {
-              session.removeCondition(condition, from: slot.id)
-            } else {
-              session.applyCondition(condition, to: slot.id)
+      ScrollView(.horizontal, showsIndicators: false) {
+        HStack(spacing: 6) {
+          ForEach(Condition.standardConditions, id: \.self) { condition in
+            let active = slot.conditions.contains(condition)
+            Button(condition.displayName) {
+              if active {
+                session.removeCondition(condition, from: slot.id)
+              } else {
+                session.applyCondition(condition, to: slot.id)
+              }
             }
+            .font(.caption)
+            .buttonStyle(.bordered)
+            .tint(active ? .orange : nil)
+            .accessibilityIdentifier(
+              "runner.adversary-card.condition.\(condition.displayName.lowercased())"
+            )
           }
-          .font(.caption)
-          .buttonStyle(.bordered)
-          .tint(active ? .orange : nil)
-          .accessibilityIdentifier(
-            "runner.adversary-card.condition.\(condition.displayName.lowercased())"
-          )
         }
       }
     }
