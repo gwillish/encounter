@@ -33,7 +33,6 @@ final class RunnerUITests: XCTestCase {
 
   /// Applying a condition in the expanded card shows a badge in the
   /// collapsed row; removing it hides the badge.
-  @MainActor
   func testConditionBadgeVisibleInCollapsedRow() throws {
     navigateToRunner()
 
@@ -84,7 +83,6 @@ final class RunnerUITests: XCTestCase {
   // MARK: - Stress button
 
   /// Tapping +1 Stress in the expanded card is reflected in the stress pip track.
-  @MainActor
   func testStressButtonIncrementsStress() throws {
     navigateToRunner()
 

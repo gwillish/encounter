@@ -54,17 +54,19 @@ struct AdversaryRunnerRow: View {
         }
       }
       if !slot.conditions.isEmpty {
-        HStack(spacing: 6) {
-          ForEach(
-            slot.conditions.sorted { $0.displayName < $1.displayName }, id: \.self
-          ) { condition in
-            Text(condition.displayName)
-              .font(.caption)
-              .padding(.horizontal, 6)
-              .padding(.vertical, 2)
-              .background(.orange.opacity(0.15))
-              .foregroundStyle(.orange)
-              .clipShape(.capsule)
+        ScrollView(.horizontal, showsIndicators: false) {
+          HStack(spacing: 6) {
+            ForEach(
+              slot.conditions.sorted { $0.displayName < $1.displayName }, id: \.self
+            ) { condition in
+              Text(condition.displayName)
+                .font(.caption)
+                .padding(.horizontal, 6)
+                .padding(.vertical, 2)
+                .background(.orange.opacity(0.15))
+                .foregroundStyle(.orange)
+                .clipShape(.capsule)
+            }
           }
         }
         .accessibilityElement(children: .combine)
