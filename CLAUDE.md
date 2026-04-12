@@ -178,6 +178,25 @@ CLI-driven iteration.
 
 ---
 
+## Code Changes 
+
+When making bulk renames or refactors, do NOT make unrequested additional renames. Only change what was explicitly asked for. If you think something else should be renamed, ask first.
+
+---
+
+## Interaction Style 
+
+When working through a list of items (issues, review findings, renames), present them one at a time and wait for user input before proceeding to the next.
+
+
+---
+
+## Problem Solving 
+
+When fixing build errors or investigating issues, always research the root cause before attempting a fix. Do not apply quick fixes without understanding the underlying problem (e.g., platform availability, import visibility rules).
+
+---
+
 ## Testing
 
 Tests use **Swift Testing** (`import Testing`), not XCTest.
@@ -188,6 +207,7 @@ Test coverage priorities:
 3. `Compendium` loading and lookup correctness
 4. UI flows for encounter setup and live tracking (UITests)
 
+Always run a clean build and full test suite after making changes. Never reuse stale test output or cached build results. Use `swift build` and `swift test` fresh each time.
 ---
 
 ## Architecture Decision Records

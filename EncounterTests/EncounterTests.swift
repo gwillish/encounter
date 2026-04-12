@@ -263,6 +263,57 @@ struct ConditionTests {
     #expect(session.adversarySlots[0].isDefeated == false)
   }
 
+  // MARK: - Rename
+
+  @Test func renameAdversary_success() {
+    let session = makeSession()
+    let soldier = makeSoldier()
+    session.add(adversary: soldier, customName: "Alpha")
+    session.add(adversary: soldier, customName: "Bravo")
+    let id = session.adversarySlots[0].id
+
+    let result = session.renameAdversary(id: id, name: "Charlie")
+
+    #expect(result == true)
+    #expect(session.adversarySlots[0].customName == "Charlie")
+  }
+
+  @Test func renameAdversary_duplicate() {
+    let session = makeSession()
+    let soldier = makeSoldier()
+    session.add(adversary: soldier, customName: "Alpha")
+    session.add(adversary: soldier, customName: "Bravo")
+    let id = session.adversarySlots[0].id
+
+    let result = session.renameAdversary(id: id, name: "Bravo")
+
+    #expect(result == false)
+    #expect(session.adversarySlots[0].customName == "Alpha")
+  }
+
+  @Test func renameAdversary_emptyName() {
+    let session = makeSession()
+    let soldier = makeSoldier()
+    session.add(adversary: soldier, customName: "Alpha")
+    let id = session.adversarySlots[0].id
+
+    #expect(session.renameAdversary(id: id, name: "") == false)
+    #expect(session.renameAdversary(id: id, name: "   ") == false)
+    #expect(session.adversarySlots[0].customName == "Alpha")
+  }
+
+  @Test func renameAdversary_selfNameAllowed() {
+    let session = makeSession()
+    let soldier = makeSoldier()
+    session.add(adversary: soldier, customName: "Alpha")
+    let id = session.adversarySlots[0].id
+
+    let result = session.renameAdversary(id: id, name: "Alpha")
+
+    #expect(result == true)
+    #expect(session.adversarySlots[0].customName == "Alpha")
+  }
+
   @Test func applyDamageReducesHP() {
     let session = makeSession()
     let soldier = makeSoldier()
@@ -366,7 +417,6 @@ struct ConditionTests {
     session.applyCondition(.custom("Enraged"), to: session.adversarySlots[0].id)
     #expect(session.adversarySlots[0].conditions.contains(.custom("Enraged")))
   }
-
 
 }
 

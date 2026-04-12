@@ -22,6 +22,11 @@ struct AdversaryRunnerCard: View {
   let compendium: Compendium
   let onCollapse: () -> Void
 
+  @State private var isEditingName = false
+  @State private var pendingName = ""
+  @State private var nameError: String?
+  @FocusState private var isNameFieldFocused: Bool
+
   private var displayName: String {
     let adversary = compendium.adversary(id: slot.adversaryID)
     return slot.customName ?? adversary?.name ?? "Unknown (\(slot.adversaryID))"
@@ -36,13 +41,39 @@ struct AdversaryRunnerCard: View {
 
       // Header
       HStack {
-        Text(displayName)
-          .font(.headline)
-        Spacer()
-        Button("Collapse", systemImage: "chevron.up", action: onCollapse)
-          .labelStyle(.iconOnly)
-          .buttonStyle(.borderless)
-          .accessibilityIdentifier("runner.adversary-card.collapse-button")
+        if isEditingName {
+          TextField("Name", text: $pendingName)
+            .font(.headline)
+            .focused($isNameFieldFocused)
+            .onSubmit { commitRename() }
+            .accessibilityIdentifier("runner.adversary-card.name-field")
+          Button("Done") { commitRename() }
+            .buttonStyle(.borderless)
+            .accessibilityIdentifier("runner.adversary-card.rename-done-button")
+          Button("Cancel") { cancelRename() }
+            .buttonStyle(.borderless)
+            .accessibilityIdentifier("runner.adversary-card.rename-cancel-button")
+        } else {
+          Button(action: beginRename) {
+            Text(displayName)
+              .font(.headline)
+              .foregroundStyle(.primary)
+          }
+          .buttonStyle(.plain)
+          .accessibilityIdentifier("runner.adversary-card.name")
+          .accessibilityHint("Tap to rename")
+          Spacer()
+          Button("Collapse", systemImage: "chevron.up", action: onCollapse)
+            .labelStyle(.iconOnly)
+            .buttonStyle(.borderless)
+            .accessibilityIdentifier("runner.adversary-card.collapse-button")
+        }
+      }
+      if isEditingName, let error = nameError {
+        Text(error)
+          .font(.caption)
+          .foregroundStyle(.red)
+          .accessibilityIdentifier("runner.adversary-card.name-error")
       }
 
       // HP pip track
@@ -92,6 +123,34 @@ struct AdversaryRunnerCard: View {
       }
     }
     .padding(.vertical, 8)
+  }
+
+  private func beginRename() {
+    pendingName = displayName
+    nameError = nil
+    isEditingName = true
+    isNameFieldFocused = true
+  }
+
+  private func commitRename() {
+    let trimmed = pendingName.trimmingCharacters(in: .whitespaces)
+    guard !trimmed.isEmpty else {
+      cancelRename()
+      return
+    }
+    if session.renameAdversary(id: slot.id, name: trimmed) {
+      isNameFieldFocused = false
+      isEditingName = false
+      nameError = nil
+    } else {
+      nameError = "Name already in use"
+    }
+  }
+
+  private func cancelRename() {
+    isNameFieldFocused = false
+    isEditingName = false
+    nameError = nil
   }
 }
 

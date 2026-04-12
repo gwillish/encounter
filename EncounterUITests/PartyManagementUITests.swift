@@ -92,8 +92,9 @@ final class PartyManagementUITests: XCTestCase {
     // stepper is still on-screen and the number-pad keyboard is not yet showing.
     incrementLevel(by: 2)
 
-    fillForm(name: "Aric", hp: "6", stress: "6", evasion: "12",
-             major: "5", severe: "10", armor: "3")
+    fillForm(
+      name: "Aric", hp: "6", stress: "6", evasion: "12",
+      major: "5", severe: "10", armor: "3")
     app.buttons["party.form.commit-button"].tap()
 
     // The active-party row Button's accessibility label is the concatenation of
@@ -116,8 +117,9 @@ final class PartyManagementUITests: XCTestCase {
 
     // Set level to 5 (Tier 3) before filling text fields.
     incrementLevel(by: 4)
-    fillForm(name: "Lira", hp: "5", stress: "7", evasion: "14",
-             major: "4", severe: "8", armor: "2")
+    fillForm(
+      name: "Lira", hp: "5", stress: "7", evasion: "14",
+      major: "4", severe: "8", armor: "2")
     app.buttons["party.form.commit-button"].tap()
 
     // Open the edit form by tapping the party row.
@@ -127,7 +129,8 @@ final class PartyManagementUITests: XCTestCase {
 
     // Verify the edit form shows level 5.
     let stepper = app.steppers["party.form.level-stepper"]
-    XCTAssertTrue(stepper.waitForExistence(timeout: 3), "Level stepper should be visible in edit form")
+    XCTAssertTrue(
+      stepper.waitForExistence(timeout: 3), "Level stepper should be visible in edit form")
     XCTAssertEqual(stepper.value as? String, "5", "Edit form should show the saved level of 5")
   }
 
@@ -142,8 +145,9 @@ final class PartyManagementUITests: XCTestCase {
       app.textFields["party.form.name-field"].waitForExistence(timeout: 3),
       "Player form sheet should appear after tapping Add Player")
 
-    fillForm(name: "Aric", hp: "6", stress: "6", evasion: "12",
-             major: "5", severe: "10", armor: "3")
+    fillForm(
+      name: "Aric", hp: "6", stress: "6", evasion: "12",
+      major: "5", severe: "10", armor: "3")
 
     // The Add Another button sits in a safeAreaInset outside the Form scroll view so
     // it is always pinned above the number pad keyboard — no keyboard dismissal step
@@ -174,14 +178,16 @@ final class PartyManagementUITests: XCTestCase {
     // returns the placeholder text as the element's value — so "empty" means
     // value == placeholderValue, not value == "".
     let nameField = app.textFields["party.form.name-field"]
-    XCTAssertTrue(nameField.waitForExistence(timeout: 3), "Name field should be visible after scrolling to top")
+    XCTAssertTrue(
+      nameField.waitForExistence(timeout: 3), "Name field should be visible after scrolling to top")
     XCTAssertEqual(
       nameField.value as? String, nameField.placeholderValue,
       "Name field should be empty (showing placeholder) after Add Another resets the form")
 
     // Fill the second player and commit.
-    fillForm(name: "Lira", hp: "5", stress: "7", evasion: "14",
-             major: "4", severe: "8", armor: "2")
+    fillForm(
+      name: "Lira", hp: "5", stress: "7", evasion: "14",
+      major: "4", severe: "8", armor: "2")
     app.buttons["party.form.commit-button"].tap()
 
     // Both players must appear as active-party rows.
@@ -196,8 +202,9 @@ final class PartyManagementUITests: XCTestCase {
   /// Encounter builder after the user switches tabs and opens a builder.
   @MainActor
   func testPartyMembersVisibleInBuilderRoster() throws {
-    addOnePlayer(name: "Aric", hp: "6", stress: "6", evasion: "12",
-                 major: "5", severe: "10", armor: "3")
+    addOnePlayer(
+      name: "Aric", hp: "6", stress: "6", evasion: "12",
+      major: "5", severe: "10", armor: "3")
 
     // Switch to Encounters tab.
     let encountersTab = app.tabBars.buttons["Encounters"]
@@ -281,8 +288,9 @@ final class PartyManagementUITests: XCTestCase {
   ) {
     app.buttons["party.add-player-button"].tap()
     _ = app.textFields["party.form.name-field"].waitForExistence(timeout: 3)
-    fillForm(name: name, hp: hp, stress: stress, evasion: evasion,
-             major: major, severe: severe, armor: armor)
+    fillForm(
+      name: name, hp: hp, stress: stress, evasion: evasion,
+      major: major, severe: severe, armor: armor)
     app.buttons["party.form.commit-button"].tap()
     _ = app.buttons.matching(identifier: "party.active-row").firstMatch
       .waitForExistence(timeout: 5)
