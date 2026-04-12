@@ -39,9 +39,19 @@ struct AdversaryRunnerSection: View {
         .disabled(slot.isDefeated)
         .accessibilityIdentifier("runner.adversary-row")
         .accessibilityLabel(
-          slot.isDefeated
-            ? "\(slot.customName ?? slot.adversaryID), defeated"
-            : (slot.customName ?? slot.adversaryID)
+          {
+            let name = slot.customName ?? slot.adversaryID
+            var parts: [String] = [name]
+            if slot.isDefeated {
+              parts.append("defeated")
+            }
+            if !slot.conditions.isEmpty {
+              let conditionNames = slot.conditions.map(\.displayName).sorted().joined(
+                separator: ", ")
+              parts.append("Conditions: \(conditionNames)")
+            }
+            return parts.joined(separator: ", ")
+          }()
         )
         .accessibilityHint(slot.isDefeated ? "" : "Tap to expand")
       }

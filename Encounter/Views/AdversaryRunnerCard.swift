@@ -24,7 +24,8 @@ struct AdversaryRunnerCard: View {
 
   @State private var isEditingName = false
   @State private var pendingName = ""
-  @State private var nameError: String? = nil
+  @State private var nameError: String?
+  @FocusState private var isNameFieldFocused: Bool
 
   private var displayName: String {
     let adversary = compendium.adversary(id: slot.adversaryID)
@@ -43,12 +44,15 @@ struct AdversaryRunnerCard: View {
         if isEditingName {
           TextField("Name", text: $pendingName)
             .font(.headline)
+            .focused($isNameFieldFocused)
             .onSubmit { commitRename() }
             .accessibilityIdentifier("runner.adversary-card.name-field")
           Button("Done") { commitRename() }
             .buttonStyle(.borderless)
+            .accessibilityIdentifier("runner.adversary-card.rename-done-button")
           Button("Cancel") { cancelRename() }
             .buttonStyle(.borderless)
+            .accessibilityIdentifier("runner.adversary-card.rename-cancel-button")
         } else {
           Button(action: beginRename) {
             Text(displayName)
@@ -125,6 +129,7 @@ struct AdversaryRunnerCard: View {
     pendingName = displayName
     nameError = nil
     isEditingName = true
+    isNameFieldFocused = true
   }
 
   private func commitRename() {
@@ -134,6 +139,7 @@ struct AdversaryRunnerCard: View {
       return
     }
     if session.renameAdversary(id: slot.id, name: trimmed) {
+      isNameFieldFocused = false
       isEditingName = false
       nameError = nil
     } else {
@@ -142,6 +148,7 @@ struct AdversaryRunnerCard: View {
   }
 
   private func cancelRename() {
+    isNameFieldFocused = false
     isEditingName = false
     nameError = nil
   }

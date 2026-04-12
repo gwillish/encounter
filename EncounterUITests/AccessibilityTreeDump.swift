@@ -108,7 +108,8 @@ final class AccessibilityTreeDump: XCTestCase {
     let createButton = app.buttons.matching(identifier: "library.create-button").firstMatch
     XCTAssertTrue(createButton.waitForExistence(timeout: 3), "library.create-button not found")
     XCTAssertTrue(createButton.isEnabled, "Create button should be enabled")
-    let result = "library.create-button found: true, enabled: \(createButton.isEnabled), frame: \(createButton.frame)\n"
+    let result =
+      "library.create-button found: true, enabled: \(createButton.isEnabled), frame: \(createButton.frame)\n"
     try? result.write(toFile: "/tmp/library_create_button.txt", atomically: true, encoding: .utf8)
   }
 
