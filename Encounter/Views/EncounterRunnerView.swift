@@ -21,6 +21,7 @@ struct EncounterRunnerView: View {
 
   @Environment(Compendium.self) private var compendium
   @Environment(SessionRegistry.self) private var sessionRegistry
+  @Environment(SessionStore.self) private var sessionStore
   @State private var expandedSlotID: UUID?
 
   // MARK: - Sorted slots (computed, non-mutating)
@@ -51,10 +52,9 @@ struct EncounterRunnerView: View {
       }
       ToolbarItem(placement: .secondaryAction) {
         Button("Reset Session") {
-          sessionRegistry.resetSession(
-            for: definition,
-            compendium: compendium
-          )
+          let oldSessionID = session.id
+          sessionRegistry.resetSession(for: definition, compendium: compendium)
+          sessionStore.delete(sessionID: oldSessionID)
         }
         .accessibilityIdentifier("runner.reset-button")
       }
@@ -102,4 +102,5 @@ struct EncounterRunnerView: View {
   }
   .environment(compendium)
   .environment(SessionRegistry())
+  .environment(SessionStore(directory: .temporaryDirectory))
 }

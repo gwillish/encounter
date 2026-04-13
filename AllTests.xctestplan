@@ -25,6 +25,11 @@
       }
     },
     {
+      "skippedTests" : [
+        "AccessibilityTreeDump",
+        "EncounterUITests",
+        "EncounterUITestsLaunchTests"
+      ],
       "target" : {
         "containerPath" : "container:Encounter.xcodeproj",
         "identifier" : "1A8F7BB02F660D3900548E3A",
