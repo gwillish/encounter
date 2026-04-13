@@ -105,6 +105,7 @@ struct ResumePromptView: View {
           .foregroundStyle(.secondary)
         }
       }
+      .buttonStyle(.plain)
       .accessibilityIdentifier("resume.session-\(target.id)")
     }
   }

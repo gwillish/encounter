@@ -94,15 +94,19 @@ struct EncounterApp: App {
             #if os(iOS) || os(visionOS)
               // Request a background-execution extension so writes complete
               // before iOS/visionOS suspends the process.
+              // The handler is called on an unspecified background thread;
+              // we block it with a semaphore until saveAll finishes so iOS
+              // does not suspend the process before the writes hit disk.
               ProcessInfo.processInfo.performExpiringActivity(
                 withReason: "save-sessions"
               ) { expired in
                 guard !expired else { return }
-                DispatchQueue.main.async {
-                  Task { @MainActor in
-                    await sessionStore.saveAll(from: registry)
-                  }
+                let sema = DispatchSemaphore(value: 0)
+                Task { @MainActor in
+                  await sessionStore.saveAll(from: registry)
+                  sema.signal()
                 }
+                sema.wait()
               }
             #else
               Task { await sessionStore.saveAll(from: registry) }

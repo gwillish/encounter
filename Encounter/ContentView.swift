@@ -52,6 +52,11 @@ struct ContentView: View {
   @State private var resumeSheetPayload: ResumeSheetPayload?
   /// Set when the user taps Resume; drives .fullScreenCover to present the runner.
   @State private var activeResumedTarget: ResumeTarget?
+  /// Holds the resume target chosen inside the sheet while the sheet is still
+  /// animating out. Transferred to activeResumedTarget in onDismiss so the
+  /// fullScreenCover presentation starts after the sheet is fully gone,
+  /// avoiding back-to-back iOS 26 presentation-transition collisions.
+  @State private var pendingResumeTarget: ResumeTarget?
 
   /// In-flight sessions that were loaded from disk and still have active adversaries.
   private var resumeTargets: [ResumeTarget] {
@@ -88,11 +93,23 @@ struct ContentView: View {
       guard !loading && sessionStore.isLoaded && !resumeDismissed else { return }
       snapshotAndShowResume()
     }
-    .sheet(item: $resumeSheetPayload, onDismiss: { resumeDismissed = true }) { payload in
-      ResumePromptView(targets: payload.targets) { target in
-        resumeSheetPayload = nil
+    .sheet(
+      item: $resumeSheetPayload,
+      onDismiss: {
         resumeDismissed = true
-        activeResumedTarget = target
+        // Transfer any pending resume target now that the sheet is fully
+        // dismissed, so fullScreenCover doesn't fight an in-flight
+        // sheet-dismissal animation on iOS 26.
+        if let t = pendingResumeTarget {
+          activeResumedTarget = t
+          pendingResumeTarget = nil
+        }
+      }
+    ) { payload in
+      ResumePromptView(targets: payload.targets) { target in
+        // Store the target and clear the sheet; onDismiss will pick it up.
+        pendingResumeTarget = target
+        resumeSheetPayload = nil
       }
     }
     #if os(macOS)
@@ -125,6 +142,10 @@ struct ContentView: View {
   // MARK: - Resume helpers
 
   private func snapshotAndShowResume() {
+    // The guard prevents double-presentation: both onChange(sessionStore.isLoaded)
+    // and onChange(store.isLoading) can fire on the same run-loop turn when both
+    // conditions become true simultaneously. The second call is safely no-op'd
+    // because resumeSheetPayload is already non-nil from the first.
     guard !resumeDismissed && resumeSheetPayload == nil else { return }
     // Snapshot launch-time candidate IDs exactly once; allow target
     // resolution to retry on subsequent triggers if definitions weren't

@@ -35,14 +35,17 @@ import Testing
   }
 
   private func tempDir() -> URL {
-    FileManager.default.temporaryDirectory
+    let dir = FileManager.default.temporaryDirectory
       .appending(path: "SessionStoreTests-\(UUID())", directoryHint: .isDirectory)
+    try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+    return dir
   }
 
   // MARK: - save / load round-trip
 
   @Test func saveAndLoadRestoresSession() async throws {
     let dir = tempDir()
+    defer { try? FileManager.default.removeItem(at: dir) }
     let store = SessionStore(directory: dir)
     let (session, _) = makeSession()
     session.fearPool = 5
@@ -60,6 +63,7 @@ import Testing
 
   @Test func loadSetsIsLoaded() async {
     let dir = tempDir()
+    defer { try? FileManager.default.removeItem(at: dir) }
     let store = SessionStore(directory: dir)
     #expect(store.isLoaded == false)
 
@@ -71,6 +75,7 @@ import Testing
 
   @Test func loadIntoEmptyDirectorySucceeds() async {
     let dir = tempDir()
+    defer { try? FileManager.default.removeItem(at: dir) }
     let store = SessionStore(directory: dir)
     let registry = SessionRegistry()
 
@@ -84,6 +89,7 @@ import Testing
 
   @Test func saveAndLoadPreservesAdversarySlotState() async throws {
     let dir = tempDir()
+    defer { try? FileManager.default.removeItem(at: dir) }
     let store = SessionStore(directory: dir)
     let (session, _) = makeSession()
 
@@ -110,6 +116,7 @@ import Testing
 
   @Test func saveAllPersistsMultipleSessions() async {
     let dir = tempDir()
+    defer { try? FileManager.default.removeItem(at: dir) }
     let store = SessionStore(directory: dir)
     let compendium = makeCompendium()
 
@@ -131,6 +138,7 @@ import Testing
 
   @Test func deleteRemovesPersistedFile() async {
     let dir = tempDir()
+    defer { try? FileManager.default.removeItem(at: dir) }
     let store = SessionStore(directory: dir)
     let (session, _) = makeSession()
 
@@ -145,6 +153,7 @@ import Testing
 
   @Test func deleteNeverSavedSessionIsNoop() async {
     let dir = tempDir()
+    defer { try? FileManager.default.removeItem(at: dir) }
     let store = SessionStore(directory: dir)
 
     // Deleting a session that was never saved should not throw or crash.
@@ -155,11 +164,47 @@ import Testing
     #expect(registry.sessions.isEmpty)
   }
 
+  @Test func resaveAfterDeleteRecreatesFile() async throws {
+    let dir = tempDir()
+    defer { try? FileManager.default.removeItem(at: dir) }
+    let store = SessionStore(directory: dir)
+    let (session, _) = makeSession()
+
+    await store.save(session)
+    await store.delete(sessionID: session.id)
+    // Re-saving after delete should recreate the file.
+    await store.save(session)
+
+    let registry = SessionRegistry()
+    await store.load(into: registry)
+
+    #expect(registry.sessions.count == 1)
+  }
+
+  @Test func relocateDoesNotExposeOldSessions() async throws {
+    let dirA = tempDir()
+    defer { try? FileManager.default.removeItem(at: dirA) }
+    let dirB = tempDir()
+    defer { try? FileManager.default.removeItem(at: dirB) }
+
+    let store = SessionStore(directory: dirA)
+    let (session, _) = makeSession()
+    await store.save(session)
+
+    // Relocate to an empty directory — no sessions should be visible.
+    store.relocate(to: dirB)
+
+    let registry = SessionRegistry()
+    await store.load(into: registry)
+
+    #expect(registry.sessions.isEmpty)
+  }
+
   // MARK: - corrupt file resilience
 
   @Test func loadIgnoresCorruptFile() async throws {
     let dir = tempDir()
-    try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+    defer { try? FileManager.default.removeItem(at: dir) }
     // Write a file that matches the .session.json suffix but contains invalid JSON.
     let badFile = dir.appending(path: "corrupt.session.json")
     try "not valid json".data(using: .utf8)!.write(to: badFile)
@@ -176,6 +221,7 @@ import Testing
 
   @Test func loadDoesNotOverwriteExistingSession() async {
     let dir = tempDir()
+    defer { try? FileManager.default.removeItem(at: dir) }
     let store = SessionStore(directory: dir)
     let (session, definition) = makeSession()
 
