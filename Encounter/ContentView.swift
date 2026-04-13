@@ -50,6 +50,8 @@ struct ContentView: View {
   /// Using .sheet(item:) rather than .sheet(isPresented:) so SwiftUI passes
   /// the payload directly to the closure instead of reading @State at render time.
   @State private var resumeSheetPayload: ResumeSheetPayload?
+  /// Set when the user taps Resume; drives .fullScreenCover to present the runner.
+  @State private var activeResumedTarget: ResumeTarget?
 
   /// In-flight sessions that were loaded from disk and still have active adversaries.
   private var resumeTargets: [ResumeTarget] {
@@ -87,15 +89,49 @@ struct ContentView: View {
       snapshotAndShowResume()
     }
     .sheet(item: $resumeSheetPayload, onDismiss: { resumeDismissed = true }) { payload in
-      ResumePromptView(targets: payload.targets)
+      ResumePromptView(targets: payload.targets) { target in
+        resumeSheetPayload = nil
+        resumeDismissed = true
+        activeResumedTarget = target
+      }
     }
+    #if os(macOS)
+      .sheet(item: $activeResumedTarget) { target in
+        NavigationStack {
+          EncounterRunnerView(session: target.session, definition: target.definition)
+          .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+              Button("Done") { activeResumedTarget = nil }
+              .accessibilityIdentifier("runner.done-button")
+            }
+          }
+        }
+      }
+    #else
+      .fullScreenCover(item: $activeResumedTarget) { target in
+        NavigationStack {
+          EncounterRunnerView(session: target.session, definition: target.definition)
+          .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+              Button("Done") { activeResumedTarget = nil }
+              .accessibilityIdentifier("runner.done-button")
+            }
+          }
+        }
+      }
+    #endif
   }
 
   // MARK: - Resume helpers
 
   private func snapshotAndShowResume() {
-    guard resumeCandidateSessionIDs.isEmpty else { return }
-    resumeCandidateSessionIDs = Set(sessionRegistry.sessions.values.map { $0.id })
+    guard !resumeDismissed && resumeSheetPayload == nil else { return }
+    // Snapshot launch-time candidate IDs exactly once; allow target
+    // resolution to retry on subsequent triggers if definitions weren't
+    // available on the first pass.
+    if resumeCandidateSessionIDs.isEmpty {
+      resumeCandidateSessionIDs = Set(sessionRegistry.sessions.values.map { $0.id })
+    }
     let targets = resumeTargets
     if !targets.isEmpty {
       resumeSheetPayload = ResumeSheetPayload(targets: targets)

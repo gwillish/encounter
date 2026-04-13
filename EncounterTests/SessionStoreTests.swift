@@ -41,24 +41,21 @@ import Testing
 
   // MARK: - save / load round-trip
 
-  @Test func saveAndLoadRestoresSession() async {
+  @Test func saveAndLoadRestoresSession() async throws {
     let dir = tempDir()
     let store = SessionStore(directory: dir)
     let (session, _) = makeSession()
-    session.fearPool = 5  // mutate so we can verify state is preserved
+    session.fearPool = 5
 
-    store.save(session)
-
-    // Give the detached write task a moment to flush to disk
-    try? await Task.sleep(for: .milliseconds(200))
+    await store.save(session)
 
     let registry = SessionRegistry()
     await store.load(into: registry)
 
-    let restored = registry.sessions[session.definitionID!]
-    #expect(restored != nil)
-    #expect(restored?.id == session.id)
-    #expect(restored?.fearPool == 5)
+    let defID = try #require(session.definitionID)
+    let restored = try #require(registry.sessions[defID])
+    #expect(restored.id == session.id)
+    #expect(restored.fearPool == 5)
   }
 
   @Test func loadSetsIsLoaded() async {
@@ -83,6 +80,32 @@ import Testing
     #expect(store.isLoaded == true)
   }
 
+  // MARK: - adversary slot round-trip
+
+  @Test func saveAndLoadPreservesAdversarySlotState() async throws {
+    let dir = tempDir()
+    let store = SessionStore(directory: dir)
+    let (session, _) = makeSession()
+
+    // Apply damage and stress to the goblin slot so we can verify both round-trip.
+    let slotID = try #require(session.adversarySlots.first?.id)
+    session.applyDamage(2, to: slotID)
+    session.applyStress(1, to: slotID)
+
+    await store.save(session)
+
+    let registry = SessionRegistry()
+    await store.load(into: registry)
+
+    let defID = try #require(session.definitionID)
+    let restored = try #require(registry.sessions[defID])
+    let restoredSlot = try #require(restored.adversarySlots.first)
+    // Goblin starts with hp=3; after 2 damage → currentHP should be 1.
+    #expect(restoredSlot.currentHP == 1)
+    // Goblin starts with stress=2 max; after 1 stress → currentStress should be 1.
+    #expect(restoredSlot.currentStress == 1)
+  }
+
   // MARK: - saveAll
 
   @Test func saveAllPersistsMultipleSessions() async {
@@ -96,8 +119,7 @@ import Testing
     _ = registry.session(for: def1, compendium: compendium)
     _ = registry.session(for: def2, compendium: compendium)
 
-    store.saveAll(from: registry)
-    try? await Task.sleep(for: .milliseconds(200))
+    await store.saveAll(from: registry)
 
     let fresh = SessionRegistry()
     await store.load(into: fresh)
@@ -112,15 +134,42 @@ import Testing
     let store = SessionStore(directory: dir)
     let (session, _) = makeSession()
 
-    store.save(session)
-    try? await Task.sleep(for: .milliseconds(200))
-
-    store.delete(sessionID: session.id)
+    await store.save(session)
+    await store.delete(sessionID: session.id)
 
     let registry = SessionRegistry()
     await store.load(into: registry)
 
     #expect(registry.sessions.isEmpty)
+  }
+
+  @Test func deleteNeverSavedSessionIsNoop() async {
+    let dir = tempDir()
+    let store = SessionStore(directory: dir)
+
+    // Deleting a session that was never saved should not throw or crash.
+    await store.delete(sessionID: UUID())
+
+    let registry = SessionRegistry()
+    await store.load(into: registry)
+    #expect(registry.sessions.isEmpty)
+  }
+
+  // MARK: - corrupt file resilience
+
+  @Test func loadIgnoresCorruptFile() async throws {
+    let dir = tempDir()
+    try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+    // Write a file that matches the .session.json suffix but contains invalid JSON.
+    let badFile = dir.appending(path: "corrupt.session.json")
+    try "not valid json".data(using: .utf8)!.write(to: badFile)
+
+    let store = SessionStore(directory: dir)
+    let registry = SessionRegistry()
+    await store.load(into: registry)
+
+    #expect(registry.sessions.isEmpty)
+    #expect(store.isLoaded == true)
   }
 
   // MARK: - insert guard
@@ -132,8 +181,7 @@ import Testing
 
     // Save a session with fearPool = 3
     session.fearPool = 3
-    store.save(session)
-    try? await Task.sleep(for: .milliseconds(200))
+    await store.save(session)
 
     // Pre-populate the registry with a different session for the same definition
     let registry = SessionRegistry()
