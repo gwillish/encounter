@@ -35,6 +35,10 @@ final class SessionResumeUITests: EncounterUITestCase {
         XCTAssertTrue(
             app.wait(for: .runningBackground, timeout: 5),
             "App should enter background state so saveAll can fire")
+        // .runningBackground confirms process state, not I/O completion.
+        // performExpiringActivity blocks the handler until saveAll finishes,
+        // but a brief pause reduces CI flakiness on slower devices or builds.
+        Thread.sleep(forTimeInterval: 1)
 
         // Relaunch without resetting — persisted session survives
         app.launchArguments = []
@@ -70,6 +74,7 @@ final class SessionResumeUITests: EncounterUITestCase {
         XCTAssertTrue(
             app.wait(for: .runningBackground, timeout: 5),
             "App should enter background state so saveAll can fire")
+        Thread.sleep(forTimeInterval: 1)
 
         app.launchArguments = []
         app.launch()
@@ -88,6 +93,13 @@ final class SessionResumeUITests: EncounterUITestCase {
         XCTAssertTrue(
             app.navigationBars["Party"].waitForExistence(timeout: 5),
             "App should show the Party screen after dismissing the resume prompt")
+
+        // Navigate away and back to confirm the dismiss is sticky.
+        app.tabBars.firstMatch.buttons["Encounters"].tap()
+        app.tabBars.firstMatch.buttons["Party"].tap()
+        XCTAssertFalse(
+            app.navigationBars["In Progress"].waitForExistence(timeout: 3),
+            "Resume sheet should not re-appear after navigating away and back")
     }
 
     // MARK: - No resume prompt on fresh launch

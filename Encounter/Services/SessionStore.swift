@@ -111,6 +111,11 @@ final class SessionStore {
   }
 
   /// Persist all sessions currently held in `registry`.
+  ///
+  /// Child tasks hop back to `@MainActor` to call `save`, so the
+  /// individual writes are serialized through the main actor even though
+  /// `TaskGroup` is used. The actual file I/O inside each `save` is
+  /// off-actor via `@concurrent`, so disk writes still overlap.
   func saveAll(from registry: SessionRegistry) async {
     await withTaskGroup(of: Void.self) { group in
       for session in registry.sessions.values {
