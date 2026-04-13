@@ -96,29 +96,39 @@ final class SessionStore {
   // MARK: - Save
 
   /// Persist a single session to disk.
-  /// Encoding happens on the caller's actor; the write is fire-and-forget off main.
-  func save(_ session: EncounterSession) {
+  /// The write is performed off the main actor via a `@concurrent` helper.
+  func save(_ session: EncounterSession) async {
     guard let data = try? JSONEncoder().encode(session) else { return }
     let url = directory.appending(path: "\(session.id).session.json")
     let dir = directory
-    Task.detached(priority: .utility) {
-      try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-      try? data.write(to: url, options: .atomic)
-    }
+    await Self.writeSessionData(data, to: url, in: dir)
+  }
+
+  @concurrent
+  nonisolated private static func writeSessionData(_ data: Data, to url: URL, in dir: URL) async {
+    try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+    try? data.write(to: url, options: .atomic)
   }
 
   /// Persist all sessions currently held in `registry`.
-  func saveAll(from registry: SessionRegistry) {
-    for session in registry.sessions.values {
-      save(session)
+  func saveAll(from registry: SessionRegistry) async {
+    await withTaskGroup(of: Void.self) { group in
+      for session in registry.sessions.values {
+        group.addTask { await self.save(session) }
+      }
     }
   }
 
   // MARK: - Delete
 
   /// Remove the persisted file for the given session ID (e.g. after an explicit reset).
-  func delete(sessionID: UUID) {
+  func delete(sessionID: UUID) async {
     let url = directory.appending(path: "\(sessionID).session.json")
+    await Self.removeSessionData(at: url)
+  }
+
+  @concurrent
+  nonisolated private static func removeSessionData(at url: URL) async {
     try? FileManager.default.removeItem(at: url)
   }
 }

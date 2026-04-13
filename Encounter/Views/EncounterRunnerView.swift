@@ -54,7 +54,7 @@ struct EncounterRunnerView: View {
         Button("Reset Session") {
           let oldSessionID = session.id
           sessionRegistry.resetSession(for: definition, compendium: compendium)
-          sessionStore.delete(sessionID: oldSessionID)
+          Task { await sessionStore.delete(sessionID: oldSessionID) }
         }
         .accessibilityIdentifier("runner.reset-button")
       }

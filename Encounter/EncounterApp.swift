@@ -90,7 +90,23 @@ struct EncounterApp: App {
         }
         .onChange(of: scenePhase) { _, phase in
           if phase == .background {
-            sessionStore.saveAll(from: sessionRegistry)
+            let registry = sessionRegistry
+            #if os(iOS) || os(visionOS)
+              // Request a background-execution extension so writes complete
+              // before iOS/visionOS suspends the process.
+              ProcessInfo.processInfo.performExpiringActivity(
+                withReason: "save-sessions"
+              ) { expired in
+                guard !expired else { return }
+                DispatchQueue.main.async {
+                  Task { @MainActor in
+                    await sessionStore.saveAll(from: registry)
+                  }
+                }
+              }
+            #else
+              Task { await sessionStore.saveAll(from: registry) }
+            #endif
           }
         }
         // onOpenURL on the root view handles .dhpack file opens on both

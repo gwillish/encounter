@@ -5,23 +5,13 @@
 //  Sheet presented on launch when one or more in-flight sessions were
 //  found in the SessionRegistry. Offers a fast path back into the runner.
 //
+//  Navigation is handled by the caller via the `onResume` callback —
+//  this view does not own a NavigationStack or push destinations itself.
+//
 
 import DHKit
 import DHModels
 import SwiftUI
-
-// MARK: - ResumeTarget
-
-/// A resolved pairing of an in-flight session and its source definition,
-/// used to drive navigation directly into EncounterRunnerView.
-struct ResumeTarget: Identifiable, Hashable {
-  let id: UUID  // session.id
-  let session: EncounterSession
-  let definition: EncounterDefinition
-
-  static func == (lhs: ResumeTarget, rhs: ResumeTarget) -> Bool { lhs.id == rhs.id }
-  func hash(into hasher: inout Hasher) { hasher.combine(id) }
-}
 
 // MARK: - ResumePromptView
 
@@ -30,10 +20,13 @@ struct ResumeTarget: Identifiable, Hashable {
 /// A single session displays a focused "Resume" card. Multiple sessions
 /// display a list. Swiping the sheet down (or tapping "Not Now") dismisses
 /// it without resuming; the session remains persisted until explicitly ended.
+///
+/// When the user taps Resume, `onResume` is called with the selected target.
+/// The caller is responsible for dismissing this sheet and navigating to the runner.
 struct ResumePromptView: View {
   let targets: [ResumeTarget]
+  var onResume: (ResumeTarget) -> Void
 
-  @State private var resumeTarget: ResumeTarget?
   @Environment(\.dismiss) private var dismiss
 
   var body: some View {
@@ -55,9 +48,6 @@ struct ResumePromptView: View {
             .accessibilityIdentifier("resume.dismiss-button")
         }
       }
-      .navigationDestination(item: $resumeTarget) { target in
-        EncounterRunnerView(session: target.session, definition: target.definition)
-      }
     }
   }
 
@@ -71,6 +61,7 @@ struct ResumePromptView: View {
         Image(systemName: "shield.lefthalf.filled")
           .font(.system(size: 48))
           .foregroundStyle(.secondary)
+          .accessibilityHidden(true)
         Text(target.definition.name)
           .font(.title2.bold())
         let activeCount = target.session.activeAdversaries.count
@@ -83,7 +74,7 @@ struct ResumePromptView: View {
         .foregroundStyle(.secondary)
       }
       Button("Resume Encounter") {
-        resumeTarget = target
+        onResume(target)
       }
       .buttonStyle(.borderedProminent)
       .controlSize(.large)
@@ -98,25 +89,20 @@ struct ResumePromptView: View {
   private var multiResumeList: some View {
     List(targets) { target in
       Button {
-        resumeTarget = target
+        onResume(target)
       } label: {
-        HStack {
-          VStack(alignment: .leading, spacing: 2) {
-            Text(target.definition.name)
-              .font(.headline)
-              .foregroundStyle(.primary)
-            let activeCount = target.session.activeAdversaries.count
-            Text(
-              activeCount == 1
-                ? "1 adversary active"
-                : "\(activeCount) adversaries active"
-            )
-            .font(.caption)
-            .foregroundStyle(.secondary)
-          }
-          Spacer()
-          Image(systemName: "chevron.right")
-            .foregroundStyle(.secondary)
+        VStack(alignment: .leading, spacing: 2) {
+          Text(target.definition.name)
+            .font(.headline)
+            .foregroundStyle(.primary)
+          let activeCount = target.session.activeAdversaries.count
+          Text(
+            activeCount == 1
+              ? "1 adversary active"
+              : "\(activeCount) adversaries active"
+          )
+          .font(.caption)
+          .foregroundStyle(.secondary)
         }
       }
       .accessibilityIdentifier("resume.session-\(target.id)")
@@ -143,7 +129,7 @@ private let previewCompendium: Compendium = {
   let def = EncounterDefinition(name: "Goblin Ambush", adversaryIDs: ["goblin", "goblin"])
   let session = EncounterSession.make(from: def, using: previewCompendium)
   let target = ResumeTarget(id: session.id, session: session, definition: def)
-  return ResumePromptView(targets: [target])
+  return ResumePromptView(targets: [target], onResume: { _ in })
     .environment(previewCompendium)
     .environment(SessionRegistry())
     .environment(SessionStore(directory: .temporaryDirectory))
@@ -158,7 +144,7 @@ private let previewCompendium: Compendium = {
     ResumeTarget(id: s1.id, session: s1, definition: def1),
     ResumeTarget(id: s2.id, session: s2, definition: def2),
   ]
-  return ResumePromptView(targets: targets)
+  return ResumePromptView(targets: targets, onResume: { _ in })
     .environment(previewCompendium)
     .environment(SessionRegistry())
     .environment(SessionStore(directory: .temporaryDirectory))
