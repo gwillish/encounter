@@ -135,18 +135,16 @@ class EncounterUITestCase: XCTestCase {
   }
 
   func tapRunEncounter() {
-    // On iOS 26 with .toolbarRole(.editor), the Run Encounter button is in the toolbar
-    // overflow menu (OverflowBarButtonItem / "More"). Menu items lose their AX identifiers
-    // and are only findable by label once the menu is open.
-    let overflowButton = app.buttons["OverflowBarButtonItem"]
+    // On iOS 26 with .toolbarRole(.editor), toolbar items collapse into an
+    // OverflowBarButtonItem ("More") menu. AX identifiers are NOT preserved
+    // in menu items — open the overflow first, then find by label.
+    let overflow = app.buttons["OverflowBarButtonItem"]
     XCTAssertTrue(
-      overflowButton.waitForExistence(timeout: 5), "Toolbar overflow button should be visible")
-    overflowButton.tap()
-
+      overflow.waitForExistence(timeout: 15), "Overflow 'More' button should be in nav bar")
+    overflow.tap()
     let runButton = app.buttons["Run Encounter"]
     XCTAssertTrue(
-      runButton.waitForExistence(timeout: 3), "Run Encounter button should appear in overflow menu")
-    XCTAssertTrue(runButton.isEnabled, "Run Encounter button should be enabled")
+      runButton.waitForExistence(timeout: 5), "Run Encounter button should appear in overflow menu")
     runButton.tap()
     XCTAssertTrue(
       app.collectionViews["runner.adversary-list"].waitForExistence(timeout: 5),

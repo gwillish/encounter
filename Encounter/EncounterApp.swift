@@ -24,6 +24,7 @@ struct EncounterApp: App {
     if CommandLine.arguments.contains("-UITestResetState") {
       try? FileManager.default.removeItem(at: EncounterStore.localDirectory)
       try? FileManager.default.removeItem(at: PlayerStore.localDirectory)
+      try? FileManager.default.removeItem(at: SessionStore.localDirectory)
     }
   }
 
@@ -38,6 +39,9 @@ struct EncounterApp: App {
     compendium: Compendium()  // placeholder; replaced by the real compendium below
   )
   @State private var playerStore = PlayerStore(directory: PlayerStore.localDirectory)
+  @State private var sessionStore = SessionStore(directory: SessionStore.localDirectory)
+
+  @Environment(\.scenePhase) private var scenePhase
 
   @State private var isShowingAbout = false
 
@@ -49,6 +53,7 @@ struct EncounterApp: App {
         .environment(sessionRegistry)
         .environment(contentStore)
         .environment(playerStore)
+        .environment(sessionStore)
         .task {
           let dir = await EncounterStore.defaultDirectory()
           store.relocate(to: dir)
@@ -67,15 +72,26 @@ struct EncounterApp: App {
             .appending(path: "Players", directoryHint: .isDirectory)
           playerStore.relocate(to: playersDir)
 
+          let sessionsDir = dir.deletingLastPathComponent()
+            .appending(path: "Sessions", directoryHint: .isDirectory)
+          sessionStore.relocate(to: sessionsDir)
+
           // All loads are independent — run concurrently.
           async let compendiumLoad: Void = compendium.load()
           async let storeLoad: Void = store.load()
           async let contentLoad: Void = contentStore.loadOnStartup()
           async let playerLoad: Void = playerStore.load()
+          async let sessionLoad: Void = sessionStore.load(into: sessionRegistry)
           do { try await compendiumLoad } catch {}
           await storeLoad
           await contentLoad
           await playerLoad
+          await sessionLoad
+        }
+        .onChange(of: scenePhase) { _, phase in
+          if phase == .background {
+            sessionStore.saveAll(from: sessionRegistry)
+          }
         }
         // onOpenURL on the root view handles .dhpack file opens on both
         // iOS and macOS. contentStore is non-nil from first render, so
