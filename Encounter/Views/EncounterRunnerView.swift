@@ -21,7 +21,7 @@ struct EncounterRunnerView: View {
 
   @Environment(Compendium.self) private var compendium
   @Environment(SessionRegistry.self) private var sessionRegistry
-  @Environment(SessionStore.self) private var sessionStore
+  @Environment(\.dismiss) private var dismiss
   @State private var expandedSlotID: UUID?
 
   // MARK: - Sorted slots (computed, non-mutating)
@@ -51,12 +51,10 @@ struct EncounterRunnerView: View {
           .accessibilityIdentifier("runner.fear-tracker-button")
       }
       ToolbarItem(placement: .secondaryAction) {
-        Button("Reset Session") {
-          let oldSessionID = session.id
-          sessionRegistry.resetSession(for: definition, compendium: compendium)
-          Task { await sessionStore.delete(sessionID: oldSessionID) }
+        Button("End Encounter") {
+          dismiss()
         }
-        .accessibilityIdentifier("runner.reset-button")
+        .accessibilityIdentifier("runner.end-button")
       }
     }
     .safeAreaInset(edge: .bottom) {

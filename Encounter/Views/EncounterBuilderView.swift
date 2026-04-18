@@ -21,6 +21,7 @@ struct EncounterBuilderView: View {
   @Environment(EncounterStore.self) private var store
   @Environment(Compendium.self) private var compendium
   @Environment(SessionRegistry.self) private var sessionRegistry
+  @Environment(SessionStore.self) private var sessionStore
   @Environment(PlayerStore.self) private var playerStore
 
   @State private var showCompendium = false
@@ -29,10 +30,17 @@ struct EncounterBuilderView: View {
   @State private var saveError: String?
   @State private var runSession: EncounterSession?
   @State private var saveTask: Task<Void, Never>?
+  @State private var showResetConfirmation = false
 
   init(definition: EncounterDefinition) {
     self.definition = definition
     _draft = State(initialValue: definition)
+  }
+
+  // MARK: - Session state
+
+  private var hasActiveSession: Bool {
+    sessionRegistry.sessions[draft.id] != nil
   }
 
   // MARK: - Computed difficulty
@@ -120,6 +128,22 @@ struct EncounterBuilderView: View {
     .navigationDestination(item: $runSession) { session in
       EncounterRunnerView(session: session, definition: draft)
     }
+    .confirmationDialog(
+      "Reset Session?",
+      isPresented: $showResetConfirmation,
+      titleVisibility: .visible
+    ) {
+      Button("Reset Session", role: .destructive) {
+        let sessionID = sessionRegistry.sessions[draft.id]?.id
+        sessionRegistry.clearSession(for: draft.id)
+        if let sessionID {
+          Task { await sessionStore.delete(sessionID: sessionID) }
+        }
+      }
+      Button("Cancel", role: .cancel) {}
+    } message: {
+      Text("The current session will be cleared. The encounter definition is not changed.")
+    }
     .onChange(of: definition) { _, newDefinition in
       if newDefinition.modifiedAt > draft.modifiedAt {
         draft = newDefinition
@@ -151,6 +175,14 @@ struct EncounterBuilderView: View {
         showCompendium = true
       }
       .accessibilityIdentifier("builder.browse-compendium-button")
+    }
+    if hasActiveSession {
+      ToolbarItem(placement: .secondaryAction) {
+        Button("Reset Session", role: .destructive) {
+          showResetConfirmation = true
+        }
+        .accessibilityIdentifier("builder.reset-button")
+      }
     }
   }
 
@@ -230,6 +262,7 @@ struct EncounterBuilderView: View {
   .environment(store)
   .environment(compendium)
   .environment(SessionRegistry())
+  .environment(SessionStore(directory: .temporaryDirectory))
   .environment(playerStore)
 }
 
