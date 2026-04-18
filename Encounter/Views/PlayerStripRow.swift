@@ -20,38 +20,61 @@ struct PlayerStripRow: View {
     Button {
       showPopover = true
     } label: {
-      HStack(spacing: 8) {
-        Text(player.name)
-          .font(.caption)
-          .fontWeight(.medium)
-          .frame(minWidth: 60, alignment: .leading)
-          .lineLimit(1)
-          .truncationMode(.tail)
+      VStack(alignment: .leading, spacing: 4) {
+        HStack(spacing: 8) {
+          Text(player.name)
+            .font(.caption)
+            .fontWeight(.medium)
+            .frame(minWidth: 60, alignment: .leading)
+            .lineLimit(1)
+            .truncationMode(.tail)
 
-        Spacer()
+          Spacer()
 
-        HStack(spacing: 4) {
-          Text("HP")
-            .font(.caption2)
-            .foregroundStyle(.secondary)
-          PipTrack(current: player.currentHP, maximum: player.maxHP)
-        }
-
-        HStack(spacing: 4) {
-          Text("St")
-            .font(.caption2)
-            .foregroundStyle(.secondary)
-          PipTrack(current: player.currentStress, maximum: player.maxStress)
-        }
-
-        if player.armorSlots > 0 {
           HStack(spacing: 4) {
-            Text("Arm")
+            Text("HP")
               .font(.caption2)
               .foregroundStyle(.secondary)
-            Text("\(player.currentArmorSlots)/\(player.armorSlots)")
-              .font(.caption)
-              .monospacedDigit()
+            PipTrack(current: player.currentHP, maximum: player.maxHP)
+          }
+
+          HStack(spacing: 4) {
+            Text("St")
+              .font(.caption2)
+              .foregroundStyle(.secondary)
+            PipTrack(current: player.currentStress, maximum: player.maxStress)
+          }
+
+          if player.armorSlots > 0 {
+            HStack(spacing: 4) {
+              Text("Arm")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+              Text("\(player.currentArmorSlots)/\(player.armorSlots)")
+                .font(.caption)
+                .monospacedDigit()
+            }
+          }
+        }
+
+        if !player.conditions.isEmpty {
+          HStack(spacing: 6) {
+            ForEach(
+              player.conditions.sorted { $0.displayName < $1.displayName }, id: \.self
+            ) { condition in
+              HStack(spacing: 3) {
+                Image(systemName: "circle.fill")
+                  .font(.system(size: 5))
+                Text(condition.displayName)
+                  .font(.caption2)
+              }
+              .foregroundStyle(.orange)
+              .accessibilityElement(children: .ignore)
+              .accessibilityLabel(condition.displayName)
+              .accessibilityIdentifier(
+                "runner.player-row.condition.\(condition.displayName.lowercased())"
+              )
+            }
           }
         }
       }
@@ -59,7 +82,11 @@ struct PlayerStripRow: View {
     }
     .buttonStyle(.plain)
     .accessibilityIdentifier("runner.player-row")
-    .accessibilityLabel(player.name)
+    .accessibilityLabel(
+      player.conditions.isEmpty
+        ? player.name
+        : player.name + ", " + player.conditions.map(\.displayName).sorted().joined(separator: ", ")
+    )
     .popover(isPresented: $showPopover) {
       PlayerEditPopover(player: player, session: session)
         .presentationCompactAdaptation(.popover)
