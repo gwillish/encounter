@@ -36,12 +36,14 @@ struct PlayerConditionsSection: View {
             .font(.caption)
             .buttonStyle(.bordered)
             .tint(active ? .orange : nil)
-            .accessibilityAddTraits(active ? .isSelected : [])
+            .accessibilityValue(active ? "active" : "inactive")
+            .accessibilityHint(active ? "Removes this condition" : "Applies this condition")
             .accessibilityIdentifier(
               "runner.player-edit.condition.\(condition.displayName.lowercased())"
             )
           }
         }
+        .padding(.horizontal, 4)
       }
     }
   }

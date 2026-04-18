@@ -16,6 +16,10 @@ struct PlayerStripRow: View {
   let session: EncounterSession
   @State private var showPopover = false
 
+  private var sortedConditions: [Condition] {
+    player.conditions.sorted { $0.displayName < $1.displayName }
+  }
+
   var body: some View {
     Button {
       showPopover = true
@@ -57,23 +61,15 @@ struct PlayerStripRow: View {
           }
         }
 
-        if !player.conditions.isEmpty {
+        if !sortedConditions.isEmpty {
           HStack(spacing: 6) {
-            ForEach(
-              player.conditions.sorted { $0.displayName < $1.displayName }, id: \.self
-            ) { condition in
-              HStack(spacing: 3) {
-                Image(systemName: "circle.fill")
-                  .font(.system(size: 5))
-                Text(condition.displayName)
-                  .font(.caption2)
-              }
-              .foregroundStyle(.orange)
-              .accessibilityElement(children: .ignore)
-              .accessibilityLabel(condition.displayName)
-              .accessibilityIdentifier(
-                "runner.player-row.condition.\(condition.displayName.lowercased())"
-              )
+            ForEach(sortedConditions, id: \.self) { condition in
+              Text("• \(condition.displayName)")
+                .font(.caption2)
+                .foregroundStyle(.orange)
+                .accessibilityIdentifier(
+                  "runner.player-row.condition.\(condition.displayName.lowercased())"
+                )
             }
           }
         }
@@ -83,10 +79,11 @@ struct PlayerStripRow: View {
     .buttonStyle(.plain)
     .accessibilityIdentifier("runner.player-row")
     .accessibilityLabel(
-      player.conditions.isEmpty
+      sortedConditions.isEmpty
         ? player.name
-        : player.name + ", " + player.conditions.map(\.displayName).sorted().joined(separator: ", ")
+        : player.name + ", " + sortedConditions.map(\.displayName).joined(separator: ", ")
     )
+    .accessibilityHint("Opens player details")
     .popover(isPresented: $showPopover) {
       PlayerEditPopover(player: player, session: session)
         .presentationCompactAdaptation(.popover)

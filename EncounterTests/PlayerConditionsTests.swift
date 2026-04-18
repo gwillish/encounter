@@ -15,6 +15,8 @@ import Testing
 
 @MainActor struct PlayerConditionsTests {
 
+  // Returns a session and a snapshot of playerSlots[0] at creation time.
+  // Post-mutation assertions must use session.playerSlots[0], not the returned player.
   private func makeSession() -> (EncounterSession, PlayerState) {
     let session = EncounterSession(name: "Test")
     session.add(
