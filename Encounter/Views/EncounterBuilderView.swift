@@ -140,7 +140,7 @@ struct EncounterBuilderView: View {
           Task { await sessionStore.delete(sessionID: sessionID) }
         }
       }
-      Button("Cancel", role: .cancel) {}
+      .accessibilityIdentifier("builder.reset-confirm-button")
     } message: {
       Text("The current session will be cleared. The encounter definition is not changed.")
     }
@@ -176,9 +176,9 @@ struct EncounterBuilderView: View {
       }
       .accessibilityIdentifier("builder.browse-compendium-button")
     }
-    if hasActiveSession {
-      ToolbarItem(placement: .secondaryAction) {
-        Button("Reset Session", role: .destructive) {
+    ToolbarItem(placement: .secondaryAction) {
+      if hasActiveSession {
+        Button("Reset Session") {
           showResetConfirmation = true
         }
         .accessibilityIdentifier("builder.reset-button")

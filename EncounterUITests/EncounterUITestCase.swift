@@ -134,6 +134,38 @@ class EncounterUITestCase: XCTestCase {
       "Builder should be visible after compendium sheet dismisses")
   }
 
+  /// Taps "End Encounter" from the runner's secondary-action overflow menu.
+  func tapEndEncounter() {
+    let overflow = app.buttons["OverflowBarButtonItem"]
+    XCTAssertTrue(
+      overflow.waitForExistence(timeout: 5),
+      "Overflow button should be in runner toolbar")
+    overflow.tap()
+    let endButton = app.buttons["End Encounter"]
+    XCTAssertTrue(endButton.waitForExistence(timeout: 3), "End Encounter should appear in overflow")
+    endButton.tap()
+    XCTAssertTrue(
+      app.buttons["builder.add-adversary-button"].waitForExistence(timeout: 5),
+      "Should return to builder after ending encounter")
+  }
+
+  /// Taps "Reset Session" from the runner's secondary-action overflow and confirms the dialog.
+  func tapResetSessionFromRunner() {
+    let overflow = app.buttons["OverflowBarButtonItem"]
+    XCTAssertTrue(
+      overflow.waitForExistence(timeout: 5),
+      "Overflow button should be in runner toolbar")
+    overflow.tap()
+    let resetButton = app.buttons["Reset Session"]
+    XCTAssertTrue(resetButton.waitForExistence(timeout: 3), "Reset Session should appear in overflow")
+    resetButton.tap()
+    let confirmButton = app.buttons["runner.reset-confirm-button"]
+    XCTAssertTrue(
+      confirmButton.waitForExistence(timeout: 3),
+      "Reset Session confirmation button should appear")
+    confirmButton.tap()
+  }
+
   func tapRunEncounter() {
     // On iOS 26 with .toolbarRole(.editor), toolbar items collapse into an
     // OverflowBarButtonItem ("More") menu. AX identifiers are NOT preserved
