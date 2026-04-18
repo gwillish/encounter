@@ -68,6 +68,82 @@ final class RunnerUITests: EncounterUITestCase {
     )
   }
 
+  // MARK: - End Encounter / Reset Session
+
+  /// Tapping "End Encounter" returns to the builder; the session stays alive
+  /// (Reset Session appears in the builder toolbar overflow).
+  func testEndEncounterReturnsToBuilderWithActiveSession() throws {
+    navigateToRunner()
+    XCTAssertTrue(
+      app.collectionViews["runner.adversary-list"].waitForExistence(timeout: 5),
+      "Should be in the runner")
+
+    tapEndEncounter()
+
+    // Builder is visible and the overflow contains "Reset Session" (active session present).
+    let overflow = app.buttons["OverflowBarButtonItem"]
+    XCTAssertTrue(overflow.waitForExistence(timeout: 3), "Builder toolbar overflow should be present")
+    overflow.tap()
+    XCTAssertTrue(
+      app.buttons["Reset Session"].waitForExistence(timeout: 3),
+      "Reset Session should appear in builder toolbar when a session is active")
+    // Dismiss the overflow without tapping Reset.
+    app.buttons["Reset Session"].tap()  // will show dialog
+    // Dismiss dialog by tapping cancel (swipe down on action sheet).
+    app.navigationBars.firstMatch.tap()
+  }
+
+  /// Tapping "Reset Session" from the runner, then confirming, clears the session
+  /// and returns to the builder; "Reset Session" does not appear in the builder toolbar.
+  func testResetSessionFromRunner() throws {
+    navigateToRunner()
+    XCTAssertTrue(
+      app.collectionViews["runner.adversary-list"].waitForExistence(timeout: 5),
+      "Should be in the runner")
+
+    tapResetSessionFromRunner()
+
+    // Back in builder with no active session — Reset Session should not appear in overflow.
+    let overflow = app.buttons["OverflowBarButtonItem"]
+    XCTAssertTrue(overflow.waitForExistence(timeout: 3))
+    overflow.tap()
+    XCTAssertFalse(
+      app.buttons["Reset Session"].waitForExistence(timeout: 2),
+      "Reset Session should not appear in builder toolbar after session was reset")
+  }
+
+  /// After ending an encounter, the builder's "Reset Session" clears the session;
+  /// tapping "Run Encounter" again starts a fresh session.
+  func testResetSessionFromBuilder() throws {
+    navigateToRunner()
+    XCTAssertTrue(
+      app.collectionViews["runner.adversary-list"].waitForExistence(timeout: 5))
+
+    tapEndEncounter()
+
+    // Tap Reset Session from the builder toolbar overflow.
+    let overflow = app.buttons["OverflowBarButtonItem"]
+    XCTAssertTrue(overflow.waitForExistence(timeout: 3))
+    overflow.tap()
+    XCTAssertTrue(
+      app.buttons["Reset Session"].waitForExistence(timeout: 3),
+      "Reset Session should be in builder toolbar overflow")
+    app.buttons["Reset Session"].tap()
+
+    // Confirm the destruction.
+    let confirmButton = app.buttons["builder.reset-confirm-button"]
+    XCTAssertTrue(confirmButton.waitForExistence(timeout: 3), "Confirmation button should appear")
+    confirmButton.tap()
+
+    // Session is cleared — Reset Session should no longer appear in the overflow.
+    let overflow2 = app.buttons["OverflowBarButtonItem"]
+    XCTAssertTrue(overflow2.waitForExistence(timeout: 3))
+    overflow2.tap()
+    XCTAssertFalse(
+      app.buttons["Reset Session"].waitForExistence(timeout: 2),
+      "Reset Session should disappear after confirming reset")
+  }
+
   // MARK: - Stress button
 
   /// Tapping +1 Stress in the expanded card is reflected in the stress pip track.

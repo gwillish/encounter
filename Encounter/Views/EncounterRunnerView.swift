@@ -21,8 +21,10 @@ struct EncounterRunnerView: View {
 
   @Environment(Compendium.self) private var compendium
   @Environment(SessionRegistry.self) private var sessionRegistry
+  @Environment(SessionStore.self) private var sessionStore
   @Environment(\.dismiss) private var dismiss
   @State private var expandedSlotID: UUID?
+  @State private var showResetConfirmation = false
 
   // MARK: - Sorted slots (computed, non-mutating)
   // Active adversaries preserve original insertion order (stable sort).
@@ -56,6 +58,27 @@ struct EncounterRunnerView: View {
         }
         .accessibilityIdentifier("runner.end-button")
       }
+      ToolbarItem(placement: .secondaryAction) {
+        Button("Reset Session") {
+          showResetConfirmation = true
+        }
+        .accessibilityIdentifier("runner.reset-button")
+      }
+    }
+    .confirmationDialog(
+      "Reset Session?",
+      isPresented: $showResetConfirmation,
+      titleVisibility: .visible
+    ) {
+      Button("Reset Session", role: .destructive) {
+        let sessionID = session.id
+        sessionRegistry.clearSession(for: definition.id)
+        Task { await sessionStore.delete(sessionID: sessionID) }
+        dismiss()
+      }
+      .accessibilityIdentifier("runner.reset-confirm-button")
+    } message: {
+      Text("The current session will be cleared. The encounter definition is not changed.")
     }
     .safeAreaInset(edge: .bottom) {
       PlayerStrip(session: session)

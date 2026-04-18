@@ -151,6 +151,26 @@ import Testing
     #expect(registry.sessions.isEmpty)
   }
 
+  @Test func clearRegistryAndDeleteLeavesNoPersistedSession() async throws {
+    let dir = tempDir()
+    defer { try? FileManager.default.removeItem(at: dir) }
+    let store = SessionStore(directory: dir)
+    let compendium = makeCompendium()
+    let def = EncounterDefinition(name: "Battle", adversaryIDs: ["goblin"])
+    let registry = SessionRegistry()
+    let session = registry.session(for: def, compendium: compendium)
+    await store.save(session)
+
+    // Simulate the reset flow: capture ID, clear registry entry, delete file.
+    let sessionID = session.id
+    registry.clearSession(for: def.id)
+    await store.delete(sessionID: sessionID)
+
+    let fresh = SessionRegistry()
+    await store.load(into: fresh)
+    #expect(fresh.sessions.isEmpty)
+  }
+
   @Test func deleteNeverSavedSessionIsNoop() async {
     let dir = tempDir()
     defer { try? FileManager.default.removeItem(at: dir) }
