@@ -80,6 +80,13 @@ final class RunnerUITests: EncounterUITestCase {
 
     tapEndEncounter()
 
+    // Capture the builder with the difficulty panel visible for visual verification.
+    let screenshot = app.screenshot()
+    let attachment = XCTAttachment(screenshot: screenshot)
+    attachment.name = "builder-difficulty-panel"
+    attachment.lifetime = .keepAlways
+    add(attachment)
+
     // Builder is visible and the overflow contains "Reset Session" (active session present).
     let overflow = app.buttons["OverflowBarButtonItem"]
     XCTAssertTrue(overflow.waitForExistence(timeout: 3), "Builder toolbar overflow should be present")

@@ -101,13 +101,25 @@ struct DifficultyAssessorView: View {
         }
 
         // Manual GM-discretionary toggles
-        VStack(alignment: .leading, spacing: 2) {
+        VStack(alignment: .leading, spacing: 4) {
           ForEach(Self.manualCases, id: \.self) { adj in
-            Toggle(adj.displayName, isOn: toggleBinding(for: adj))
-              .font(.caption)
-              .accessibilityIdentifier(
-                "builder.difficulty.toggle.\(String(describing: adj))"
-              )
+            let isOn = manualAdjustments.contains(adj)
+            HStack(spacing: 6) {
+              Image(systemName: isOn ? "checkmark.square.fill" : "square")
+                .font(.caption)
+                .foregroundStyle(isOn ? difficultyColor : .secondary)
+              Text(adj.displayName)
+                .font(.caption)
+            }
+            .contentShape(Rectangle())
+            .onTapGesture {
+              if isOn { manualAdjustments.remove(adj) } else { manualAdjustments.insert(adj) }
+            }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(adj.displayName)
+            .accessibilityValue(isOn ? "on" : "off")
+            .accessibilityAddTraits(.isButton)
+            .accessibilityIdentifier("builder.difficulty.toggle.\(String(describing: adj))")
           }
         }
       }
