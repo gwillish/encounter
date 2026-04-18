@@ -44,6 +44,10 @@ struct PlayerEditPopover: View {
           onIncrement: { session.restoreArmorSlot(for: player.id) }
         )
       }
+
+      Divider()
+
+      PlayerConditionsSection(player: player, session: session)
     }
     .padding()
     .frame(minWidth: 220)

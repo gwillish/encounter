@@ -89,7 +89,8 @@ final class RunnerUITests: EncounterUITestCase {
 
     // Builder is visible and the overflow contains "Reset Session" (active session present).
     let overflow = app.buttons["OverflowBarButtonItem"]
-    XCTAssertTrue(overflow.waitForExistence(timeout: 3), "Builder toolbar overflow should be present")
+    XCTAssertTrue(
+      overflow.waitForExistence(timeout: 3), "Builder toolbar overflow should be present")
     overflow.tap()
     XCTAssertTrue(
       app.buttons["Reset Session"].waitForExistence(timeout: 3),
@@ -151,6 +152,57 @@ final class RunnerUITests: EncounterUITestCase {
     XCTAssertFalse(
       app.buttons["Reset Session"].waitForExistence(timeout: 2),
       "Reset Session should disappear after confirming reset")
+  }
+
+  // MARK: - Player condition toggles
+
+  /// Tapping a player row opens the popover; toggling a condition updates the
+  /// strip row indicator and is removed when toggled again.
+  func testPlayerConditionToggleShowsAndHidesInStripRow() throws {
+    navigateToRunner()
+
+    // Open the player popover.
+    let playerRow = app.buttons.matching(identifier: "runner.player-row").firstMatch
+    XCTAssertTrue(playerRow.waitForExistence(timeout: 5), "Player row should be visible in strip")
+    playerRow.tap()
+
+    // Apply the Hidden condition.
+    let hiddenButton = app.buttons["runner.player-edit.condition.hidden"]
+    XCTAssertTrue(
+      hiddenButton.waitForExistence(timeout: 3), "Hidden condition button should be in popover")
+    hiddenButton.tap()
+
+    // Dismiss the popover by tapping outside (tap the adversary list area).
+    app.collectionViews["runner.adversary-list"].firstMatch.tap()
+
+    // The strip row label should now include "Hidden".
+    let rowAfterApply = app.buttons.matching(identifier: "runner.player-row").firstMatch
+    XCTAssertTrue(rowAfterApply.waitForExistence(timeout: 3), "Player row should reappear")
+    XCTAssertTrue(
+      rowAfterApply.label.contains("Hidden"),
+      "Strip row label '\(rowAfterApply.label)' should contain 'Hidden' after applying condition")
+
+    // The dot+label indicator should be visible.
+    let indicator = app.staticTexts.matching(identifier: "runner.player-row.condition.hidden")
+      .firstMatch
+    XCTAssertTrue(
+      indicator.waitForExistence(timeout: 3),
+      "Hidden condition indicator should appear in strip row")
+
+    // Re-open the popover and remove the condition.
+    rowAfterApply.tap()
+    let hiddenButtonAgain = app.buttons["runner.player-edit.condition.hidden"]
+    XCTAssertTrue(hiddenButtonAgain.waitForExistence(timeout: 3))
+    hiddenButtonAgain.tap()
+
+    app.collectionViews["runner.adversary-list"].firstMatch.tap()
+
+    // The strip row label should no longer include "Hidden".
+    let rowAfterRemove = app.buttons.matching(identifier: "runner.player-row").firstMatch
+    XCTAssertTrue(rowAfterRemove.waitForExistence(timeout: 3), "Player row should reappear")
+    XCTAssertFalse(
+      rowAfterRemove.label.contains("Hidden"),
+      "Strip row label '\(rowAfterRemove.label)' should not contain 'Hidden' after removal")
   }
 
   // MARK: - Stress button
