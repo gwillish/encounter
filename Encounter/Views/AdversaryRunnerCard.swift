@@ -76,12 +76,13 @@ struct AdversaryRunnerCard: View {
           .accessibilityIdentifier("runner.adversary-card.name-error")
       }
 
-      // HP pip track
+      // HP pip track with direct ±1 override buttons
       HStack(spacing: 4) {
         Text("HP")
           .font(.caption)
           .foregroundStyle(.secondary)
         PipTrack(current: slot.currentHP, maximum: slot.maxHP)
+        Spacer()
         if slot.isDefeated {
           Text("Defeated")
             .font(.caption)
@@ -90,6 +91,30 @@ struct AdversaryRunnerCard: View {
             .padding(.vertical, 2)
             .background(.red.opacity(0.12))
             .clipShape(.capsule)
+        } else {
+          Button("Decrease HP", systemImage: "minus.circle") {
+            session.applyDamage(1, to: slot.id)
+          }
+          .labelStyle(.iconOnly)
+          .font(.title3)
+          .buttonStyle(.borderless)
+          .disabled(slot.currentHP <= 0)
+          .accessibilityIdentifier("runner.adversary-card.hp.decrement")
+
+          Text("\(slot.currentHP)/\(slot.maxHP)")
+            .font(.caption)
+            .monospacedDigit()
+            .frame(minWidth: 36, alignment: .center)
+            .accessibilityIdentifier("runner.adversary-card.hp.label")
+
+          Button("Increase HP", systemImage: "plus.circle") {
+            session.applyHealing(1, to: slot.id)
+          }
+          .labelStyle(.iconOnly)
+          .font(.title3)
+          .buttonStyle(.borderless)
+          .disabled(slot.currentHP >= slot.maxHP)
+          .accessibilityIdentifier("runner.adversary-card.hp.increment")
         }
       }
 

@@ -13,6 +13,7 @@ import SwiftUI
 struct FearTrackerButton: View {
   let session: EncounterSession
   @State private var showPopover = false
+  @State private var customFearText = ""
 
   var body: some View {
     Button {
@@ -49,11 +50,34 @@ struct FearTrackerButton: View {
             .disabled(session.fearPool < 3)
             .accessibilityIdentifier("runner.fear.spend-3")
         }
+
+        Divider()
+
+        HStack(spacing: 8) {
+          TextField("Set to…", text: $customFearText)
+            .textFieldStyle(.roundedBorder)
+            #if os(iOS)
+              .keyboardType(.numberPad)
+            #endif
+            .frame(width: 80)
+            .accessibilityIdentifier("runner.fear.custom-field")
+            .onSubmit { commitCustomFear() }
+          Button("Set") { commitCustomFear() }
+            .buttonStyle(.bordered)
+            .disabled(Int(customFearText) == nil)
+            .accessibilityIdentifier("runner.fear.custom-set")
+        }
       }
       .padding()
       .frame(minWidth: 180)
       .presentationCompactAdaptation(.popover)
     }
+  }
+
+  private func commitCustomFear() {
+    guard let value = Int(customFearText), value >= 0 else { return }
+    session.fearPool = value
+    customFearText = ""
   }
 }
 
