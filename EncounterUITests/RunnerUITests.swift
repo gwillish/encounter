@@ -131,7 +131,9 @@ final class RunnerUITests: EncounterUITestCase {
     app.buttons["Reset Session"].tap()
 
     // Confirm the destruction.
-    let confirmButton = app.buttons["builder.reset-confirm-button"]
+    // confirmationDialog on iOS 26 exposes its buttons in two places in the AX tree
+    // (action sheet layer + source view hierarchy), so use firstMatch to avoid ambiguity.
+    let confirmButton = app.buttons.matching(identifier: "builder.reset-confirm-button").firstMatch
     XCTAssertTrue(confirmButton.waitForExistence(timeout: 3), "Confirmation button should appear")
     confirmButton.tap()
 
