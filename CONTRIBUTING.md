@@ -169,6 +169,102 @@ xcodebuild test \
 
 ---
 
+## UI exploration harness
+
+The app ships a `#if DEBUG`-only exploration harness for visual review of components
+and design proposals. It is invoked with the `-UIExploration` launch argument, which
+replaces the normal `ContentView` with `ExplorationRootView` — a navigation hub of
+named scenes. There is zero production footprint; the entire branch is excluded from
+release builds.
+
+### Why it exists
+
+- SwiftUI Previews cover atomic component work but can't be automated, can't show
+  cross-component interactions, and don't produce device screenshots.
+- The exploration harness fills that gap: deterministic, automatable, no live app
+  state required.
+- It is the designated home for design comparisons (e.g. icon proposals) and
+  component state galleries (all stress levels, all condition combinations, etc.).
+
+### Invoking the harness
+
+**In Xcode:**
+
+1. Product → Scheme → Edit Scheme (or ⌘<)
+2. Run → Arguments tab → Launch Arguments
+3. Add `-UIExploration`
+4. Run the app — the normal Party/Encounters UI is replaced by the exploration list
+
+**From the command line** (macOS target):
+
+```bash
+open -a Encounter --args -UIExploration
+```
+
+Or build and run a specific simulator:
+
+```bash
+xcrun simctl launch booted gwillish.Encounter -UIExploration
+```
+
+### Navigating scenes from XCUITest
+
+Subclass `ExplorationUITestCase` instead of `EncounterUITestCase`. It sets
+`-UIExploration` automatically and provides two helpers:
+
+```swift
+import XCTest
+
+class DesignLanguageScreenshotTests: ExplorationUITestCase {
+
+  func testScreenshotAllProposals() throws {
+    navigate(to: "exploration.design-language")
+    screenshotScene(named: "design-language")
+  }
+}
+```
+
+`navigate(to:)` taps the row with the given `accessibilityIdentifier` and
+asserts it exists within 3 seconds.
+
+`screenshotScene(named:)` captures a full-screen screenshot, attaches it to the
+test result with `lifetime: .keepAlways`, and returns the `XCUIScreenshot` if you
+need to inspect it further.
+
+### Scene catalogue
+
+| Scene ID | Content |
+|---|---|
+| `exploration.design-language` | All four icon/color proposals from ADR-0039 at 20/28/44pt, with mock adversary runner rows and player strip rows |
+| `exploration.runner-row` | `AdversaryRunnerRow` in all slot states (stub — to be completed, see issue #85) |
+| `exploration.player-strip` | `PlayerStrip` with varied player states (stub — to be completed, see issue #85) |
+
+### Adding a new exploration scene
+
+1. Create a SwiftUI view inside `Encounter/Views/Exploration/`, wrapped in `#if DEBUG`.
+2. Register it in `ExplorationScene.all` in `ExplorationScene.swift`:
+
+```swift
+ExplorationScene(
+  id: "exploration.my-scene",   // stable — used as accessibilityIdentifier
+  title: "My Scene",
+  subtitle: "Brief description shown in the list"
+) {
+  MyExplorationView()
+}
+```
+
+The scene appears automatically in the list on iOS, iPadOS, and macOS. No
+additional wiring is required.
+
+**Guidelines for scene content:**
+
+- Use hardcoded sample data, not live stores. The harness starts with no data loaded.
+- Cover edge cases: empty state, maximum values, long strings, all conditions active.
+- Keep the scene self-contained — import only `SwiftUI` where possible.
+
+---
+
 ## Architecture Decision Records
 
 Significant architectural, data-format, and UX decisions are recorded as ADRs in

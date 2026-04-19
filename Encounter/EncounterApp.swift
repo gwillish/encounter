@@ -47,14 +47,37 @@ struct EncounterApp: App {
 
   var body: some Scene {
     WindowGroup {
-      ContentView()
-        .environment(compendium)
-        .environment(store)
-        .environment(sessionRegistry)
-        .environment(contentStore)
-        .environment(playerStore)
-        .environment(sessionStore)
-        .task {
+      #if DEBUG
+      if CommandLine.arguments.contains("-UIExploration") {
+        ExplorationRootView()
+      } else {
+        mainContentView
+      }
+      #else
+      mainContentView
+      #endif
+    }
+    #if os(macOS)
+      .commands {
+        CommandGroup(replacing: .appInfo) {
+          Button("About Encounter") {
+            isShowingAbout = true
+          }
+        }
+      }
+    #endif
+  }
+
+  @ViewBuilder
+  private var mainContentView: some View {
+    ContentView()
+      .environment(compendium)
+      .environment(store)
+      .environment(sessionRegistry)
+      .environment(contentStore)
+      .environment(playerStore)
+      .environment(sessionStore)
+      .task {
           let dir = await EncounterStore.defaultDirectory()
           store.relocate(to: dir)
 
@@ -127,15 +150,5 @@ struct EncounterApp: App {
             await contentStore.importPack(from: url)
           }
         }
-    }
-    #if os(macOS)
-      .commands {
-        CommandGroup(replacing: .appInfo) {
-          Button("About Encounter") {
-            isShowingAbout = true
-          }
-        }
-      }
-    #endif
   }
 }
