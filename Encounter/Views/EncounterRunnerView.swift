@@ -43,6 +43,9 @@ struct EncounterRunnerView: View {
       )
     }
     .accessibilityIdentifier("runner.adversary-list")
+    .safeAreaInset(edge: .bottom) {
+      PlayerStrip(session: session)
+    }
     .navigationTitle(session.name)
     #if os(iOS)
       .navigationBarTitleDisplayMode(.inline)
@@ -79,10 +82,6 @@ struct EncounterRunnerView: View {
       .accessibilityIdentifier("runner.reset-confirm-button")
     } message: {
       Text("The current session will be cleared. The encounter definition is not changed.")
-    }
-    .safeAreaInset(edge: .bottom) {
-      PlayerStrip(session: session)
-        .accessibilityIdentifier("runner.player-strip")
     }
   }
 }

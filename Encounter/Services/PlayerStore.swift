@@ -76,6 +76,7 @@ public final class PlayerStore {
   /// Switches the storage directory and resets in-memory state.
   /// Call `load()` afterwards to populate from the new location.
   public func relocate(to newDirectory: URL) {
+    guard newDirectory.path != directory.path else { return }
     directory = newDirectory
     players = []
     party = Party(name: "Active Party")
