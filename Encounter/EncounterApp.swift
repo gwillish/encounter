@@ -48,13 +48,13 @@ struct EncounterApp: App {
   var body: some Scene {
     WindowGroup {
       #if DEBUG
-      if CommandLine.arguments.contains("-UIExploration") {
-        ExplorationRootView()
-      } else {
-        mainContentView
-      }
+        if CommandLine.arguments.contains("-UIExploration") {
+          ExplorationRootView()
+        } else {
+          mainContentView
+        }
       #else
-      mainContentView
+        mainContentView
       #endif
     }
     #if os(macOS)
@@ -78,77 +78,77 @@ struct EncounterApp: App {
       .environment(playerStore)
       .environment(sessionStore)
       .task {
-          let dir = await EncounterStore.defaultDirectory()
-          store.relocate(to: dir)
+        let dir = await EncounterStore.defaultDirectory()
+        store.relocate(to: dir)
 
-          // Content lives alongside encounters in the same Application
-          // Support root, one level up from the Encounters subdirectory.
-          let contentDir = dir.deletingLastPathComponent()
-            .appending(path: "Content", directoryHint: .isDirectory)
+        // Content lives alongside encounters in the same Application
+        // Support root, one level up from the Encounters subdirectory.
+        let contentDir = dir.deletingLastPathComponent()
+          .appending(path: "Content", directoryHint: .isDirectory)
 
-          // Wire in the real Compendium and switch to the resolved directory.
-          // configure() avoids recreating ContentStore just to swap the reference.
-          contentStore.configure(compendium: compendium)
-          await contentStore.relocate(to: contentDir)
+        // Wire in the real Compendium and switch to the resolved directory.
+        // configure() avoids recreating ContentStore just to swap the reference.
+        contentStore.configure(compendium: compendium)
+        await contentStore.relocate(to: contentDir)
 
-          let playersDir = dir.deletingLastPathComponent()
-            .appending(path: "Players", directoryHint: .isDirectory)
-          playerStore.relocate(to: playersDir)
+        let playersDir = dir.deletingLastPathComponent()
+          .appending(path: "Players", directoryHint: .isDirectory)
+        playerStore.relocate(to: playersDir)
 
-          let sessionsDir = dir.deletingLastPathComponent()
-            .appending(path: "Sessions", directoryHint: .isDirectory)
-          sessionStore.relocate(to: sessionsDir)
+        let sessionsDir = dir.deletingLastPathComponent()
+          .appending(path: "Sessions", directoryHint: .isDirectory)
+        sessionStore.relocate(to: sessionsDir)
 
-          // All loads are independent — run concurrently.
-          async let compendiumLoad: Void = compendium.load()
-          async let storeLoad: Void = store.load()
-          async let contentLoad: Void = contentStore.loadOnStartup()
-          async let playerLoad: Void = playerStore.load()
-          async let sessionLoad: Void = sessionStore.load(into: sessionRegistry)
-          do { try await compendiumLoad } catch {}
-          await storeLoad
-          await contentLoad
-          await playerLoad
-          await sessionLoad
-        }
-        .onChange(of: scenePhase) { _, phase in
-          if phase == .background {
-            let registry = sessionRegistry
-            #if os(iOS) || os(visionOS)
-              // Request a background-execution extension so writes complete
-              // before iOS/visionOS suspends the process.
-              // The handler is called on an unspecified background thread;
-              // we block it with a semaphore until saveAll finishes so iOS
-              // does not suspend the process before the writes hit disk.
-              ProcessInfo.processInfo.performExpiringActivity(
-                withReason: "save-sessions"
-              ) { expired in
-                guard !expired else { return }
-                let sema = DispatchSemaphore(value: 0)
-                Task { @MainActor in
-                  await sessionStore.saveAll(from: registry)
-                  sema.signal()
-                }
-                sema.wait()
+        // All loads are independent — run concurrently.
+        async let compendiumLoad: Void = compendium.load()
+        async let storeLoad: Void = store.load()
+        async let contentLoad: Void = contentStore.loadOnStartup()
+        async let playerLoad: Void = playerStore.load()
+        async let sessionLoad: Void = sessionStore.load(into: sessionRegistry)
+        do { try await compendiumLoad } catch {}
+        await storeLoad
+        await contentLoad
+        await playerLoad
+        await sessionLoad
+      }
+      .onChange(of: scenePhase) { _, phase in
+        if phase == .background {
+          let registry = sessionRegistry
+          #if os(iOS) || os(visionOS)
+            // Request a background-execution extension so writes complete
+            // before iOS/visionOS suspends the process.
+            // The handler is called on an unspecified background thread;
+            // we block it with a semaphore until saveAll finishes so iOS
+            // does not suspend the process before the writes hit disk.
+            ProcessInfo.processInfo.performExpiringActivity(
+              withReason: "save-sessions"
+            ) { expired in
+              guard !expired else { return }
+              let sema = DispatchSemaphore(value: 0)
+              Task { @MainActor in
+                await sessionStore.saveAll(from: registry)
+                sema.signal()
               }
-            #else
-              Task { await sessionStore.saveAll(from: registry) }
-            #endif
-          }
+              sema.wait()
+            }
+          #else
+            Task { await sessionStore.saveAll(from: registry) }
+          #endif
         }
-        // onOpenURL on the root view handles .dhpack file opens on both
-        // iOS and macOS. contentStore is non-nil from first render, so
-        // there is no startup race.
-        .sheet(isPresented: $isShowingAbout) {
-          AboutView()
+      }
+      // onOpenURL on the root view handles .dhpack file opens on both
+      // iOS and macOS. contentStore is non-nil from first render, so
+      // there is no startup race.
+      .sheet(isPresented: $isShowingAbout) {
+        AboutView()
+      }
+      .onOpenURL { url in
+        guard url.pathExtension.lowercased() == "dhpack" else { return }
+        guard url.startAccessingSecurityScopedResource() else { return }
+        Task { @MainActor in
+          defer { url.stopAccessingSecurityScopedResource() }
+          await contentStore.importPack(from: url)
         }
-        .onOpenURL { url in
-          guard url.pathExtension.lowercased() == "dhpack" else { return }
-          guard url.startAccessingSecurityScopedResource() else { return }
-          Task { @MainActor in
-            defer { url.stopAccessingSecurityScopedResource() }
-            await contentStore.importPack(from: url)
-          }
-        }
+      }
   }
 }
