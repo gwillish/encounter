@@ -255,7 +255,7 @@ was learned worth preserving, don't bring the ADR to `main`.
 ## Git
 
 - **Never commit on behalf of the user.** Do not create commits unless explicitly asked.
-- **No Claude attribution in commits.** Do not add `Co-Authored-By: Claude` or any Anthropic/AI attribution lines to commit messages.
+- **No Claude attribution anywhere.** Do not add `Co-Authored-By: Claude` or any Anthropic/AI attribution lines to commit messages, issue comments, or pull request bodies.
 
 ---
 
