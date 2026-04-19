@@ -178,6 +178,74 @@ CLI-driven iteration.
 
 ---
 
+## UI Exploration Harness
+
+A `#if DEBUG`-only mode for visual review of components and design proposals without
+navigating through live app state. Enabled by the `-UIExploration` launch argument;
+`ExplorationRootView` replaces `ContentView` entirely. Zero production footprint.
+
+### When to use it
+
+- Reviewing a new component in all its states before writing UI tests
+- Comparing design proposals side-by-side (e.g. icon sets, layout variants)
+- Taking deterministic screenshots for design or accessibility review
+- Validating how a component looks with extreme data (very long names, max stress, etc.)
+
+### How to invoke
+
+**From Xcode:** Edit Scheme → Run → Arguments → Launch Arguments → add `-UIExploration`.
+
+**From the terminal:**
+
+```bash
+# macOS
+xcodebuild run -scheme Encounter -destination 'platform=macOS' \
+  OTHER_SWIFT_FLAGS='-DDEBUG' \
+  INFOPLIST_OTHER_PREPROCESSOR_FLAGS='-UIExploration'
+```
+
+**From XCUITest** (preferred for screenshots and CI):
+
+```swift
+class MyExplorationTests: ExplorationUITestCase {
+  func testDesignLanguageScreenshot() throws {
+    navigate(to: "exploration.design-language")
+    screenshotScene(named: "design-language-ios")
+  }
+}
+```
+
+`ExplorationUITestCase` (in `EncounterUITests/`) sets `-UIExploration` automatically,
+waits for the "Exploration" nav bar, and provides `navigate(to:)` and
+`screenshotScene(named:)` helpers.
+
+### Adding a new scene
+
+1. Create the view in `Encounter/Views/Exploration/` inside `#if DEBUG`.
+2. Add an entry to `ExplorationScene.all` in `ExplorationScene.swift`:
+
+```swift
+ExplorationScene(
+  id: "exploration.my-scene",      // stable AX identifier for XCUITest
+  title: "My Scene",
+  subtitle: "One-line description"
+) {
+  MyExplorationView()
+}
+```
+
+The scene appears automatically in the list on both platforms. No other wiring needed.
+
+### Current scenes
+
+| Scene ID | Content |
+|---|---|
+| `exploration.design-language` | Four icon proposals (ADR-0039) at 20/28/44pt + mock rows |
+| `exploration.runner-row` | Adversary runner row states (stub — see issue #85) |
+| `exploration.player-strip` | Player strip states (stub — see issue #85) |
+
+---
+
 ## Code Changes 
 
 When making bulk renames or refactors, do NOT make unrequested additional renames. Only change what was explicitly asked for. If you think something else should be renamed, ask first.
