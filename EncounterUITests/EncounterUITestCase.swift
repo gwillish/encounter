@@ -157,7 +157,8 @@ class EncounterUITestCase: XCTestCase {
       "Overflow button should be in runner toolbar")
     overflow.tap()
     let resetButton = app.buttons["Reset Session"]
-    XCTAssertTrue(resetButton.waitForExistence(timeout: 3), "Reset Session should appear in overflow")
+    XCTAssertTrue(
+      resetButton.waitForExistence(timeout: 3), "Reset Session should appear in overflow")
     resetButton.tap()
     // confirmationDialog on iOS 26 exposes its buttons in two places in the AX tree
     // (action sheet layer + source view hierarchy), so use firstMatch to avoid ambiguity.
