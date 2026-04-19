@@ -241,8 +241,8 @@ The scene appears automatically in the list on both platforms. No other wiring n
 | Scene ID | Content |
 |---|---|
 | `exploration.design-language` | Four icon proposals (ADR-0039) at 20/28/44pt + mock rows |
-| `exploration.runner-row` | Adversary runner row states (stub — see issue #85) |
-| `exploration.player-strip` | Player strip states (stub — see issue #85) |
+| `exploration.runner-row` | `AdversaryRunnerRow` in 9 states (normal, damaged, high-stress, single/multiple conditions, solo variants, defeated, unknown) |
+| `exploration.player-strip` | `PlayerStrip` with two `EncounterSession` galleries — 4-player varied states and edge-case long names |
 
 ---
 

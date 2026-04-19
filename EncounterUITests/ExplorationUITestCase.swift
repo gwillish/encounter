@@ -34,11 +34,14 @@ class ExplorationUITestCase: XCTestCase {
   // MARK: - Navigation
 
   /// Taps the scene row with the given accessibilityIdentifier and waits for
-  /// the scene's content to appear (identified by nav bar title).
+  /// the destination navigation bar to appear before returning.
   func navigate(to sceneID: String) {
     let row = app.buttons[sceneID]
     XCTAssertTrue(row.waitForExistence(timeout: 3), "Scene '\(sceneID)' not found in list")
     row.tap()
+    // Wait for any navigation bar other than "Exploration" to confirm the destination loaded.
+    let destination = app.navigationBars.matching(NSPredicate(format: "identifier != 'Exploration'")).firstMatch
+    XCTAssertTrue(destination.waitForExistence(timeout: 5), "Scene destination should load after tapping '\(sceneID)'")
   }
 
   // MARK: - Screenshots

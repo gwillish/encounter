@@ -236,8 +236,8 @@ need to inspect it further.
 | Scene ID | Content |
 |---|---|
 | `exploration.design-language` | All four icon/color proposals from ADR-0039 at 20/28/44pt, with mock adversary runner rows and player strip rows |
-| `exploration.runner-row` | `AdversaryRunnerRow` in all slot states (stub — to be completed, see issue #85) |
-| `exploration.player-strip` | `PlayerStrip` with varied player states (stub — to be completed, see issue #85) |
+| `exploration.runner-row` | `AdversaryRunnerRow` in 9 states (normal, damaged, high-stress, single/multiple conditions, solo variants, defeated, unknown) |
+| `exploration.player-strip` | `PlayerStrip` with two `EncounterSession` galleries — 4-player varied states and edge-case long names |
 
 ### Adding a new exploration scene
 
