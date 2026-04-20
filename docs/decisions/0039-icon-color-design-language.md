@@ -47,7 +47,7 @@ Four proposals were evaluated against the SF Symbols 7 catalog (9,184 confirmed 
 | Condition | Symbol |
 |---|---|
 | Hidden | `eye.slash.fill` |
-| Restrained | `tag.fill` |
+| Restrained | `link.circle.fill` |
 | Vulnerable | `shield.slash.fill` |
 
 **Rationale for `bolt.heart.fill` as Hope:**

@@ -144,7 +144,7 @@
         sectionHeader("Condition Icons", subtitle: "Shared across all proposals")
         HStack(spacing: 24) {
           conditionIcon(symbol: "eye.slash.fill", label: "Hidden")
-          conditionIcon(symbol: "tag.fill", label: "Restrained")
+          conditionIcon(symbol: "link.circle.fill", label: "Restrained")
           conditionIcon(symbol: "shield.slash.fill", label: "Vulnerable")
         }
       }
