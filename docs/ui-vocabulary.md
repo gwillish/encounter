@@ -25,7 +25,7 @@ Canonical icon and color choices for core Daggerheart mechanics. Decided in [ADR
 | Condition | Symbol |
 |---|---|
 | Hidden | `eye.slash.fill` |
-| Restrained | `tag.fill` |
+| Restrained | `link.circle.fill` |
 | Vulnerable | `shield.slash.fill` |
 
 ### Color palette
