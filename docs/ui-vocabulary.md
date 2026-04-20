@@ -55,6 +55,10 @@ Stress shares the energy register with Hope (`bolt.fill` vs `bolt.heart.fill`) b
 
 See ADR-0039 for three alternative proposals (Blade & Spirit, Beacon & Storm, Signal Board) that were considered and may be revisited.
 
+### Visual reference
+
+Screenshots of all four proposals rendered in the app (iOS + macOS) are in `docs/screenshots/icon-design-language/`. The `ios-design-language.png` and `macos-design-language.png` files show the adopted Proposal 1 at top with the three alternatives below for comparison. See [ADR-0039](decisions/0039-icon-color-design-language.md#visual-record) for the full index.
+
 ---
 
 ## Navigation Map
