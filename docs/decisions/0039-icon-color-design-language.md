@@ -104,11 +104,27 @@ Two-color tactical system optimized for runner-screen legibility.
 
 ---
 
+## Visual record
+
+All four proposals were rendered side-by-side in the UI exploration harness (issue #84) at 20/28/44pt with mock adversary and player rows, on both platforms. Screenshots are in `docs/screenshots/icon-design-language/`.
+
+| File | Content |
+|---|---|
+| `ios-design-language.png` | iOS — all four proposals at 20/28/44pt + mock rows |
+| `ios-runner-row.png` | iOS — `AdversaryRunnerRow` in 9 states |
+| `ios-player-strip.png` | iOS — `PlayerStrip` with varied player states |
+| `macos-design-language.png` | macOS — same view in `NavigationSplitView` |
+| `macos-runner-row.png` | macOS — adversary runner row states |
+| `macos-player-strip.png` | macOS — player strip states |
+
+No legibility or aesthetic problems were identified. Proposal 1 — "The Duality" is confirmed as the standard.
+
+---
+
 ## Consequences
 
 - All new views use the symbols and tints specified in the Decision section.
 - The `docs/ui-vocabulary.md` Design Language section is the canonical reference.
 - Future player companion app and GM screen tools should adopt the same icon set for consistency across the Daggerheart tool family.
-- A visual exploration view (see GitHub issue) will be built to compare all four proposals side-by-side before committing these choices to the full UI. If that exploration reveals legibility or aesthetic problems, this ADR should be revisited and superseded.
 - `dice.fill` and `die.face.N.fill` (confirmed in SF Symbols 7) are reserved for a future dice-roll feature.
 - `wand.and.sparkles` is reserved for the future LLM encounter-generation feature.
