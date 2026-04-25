@@ -18,7 +18,7 @@ struct EncounterLibraryList: View {
   @Environment(PlayerStore.self) private var playerStore
 
   private var partyCount: Int? {
-    let count = playerStore.selectedPlayerCount
+    let count = playerStore.activePartyPlayers.count
     return count > 0 ? count : nil
   }
 
