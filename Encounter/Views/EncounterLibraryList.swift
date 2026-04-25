@@ -90,4 +90,5 @@ struct EncounterLibraryList: View {
       onDelete: { _ in }
     )
   }
+  .environment(Compendium())
 }

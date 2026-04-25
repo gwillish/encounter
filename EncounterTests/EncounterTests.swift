@@ -822,35 +822,40 @@ struct DifficultyBudgetTests {
 
   // MARK: Rating
 
-  @Test func ratingWithinBudgetIsBalanced() {
-    let rating = DifficultyBudget.rating(
+  @Test func ratingWithinBudgetIsBalanced() throws {
+    let rating = try #require(DifficultyBudget.rating(
       adversaryTypes: [.standard, .standard, .minion],
       playerCount: 4
-    )
+    ))
     #expect(rating.cost == 5)
     #expect(rating.budget == 14)
     #expect(rating.remaining == 9)
   }
 
-  @Test func ratingOverBudgetShowsNegativeRemaining() {
-    let rating = DifficultyBudget.rating(
+  @Test func ratingOverBudgetShowsNegativeRemaining() throws {
+    let rating = try #require(DifficultyBudget.rating(
       adversaryTypes: [.solo, .solo, .bruiser],
       playerCount: 3
-    )
+    ))
     #expect(rating.cost == 14)
     #expect(rating.budget == 11)
     #expect(rating.remaining == -3)
   }
 
-  @Test func ratingWithBudgetAdjustment() {
-    let rating = DifficultyBudget.rating(
+  @Test func ratingWithBudgetAdjustment() throws {
+    let rating = try #require(DifficultyBudget.rating(
       adversaryTypes: [.standard],
       playerCount: 4,
       budgetAdjustment: -2
-    )
+    ))
     #expect(rating.budget == 12)
     #expect(rating.cost == 2)
     #expect(rating.remaining == 10)
+  }
+
+  @Test func ratingReturnsNilForZeroPlayers() {
+    let rating = DifficultyBudget.rating(adversaryTypes: [.standard], playerCount: 0)
+    #expect(rating == nil)
   }
 
   // MARK: Adjustment Suggestions

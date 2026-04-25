@@ -57,7 +57,7 @@ struct EncounterBuilderView: View {
     autoAdjustments.union(manualAdjustments).reduce(0) { $0 + $1.pointValue }
   }
 
-  private var difficultyRating: DifficultyBudget.Rating {
+  private var difficultyRating: DifficultyBudget.Rating? {
     DifficultyBudget.rating(
       adversaryTypes: adversaryTypes,
       playerCount: playerStore.activePartyPlayers.count,
