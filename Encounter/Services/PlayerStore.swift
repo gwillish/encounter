@@ -89,6 +89,12 @@ public final class PlayerStore {
     party.playerIDs.compactMap { id in players.first { $0.id == id } }
   }
 
+  /// Number of players in the active party. Used by the encounter library to
+  /// compute difficulty without relying on the builder's runtime snapshot.
+  public var selectedPlayerCount: Int {
+    party.playerIDs.count
+  }
+
   // MARK: - Player Operations
 
   /// Adds a new player to the roster and persists.

@@ -15,10 +15,17 @@ struct EncounterLibraryList: View {
   let onRename: (EncounterDefinition) -> Void
   let onDelete: (EncounterDefinition) -> Void
 
+  @Environment(PlayerStore.self) private var playerStore
+
+  private var partyCount: Int? {
+    let count = playerStore.selectedPlayerCount
+    return count > 0 ? count : nil
+  }
+
   var body: some View {
     List(definitions, selection: $selection) { definition in
       #if os(macOS)
-        EncounterLibraryRow(definition: definition)
+        EncounterLibraryRow(definition: definition, playerCount: partyCount)
           .accessibilityIdentifier("library.row")
           .accessibilityValue(definition.name)
           .contextMenu {
@@ -36,7 +43,7 @@ struct EncounterLibraryList: View {
           }
       #else
         NavigationLink(value: definition) {
-          EncounterLibraryRow(definition: definition)
+          EncounterLibraryRow(definition: definition, playerCount: partyCount)
         }
         .accessibilityIdentifier("library.row")
         .accessibilityValue(definition.name)
@@ -91,4 +98,5 @@ struct EncounterLibraryList: View {
     )
   }
   .environment(Compendium())
+  .environment(PlayerStore(directory: .temporaryDirectory))
 }
