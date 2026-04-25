@@ -22,7 +22,7 @@ struct EncounterLibraryRow: View {
   private var summaryText: String? {
     guard let playerCount else { return nil }
     if definition.adversaryIDs.isEmpty { return "No adversaries added" }
-    if adversaryTypes.count < definition.adversaryIDs.count { return "—" }
+    if adversaryTypes.count < definition.adversaryIDs.count { return nil }
     guard
       let rating = DifficultyBudget.rating(
         adversaryTypes: adversaryTypes, playerCount: playerCount
@@ -55,4 +55,14 @@ struct EncounterLibraryRow: View {
   EncounterLibraryRow(definition: EncounterDefinition(name: "Goblin Ambush"), playerCount: 4)
     .padding()
     .environment(Compendium())
+}
+
+#Preview("Party of 4, rated encounter") {
+  @Previewable @State var compendium = Compendium()
+  var definition = EncounterDefinition(name: "Goblin Ambush")
+  definition.adversaryIDs = ["ironguard-soldier", "ironguard-soldier", "thornwood-archer"]
+  return EncounterLibraryRow(definition: definition, playerCount: 4)
+    .padding()
+    .environment(compendium)
+    .task { try? await compendium.load() }
 }
