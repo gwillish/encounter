@@ -4,14 +4,6 @@
 //
 //  Always-visible difficulty budget panel pinned via .safeAreaInset(edge: .bottom).
 //
-//  Color thresholds (remaining = budget − totalCost):
-//    ≥  4  teal    "Too Easy"
-//    1–3   green   "Well Matched"
-//    0     green   "On Budget"
-//   -1–-3  amber   "Challenging"
-//   -4–-6  red     "Dangerous"
-//    ≤ -7  pulsing red  "Likely TPK"
-//
 //  Auto-detected adjustments (multipleSolos, noBigThreats) are shown
 //  as read-only labels. GM-discretionary adjustments are Toggle rows.
 //
@@ -21,7 +13,7 @@ import DHModels
 import SwiftUI
 
 struct DifficultyAssessorView: View {
-  let rating: DifficultyBudget.Rating
+  let rating: DifficultyBudget.Rating?
   let autoAdjustments: Set<DifficultyBudget.Adjustment>
   @Binding var manualAdjustments: Set<DifficultyBudget.Adjustment>
 
@@ -31,29 +23,17 @@ struct DifficultyAssessorView: View {
     .easierFight, .harderFight, .boostedDamage, .lowerTierAdversary,
   ]
 
-  private var difficultyLabel: String {
-    switch rating.remaining {
-    case 4...: return "Too Easy"
-    case 1...3: return "Well Matched"
-    case 0: return "On Budget"
-    case -3 ... -1: return "Challenging"
-    case -6 ... -4: return "Dangerous"
-    default: return "Likely TPK"
-    }
-  }
-
   private var difficultyColor: Color {
-    switch rating.remaining {
-    case 4...: return .teal
-    case 1...: return .green
-    case 0: return .green
-    case -3 ... -1: return .orange
-    case -6 ... -4: return .red
-    default: return .red
+    switch rating?.category {
+    case .tooEasy: return .teal
+    case .wellMatched, .onBudget: return .green
+    case .challenging: return .orange
+    case .dangerous, .likelyTPK: return .red
+    case nil: return .secondary
     }
   }
 
-  private var isPulsing: Bool { rating.remaining <= -7 }
+  private var isPulsing: Bool { rating?.category == .likelyTPK }
 
   private func toggleBinding(for adj: DifficultyBudget.Adjustment) -> Binding<Bool> {
     Binding(
@@ -72,7 +52,7 @@ struct DifficultyAssessorView: View {
       VStack(alignment: .leading, spacing: 8) {
         // BP summary row
         HStack {
-          Text(difficultyLabel)
+          Text(rating?.displayName ?? "No players configured")
             .font(.headline)
             .foregroundStyle(difficultyColor)
             .opacity(animating ? 0.35 : 1.0)
@@ -83,10 +63,12 @@ struct DifficultyAssessorView: View {
               value: animating
             )
           Spacer()
-          Text("\(rating.cost) / \(rating.budget) BP")
-            .font(.subheadline)
-            .monospacedDigit()
-            .foregroundStyle(.secondary)
+          if let rating {
+            Text("\(rating.cost) / \(rating.budget) BP")
+              .font(.subheadline)
+              .monospacedDigit()
+              .foregroundStyle(.secondary)
+          }
         }
 
         // Auto-detected adjustments (informational, non-interactive)
@@ -150,4 +132,10 @@ struct DifficultyAssessorView: View {
     manualAdjustments: $manual
   )
   .padding()
+}
+
+#Preview("No players configured") {
+  @Previewable @State var manual: Set<DifficultyBudget.Adjustment> = []
+  DifficultyAssessorView(rating: nil, autoAdjustments: [], manualAdjustments: $manual)
+    .padding()
 }
