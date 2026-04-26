@@ -95,8 +95,8 @@ import XCTest
         "App should show the Encounters screen after dismissing the resume prompt")
 
       // Navigate away and back to confirm the dismiss is sticky.
-      app.tabBars.firstMatch.buttons["Encounters"].tap()
-      app.tabBars.firstMatch.buttons["Party"].tap()
+      app.tabBars.buttons["Encounters"].tap()
+      app.tabBars.buttons["Party"].tap()
       XCTAssertFalse(
         app.navigationBars["In Progress"].waitForExistence(timeout: 3),
         "Resume sheet should not re-appear after navigating away and back")

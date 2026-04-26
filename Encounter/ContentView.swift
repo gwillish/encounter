@@ -4,11 +4,6 @@
 //
 //  Root navigation container.
 //
-//  iOS / visionOS: TabView — Encounters tab first, Party tab second.
-//  macOS: three-column NavigationSplitView — sidebar selects Encounters or
-//  Party, content column shows the corresponding list/overview,
-//  detail column shows the encounter builder when an encounter is selected.
-//
 
 import DHKit
 import DHModels
@@ -177,7 +172,7 @@ struct ContentView: View {
         .navigationTitle("Encounter")
       } content: {
         switch sidebarItem {
-        case .encounters, nil:
+        case .encounters, nil:  // nil (sidebar deselected) falls through to Encounters
           EncounterLibraryView(selection: $encounterSelection)
         case .party:
           PartyOverviewView()
