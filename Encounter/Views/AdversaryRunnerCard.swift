@@ -81,7 +81,12 @@ struct AdversaryRunnerCard: View {
         Text("HP")
           .font(.caption)
           .foregroundStyle(.secondary)
-        PipTrack(current: slot.currentHP, maximum: slot.maxHP)
+        PipTrack(
+          current: slot.currentHP,
+          maximum: slot.maxHP,
+          filledSymbol: "heart.fill",
+          emptySymbol: "heart"
+        )
         Spacer()
         if slot.isDefeated {
           Text("Defeated")

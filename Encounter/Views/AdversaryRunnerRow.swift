@@ -3,7 +3,8 @@
 //  Encounter
 //
 //  Collapsed adversary row shown in the live encounter runner.
-//  Displays name, type/tier badge, HP pip track, and stress pip track.
+//  Row 1: name, type/tier badge, active condition icons, stress pip track.
+//  Row 2: HP pip track.
 //  Tapping expands to AdversaryRunnerCard (managed by AdversaryRunnerSection).
 //
 
@@ -22,13 +23,16 @@ struct AdversaryRunnerRow: View {
 
   var body: some View {
     let adversary = compendium.adversary(id: slot.adversaryID)
+    let sortedConditions = slot.conditions.sorted { $0.displayName < $1.displayName }
 
     VStack(alignment: .leading, spacing: 6) {
       HStack(spacing: 6) {
         Text(displayName)
           .font(.body)
           .fontWeight(.medium)
-        Spacer()
+          .lineLimit(1)
+          .truncationMode(.tail)
+
         if let adversary {
           Text("\(adversary.role.rawValue) · T\(adversary.tier)")
             .font(.caption)
@@ -38,43 +42,38 @@ struct AdversaryRunnerRow: View {
             .background(.secondary.opacity(0.15))
             .clipShape(.capsule)
         }
-      }
-      HStack(spacing: 16) {
-        HStack(spacing: 4) {
-          Text("HP")
-            .font(.caption)
-            .foregroundStyle(.secondary)
-          PipTrack(current: slot.currentHP, maximum: slot.maxHP)
-        }
-        HStack(spacing: 4) {
-          Text("St")
-            .font(.caption)
-            .foregroundStyle(.secondary)
-          PipTrack(current: slot.currentStress, maximum: slot.maxStress)
-        }
-      }
-      if !slot.conditions.isEmpty {
-        ScrollView(.horizontal, showsIndicators: false) {
-          HStack(spacing: 6) {
-            ForEach(
-              slot.conditions.sorted { $0.displayName < $1.displayName }, id: \.self
-            ) { condition in
-              Text(condition.displayName)
-                .font(.caption)
-                .padding(.horizontal, 6)
-                .padding(.vertical, 2)
-                .background(.orange.opacity(0.15))
+
+        if !sortedConditions.isEmpty {
+          HStack(spacing: 3) {
+            ForEach(sortedConditions, id: \.self) { condition in
+              Image(systemName: condition.sfSymbol)
+                .font(.system(size: 8))
                 .foregroundStyle(.orange)
-                .clipShape(.capsule)
             }
           }
+          .accessibilityElement(children: .ignore)
+          .accessibilityLabel(
+            "Conditions: " + sortedConditions.map(\.displayName).joined(separator: ", ")
+          )
         }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel(
-          "Conditions: "
-            + slot.conditions.map(\.displayName).sorted().joined(separator: ", ")
+
+        Spacer()
+
+        PipTrack(
+          current: slot.currentStress,
+          maximum: slot.maxStress,
+          filledSymbol: "bolt.fill",
+          emptySymbol: "bolt",
+          tint: .primary
         )
       }
+
+      PipTrack(
+        current: slot.currentHP,
+        maximum: slot.maxHP,
+        filledSymbol: "heart.fill",
+        emptySymbol: "heart"
+      )
     }
     .padding(.vertical, 4)
   }

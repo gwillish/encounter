@@ -1,0 +1,42 @@
+{
+  "originHash" : "0be761dd1f6f98827992f1f4f4d479c9f2d3ab4a7e2d72e07781aa7ad1e646c9",
+  "pins" : [
+    {
+      "identity" : "dhmodels",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/gwillish/DHModels",
+      "state" : {
+        "branch" : "main",
+        "revision" : "478fdd8ac3d2509f65fee9905c1ffa34be05a21a"
+      }
+    },
+    {
+      "identity" : "swift-argument-parser",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-argument-parser",
+      "state" : {
+        "revision" : "626b5b7b2f45e1b0b1c6f4a309296d1d21d7311b",
+        "version" : "1.7.1"
+      }
+    },
+    {
+      "identity" : "swift-log",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-log",
+      "state" : {
+        "revision" : "bbd81b6725ae874c69e9b8c8804d462356b55523",
+        "version" : "1.10.1"
+      }
+    },
+    {
+      "identity" : "swift-oslog",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/danielctull/swift-oslog",
+      "state" : {
+        "revision" : "a042766b8fdd02aad42be4d20ce9aa2dd965e1c3",
+        "version" : "1.0.0"
+      }
+    }
+  ],
+  "version" : 3
+}

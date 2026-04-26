@@ -3,7 +3,8 @@
 //  Encounter
 //
 //  Compact player row inside the always-visible PlayerStrip.
-//  Shows name, HP pip track, stress pip track, and armor slot count.
+//  Row 1: name, active condition icons, stress pip track.
+//  Row 2: HP pip track, armor pip track.
 //  Tapping opens PlayerEditPopover for HP/Stress/Armor stepper controls.
 //
 
@@ -25,52 +26,56 @@ struct PlayerStripRow: View {
       showPopover = true
     } label: {
       VStack(alignment: .leading, spacing: 4) {
-        HStack(spacing: 8) {
+        HStack(spacing: 6) {
           Text(player.name)
             .font(.caption)
             .fontWeight(.medium)
-            .frame(minWidth: 60, alignment: .leading)
             .lineLimit(1)
             .truncationMode(.tail)
 
+          if !sortedConditions.isEmpty {
+            HStack(spacing: 3) {
+              ForEach(sortedConditions, id: \.self) { condition in
+                Image(systemName: condition.sfSymbol)
+                  .font(.system(size: 8))
+                  .foregroundStyle(.orange)
+                  .accessibilityLabel(condition.displayName)
+                  .accessibilityIdentifier(
+                    "runner.player-row.condition.\(condition.displayName.lowercased())"
+                  )
+              }
+            }
+          }
+
           Spacer()
 
-          HStack(spacing: 4) {
-            Text("HP")
-              .font(.caption2)
-              .foregroundStyle(.secondary)
-            PipTrack(current: player.currentHP, maximum: player.maxHP)
-          }
-
-          HStack(spacing: 4) {
-            Text("St")
-              .font(.caption2)
-              .foregroundStyle(.secondary)
-            PipTrack(current: player.currentStress, maximum: player.maxStress)
-          }
-
-          if player.armorSlots > 0 {
-            HStack(spacing: 4) {
-              Text("Arm")
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-              Text("\(player.currentArmorSlots)/\(player.armorSlots)")
-                .font(.caption)
-                .monospacedDigit()
-            }
-          }
+          PipTrack(
+            current: player.currentStress,
+            maximum: player.maxStress,
+            filledSymbol: "bolt.fill",
+            emptySymbol: "bolt",
+            tint: .primary
+          )
         }
 
-        if !sortedConditions.isEmpty {
-          HStack(spacing: 6) {
-            ForEach(sortedConditions, id: \.self) { condition in
-              Text("• \(condition.displayName)")
-                .font(.caption2)
-                .foregroundStyle(.orange)
-                .accessibilityIdentifier(
-                  "runner.player-row.condition.\(condition.displayName.lowercased())"
-                )
-            }
+        HStack(spacing: 6) {
+          PipTrack(
+            current: player.currentHP,
+            maximum: player.maxHP,
+            filledSymbol: "heart.fill",
+            emptySymbol: "heart"
+          )
+
+          Spacer()
+
+          if player.armorSlots > 0 {
+            PipTrack(
+              current: player.currentArmorSlots,
+              maximum: player.armorSlots,
+              filledSymbol: "shield.fill",
+              emptySymbol: "shield",
+              tint: .secondary
+            )
           }
         }
       }
@@ -102,7 +107,8 @@ struct PlayerStripRow: View {
       PlayerState(
         name: "Lira Dawnwhisper",
         maxHP: 5, currentHP: 3, maxStress: 7, currentStress: 2,
-        evasion: 14, thresholdMajor: 4, thresholdSevere: 8, armorSlots: 2),
+        evasion: 14, thresholdMajor: 4, thresholdSevere: 8, armorSlots: 2,
+        conditions: [.vulnerable]),
     ]
   )
   List {

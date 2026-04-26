@@ -77,7 +77,7 @@
           stripSection(
             label: "Four players — varied states",
             subtitle:
-              "Full HP · Damaged · Critical + condition · Full HP + depleted armor + conditions",
+              "Row 1: name · conditions · stress — Row 2: HP · armor",
             session: fullSession
           )
           stripSection(
