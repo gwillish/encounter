@@ -299,3 +299,29 @@ final class PartyManagementUITests: XCTestCase {
       .waitForExistence(timeout: 5)
   }
 }
+
+// MARK: - Launch default
+
+/// Verifies the raw launch default without the Party-navigation that
+/// PartyManagementUITests.setUp performs before every test.
+final class NavigationDefaultUITests: XCTestCase {
+
+  var app: XCUIApplication!
+
+  override func setUpWithError() throws {
+    continueAfterFailure = false
+    app = XCUIApplication()
+    app.launchArguments = ["-UITestResetState"]
+    app.launch()
+  }
+
+  @MainActor
+  func testEncountersIsDefaultTabOnFreshLaunch() throws {
+    XCTAssertTrue(
+      app.navigationBars["Encounters"].waitForExistence(timeout: 10),
+      "Encounters should be the active screen on launch")
+    XCTAssertFalse(
+      app.navigationBars["Party"].waitForExistence(timeout: 1),
+      "Party nav bar should not be visible without switching tabs")
+  }
+}
