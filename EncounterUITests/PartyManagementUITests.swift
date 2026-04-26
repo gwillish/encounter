@@ -34,17 +34,20 @@ final class PartyManagementUITests: XCTestCase {
     app = XCUIApplication()
     app.launchArguments = ["-UITestResetState"]
     app.launch()
-    // Wait for the app to fully load before any test step runs.
     XCTAssertTrue(
-      app.navigationBars["Party"].waitForExistence(timeout: 10),
-      "App should load and show Party screen within 10 seconds")
+      app.navigationBars["Encounters"].waitForExistence(timeout: 10),
+      "App should load and show Encounters screen within 10 seconds")
+    app.tabBars.buttons["Party"].tap()
+    XCTAssertTrue(
+      app.navigationBars["Party"].waitForExistence(timeout: 5),
+      "Party screen should appear after tapping Party tab")
   }
 
   // MARK: - Navigation structure
 
-  /// Party tab is the first screen on launch; empty-state CTA is visible.
+  /// Encounters is the default tab on launch; Party tab is accessible and shows its empty-state CTA.
   @MainActor
-  func testPartyTabFirstAndEmptyStateCTA() throws {
+  func testEncountersTabFirstAndPartyTabAccessible() throws {
     XCTAssertTrue(
       app.buttons["party.empty-add-button"].waitForExistence(timeout: 3),
       "Empty-state Add Player CTA should be visible when no players exist")

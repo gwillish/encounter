@@ -40,8 +40,12 @@ class ExplorationUITestCase: XCTestCase {
     XCTAssertTrue(row.waitForExistence(timeout: 3), "Scene '\(sceneID)' not found in list")
     row.tap()
     // Wait for any navigation bar other than "Exploration" to confirm the destination loaded.
-    let destination = app.navigationBars.matching(NSPredicate(format: "identifier != 'Exploration'")).firstMatch
-    XCTAssertTrue(destination.waitForExistence(timeout: 5), "Scene destination should load after tapping '\(sceneID)'")
+    let destination = app.navigationBars.matching(
+      NSPredicate(format: "identifier != 'Exploration'")
+    ).firstMatch
+    XCTAssertTrue(
+      destination.waitForExistence(timeout: 5),
+      "Scene destination should load after tapping '\(sceneID)'")
   }
 
   // MARK: - Screenshots

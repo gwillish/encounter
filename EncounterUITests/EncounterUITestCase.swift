@@ -18,22 +18,23 @@ class EncounterUITestCase: XCTestCase {
     app.launchArguments = ["-UITestResetState"]
     app.launch()
     XCTAssertTrue(
-      app.navigationBars["Party"].waitForExistence(timeout: 10),
-      "App should load and show Party screen within 10 seconds")
+      app.navigationBars["Encounters"].waitForExistence(timeout: 10),
+      "App should load and show Encounters screen within 10 seconds")
   }
 
   // MARK: - Top-level navigation flows
 
-  /// Navigates from the Party screen all the way into the live encounter runner.
+  /// Navigates from the Encounters screen all the way into the live encounter runner.
   ///
   /// Flow:
-  ///   1. Add one player (required for "Run Encounter" to be enabled).
+  ///   1. Switch to Party tab and add one player (required for "Run Encounter" to be enabled).
   ///   2. Switch to Encounters tab.
   ///   3. Create a new encounter.
   ///   4. Open the encounter in the builder.
   ///   5. Add one adversary from the compendium.
   ///   6. Tap "Run Encounter".
   func navigateToRunner() {
+    switchToPartyTab()
     addOnePlayer()
     switchToEncountersTab()
     createEncounter()
@@ -45,6 +46,7 @@ class EncounterUITestCase: XCTestCase {
   /// Same as `navigateToRunner`, but adds the same (first) adversary twice so
   /// both slots receive auto-assigned `customName` values ("Name 1", "Name 2").
   func navigateToRunnerWithTwoSameAdversaries() {
+    switchToPartyTab()
     addOnePlayer()
     switchToEncountersTab()
     createEncounter()
@@ -91,6 +93,15 @@ class EncounterUITestCase: XCTestCase {
     XCTAssertTrue(
       app.navigationBars["Encounters"].waitForExistence(timeout: 5),
       "Encounters screen should appear")
+  }
+
+  func switchToPartyTab() {
+    let tab = app.tabBars.buttons["Party"]
+    XCTAssertTrue(tab.waitForExistence(timeout: 3))
+    tab.tap()
+    XCTAssertTrue(
+      app.navigationBars["Party"].waitForExistence(timeout: 5),
+      "Party screen should appear")
   }
 
   func createEncounter() {

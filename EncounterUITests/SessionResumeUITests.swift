@@ -89,10 +89,10 @@ import XCTest
         app.navigationBars["In Progress"].waitForExistence(timeout: 3),
         "Resume sheet should dismiss after tapping 'Not Now'")
 
-      // Normal app state: Party tab is default
+      // Normal app state: Encounters tab is default
       XCTAssertTrue(
-        app.navigationBars["Party"].waitForExistence(timeout: 5),
-        "App should show the Party screen after dismissing the resume prompt")
+        app.navigationBars["Encounters"].waitForExistence(timeout: 5),
+        "App should show the Encounters screen after dismissing the resume prompt")
 
       // Navigate away and back to confirm the dismiss is sticky.
       app.tabBars.firstMatch.buttons["Encounters"].tap()

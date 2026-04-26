@@ -4,9 +4,9 @@
 //
 //  Root navigation container.
 //
-//  iOS / visionOS: TabView — Party tab first, Encounters tab second.
-//  macOS: three-column NavigationSplitView — sidebar selects Party or
-//  Encounters, content column shows the corresponding list/overview,
+//  iOS / visionOS: TabView — Encounters tab first, Party tab second.
+//  macOS: three-column NavigationSplitView — sidebar selects Encounters or
+//  Party, content column shows the corresponding list/overview,
 //  detail column shows the encounter builder when an encounter is selected.
 //
 
@@ -162,25 +162,25 @@ struct ContentView: View {
   // MARK: - macOS
 
   #if os(macOS)
-    @State private var sidebarItem: SidebarItem? = .party
+    @State private var sidebarItem: SidebarItem? = .encounters
 
     private var macOSLayout: some View {
       NavigationSplitView {
         List(selection: $sidebarItem) {
-          Label("Party", systemImage: "person.2")
-            .tag(SidebarItem.party)
-            .accessibilityIdentifier("sidebar.party")
           Label("Encounters", systemImage: "list.bullet.clipboard")
             .tag(SidebarItem.encounters)
             .accessibilityIdentifier("sidebar.encounters")
+          Label("Party", systemImage: "person.2")
+            .tag(SidebarItem.party)
+            .accessibilityIdentifier("sidebar.party")
         }
         .navigationTitle("Encounter")
       } content: {
         switch sidebarItem {
-        case .party, nil:
-          PartyOverviewView()
-        case .encounters:
+        case .encounters, nil:
           EncounterLibraryView(selection: $encounterSelection)
+        case .party:
+          PartyOverviewView()
         }
       } detail: {
         NavigationStack {
@@ -204,19 +204,19 @@ struct ContentView: View {
   #if !os(macOS)
     private var iOSLayout: some View {
       TabView {
-        Tab("Party", systemImage: "person.2") {
-          NavigationStack {
-            PartyOverviewView()
-          }
-        }
-        .accessibilityIdentifier("tab.party")
-
         Tab("Encounters", systemImage: "list.bullet.clipboard") {
           NavigationStack {
             EncounterLibraryView(selection: $encounterSelection)
           }
         }
         .accessibilityIdentifier("tab.encounters")
+
+        Tab("Party", systemImage: "person.2") {
+          NavigationStack {
+            PartyOverviewView()
+          }
+        }
+        .accessibilityIdentifier("tab.party")
       }
     }
   #endif
