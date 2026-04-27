@@ -35,6 +35,13 @@
           DesignLanguageExplorationView()
         },
         ExplorationScene(
+          id: "exploration.pip-track",
+          title: "Pip Track",
+          subtitle: "HP gradient · stress · armor · text fallback — interactive sliders"
+        ) {
+          PipTrackExplorationView()
+        },
+        ExplorationScene(
           id: "exploration.runner-row",
           title: "Adversary Runner Row",
           subtitle: "All slot states: normal, stressed, conditioned, defeated"

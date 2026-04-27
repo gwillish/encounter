@@ -12,6 +12,7 @@
 		1AD61A402F74D40B00296F39 /* OSLogging in Frameworks */ = {isa = PBXBuildFile; productRef = 1AD61A3F2F74D40B00296F39 /* OSLogging */; };
 		5B67DAEC49BC4CA58D0F68CB /* DHKit in Frameworks */ = {isa = PBXBuildFile; productRef = 696E5A197EC643C8822586E5 /* DHKit */; };
 		720CFEA27FDB4C618D811F30 /* DHModels in Frameworks */ = {isa = PBXBuildFile; productRef = 372D78F7B37E42698659576B /* DHModels */; };
+		CF8BC2B4C4DFAF5CE05866D8 /* ViewInspector in Frameworks */ = {isa = PBXBuildFile; productRef = 5C13F094DDFC652F1F5FD889 /* ViewInspector */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -85,6 +86,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CF8BC2B4C4DFAF5CE05866D8 /* ViewInspector in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -166,6 +168,7 @@
 			);
 			name = EncounterTests;
 			packageProductDependencies = (
+				5C13F094DDFC652F1F5FD889 /* ViewInspector */,
 			);
 			productName = EncounterTests;
 			productReference = 1A8F7BA72F660D3900548E3A /* EncounterTests.xctest */;
@@ -235,6 +238,7 @@
 				1AD61A392F74D3F900296F39 /* XCRemoteSwiftPackageReference "swift-log" */,
 				1AD61A3E2F74D40B00296F39 /* XCRemoteSwiftPackageReference "swift-oslog" */,
 				6E36C5CB9EA54972BB735840 /* XCRemoteSwiftPackageReference "DHModels" */,
+				F36026598457CF9B8914E497 /* XCRemoteSwiftPackageReference "ViewInspector" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 1A8F7B9B2F660D3800548E3A /* Products */;
@@ -688,6 +692,14 @@
 				kind = branch;
 			};
 		};
+		F36026598457CF9B8914E497 /* XCRemoteSwiftPackageReference "ViewInspector" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/nalexn/ViewInspector";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.10.3;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -710,6 +722,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 6E36C5CB9EA54972BB735840 /* XCRemoteSwiftPackageReference "DHModels" */;
 			productName = DHModels;
+		};
+		5C13F094DDFC652F1F5FD889 /* ViewInspector */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F36026598457CF9B8914E497 /* XCRemoteSwiftPackageReference "ViewInspector" */;
+			productName = ViewInspector;
 		};
 		696E5A197EC643C8822586E5 /* DHKit */ = {
 			isa = XCSwiftPackageProductDependency;

@@ -8,7 +8,14 @@
 //  Layout:
 //   - Nav bar: encounter name + FearTrackerButton (trailing)
 //   - Scrollable adversary list (active first, defeated greyed at bottom)
-//   - PlayerStrip pinned to bottom via .safeAreaInset
+//   - PlayerStrip below the list in a VStack (NOT an overlay or safeAreaInset:
+//     UICollectionView.hitTest returns self for all points in its bounds, so
+//     any view rendered over it via overlay/safeAreaInset never receives touches.)
+//
+//  Known issue (#94): a SwiftUI NavigationStack infrastructure UIKit view intercepts
+//  HID touches in the PlayerStrip area on iOS 26. Binding behaviour is verified by
+//  PlayerStripRowTests (ViewInspector). The XCUITest for player condition toggle is
+//  skipped until the UIKit root cause is diagnosed. See ui-development-issues.md.
 //
 
 import DHKit
@@ -25,6 +32,7 @@ struct EncounterRunnerView: View {
   @Environment(\.dismiss) private var dismiss
   @State private var expandedSlotID: UUID?
   @State private var showResetConfirmation = false
+  @State private var editingPlayer: PlayerState?
 
   // MARK: - Sorted slots (computed, non-mutating)
   // Active adversaries preserve original insertion order (stable sort).
@@ -34,54 +42,58 @@ struct EncounterRunnerView: View {
   }
 
   var body: some View {
-    List {
-      AdversaryRunnerSection(
-        slots: sortedAdversarySlots,
-        expandedSlotID: $expandedSlotID,
-        session: session,
-        compendium: compendium
-      )
-    }
-    .accessibilityIdentifier("runner.adversary-list")
-    .safeAreaInset(edge: .bottom) {
-      PlayerStrip(session: session)
-    }
-    .navigationTitle(session.name)
-    #if os(iOS)
-      .navigationBarTitleDisplayMode(.inline)
-    #endif
-    .toolbar {
-      ToolbarItem(placement: .primaryAction) {
-        FearTrackerButton(session: session)
-          .accessibilityIdentifier("runner.fear-tracker-button")
+    VStack(spacing: 0) {
+      List {
+        AdversaryRunnerSection(
+          slots: sortedAdversarySlots,
+          expandedSlotID: $expandedSlotID,
+          session: session,
+          compendium: compendium
+        )
       }
-      ToolbarItem(placement: .secondaryAction) {
-        Button("End Encounter") {
+      .accessibilityIdentifier("runner.adversary-list")
+      .navigationTitle(session.name)
+      #if os(iOS)
+        .navigationBarTitleDisplayMode(.inline)
+      #endif
+      .toolbar {
+        ToolbarItem(placement: .primaryAction) {
+          FearTrackerButton(session: session)
+            .accessibilityIdentifier("runner.fear-tracker-button")
+        }
+        ToolbarItem(placement: .secondaryAction) {
+          Button("End Encounter") {
+            dismiss()
+          }
+          .accessibilityIdentifier("runner.end-button")
+        }
+        ToolbarItem(placement: .secondaryAction) {
+          Button("Reset Session") {
+            showResetConfirmation = true
+          }
+          .accessibilityIdentifier("runner.reset-button")
+        }
+      }
+      .confirmationDialog(
+        "Reset Session?",
+        isPresented: $showResetConfirmation,
+        titleVisibility: .visible
+      ) {
+        Button("Reset Session", role: .destructive) {
+          let sessionID = session.id
+          sessionRegistry.clearSession(for: definition.id)
+          Task { await sessionStore.delete(sessionID: sessionID) }
           dismiss()
         }
-        .accessibilityIdentifier("runner.end-button")
+        .accessibilityIdentifier("runner.reset-confirm-button")
+      } message: {
+        Text("The current session will be cleared. The encounter definition is not changed.")
       }
-      ToolbarItem(placement: .secondaryAction) {
-        Button("Reset Session") {
-          showResetConfirmation = true
-        }
-        .accessibilityIdentifier("runner.reset-button")
-      }
+
+      PlayerStrip(session: session, editingPlayer: $editingPlayer)
     }
-    .confirmationDialog(
-      "Reset Session?",
-      isPresented: $showResetConfirmation,
-      titleVisibility: .visible
-    ) {
-      Button("Reset Session", role: .destructive) {
-        let sessionID = session.id
-        sessionRegistry.clearSession(for: definition.id)
-        Task { await sessionStore.delete(sessionID: sessionID) }
-        dismiss()
-      }
-      .accessibilityIdentifier("runner.reset-confirm-button")
-    } message: {
-      Text("The current session will be cleared. The encounter definition is not changed.")
+    .sheet(item: $editingPlayer) { player in
+      PlayerEditPopover(player: player, session: session)
     }
   }
 }
