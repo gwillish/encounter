@@ -156,15 +156,54 @@ final class RunnerUITests: EncounterUITestCase {
 
   // MARK: - Player condition toggles
 
-  /// PlayerStrip row tap is blocked by an iOS 26 SwiftUI navigation-infrastructure
-  /// UIKit overlay view. The binding and AX label behaviour are covered at the unit
-  /// level by PlayerStripRowTests (ViewInspector). This end-to-end test is skipped
-  /// until the hit-testing root cause is diagnosed with UIKit introspection tooling —
-  /// see ui-development-issues.md and issue #94.
+  /// Tapping a player row opens the edit popover; toggling a condition updates
+  /// the AX label on the strip row; removing the condition clears it.
   func testPlayerConditionToggleShowsAndHidesInStripRow() throws {
-    throw XCTSkip(
-      "PlayerStrip tap blocked by iOS 26 navigation infrastructure overlay. "
-        + "Binding behaviour covered by PlayerStripRowTests (ViewInspector). See #94.")
+    navigateToRunner()
+
+    // Tap the first player row to open the edit popover.
+    let playerRow = app.buttons.matching(identifier: "runner.player-row").firstMatch
+    XCTAssertTrue(
+      playerRow.waitForExistence(timeout: 5), "Player row should be visible in the strip")
+    playerRow.tap()
+
+    // Apply the Hidden condition in the popover.
+    let hiddenButton = app.buttons["runner.player-edit.condition.hidden"]
+    XCTAssertTrue(
+      hiddenButton.waitForExistence(timeout: 3),
+      "Hidden condition button should appear in the popover")
+    hiddenButton.tap()
+
+    // Dismiss the popover by swiping down.
+    app.swipeDown()
+
+    // The strip row's AX label should now include "Hidden".
+    let rowWithCondition = app.buttons.matching(identifier: "runner.player-row").firstMatch
+    XCTAssertTrue(
+      rowWithCondition.waitForExistence(timeout: 3), "Player row should be visible after dismiss")
+    XCTAssertTrue(
+      rowWithCondition.label.contains("Hidden"),
+      "Player row label '\(rowWithCondition.label)' should contain 'Hidden' after applying condition"
+    )
+
+    // Re-open the popover and remove the condition.
+    rowWithCondition.tap()
+    let hiddenButtonAgain = app.buttons["runner.player-edit.condition.hidden"]
+    XCTAssertTrue(hiddenButtonAgain.waitForExistence(timeout: 3))
+    hiddenButtonAgain.tap()
+
+    // Dismiss again.
+    app.swipeDown()
+
+    // The strip row's AX label should no longer include "Hidden".
+    let rowWithoutCondition = app.buttons.matching(identifier: "runner.player-row").firstMatch
+    XCTAssertTrue(
+      rowWithoutCondition.waitForExistence(timeout: 3), "Player row should be visible after dismiss"
+    )
+    XCTAssertFalse(
+      rowWithoutCondition.label.contains("Hidden"),
+      "Player row label '\(rowWithoutCondition.label)' should not contain 'Hidden' after removing condition"
+    )
   }
 
   // MARK: - Stress button

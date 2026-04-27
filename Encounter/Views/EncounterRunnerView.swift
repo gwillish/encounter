@@ -12,10 +12,10 @@
 //     UICollectionView.hitTest returns self for all points in its bounds, so
 //     any view rendered over it via overlay/safeAreaInset never receives touches.)
 //
-//  Known issue (#94): a SwiftUI NavigationStack infrastructure UIKit view intercepts
-//  HID touches in the PlayerStrip area on iOS 26. Binding behaviour is verified by
-//  PlayerStripRowTests (ViewInspector). The XCUITest for player condition toggle is
-//  skipped until the UIKit root cause is diagnosed. See ui-development-issues.md.
+//  Presented via fullScreenCover (iOS) / sheet (macOS) from EncounterBuilderView,
+//  NOT pushed via navigationDestination. NavigationStack push navigation adds a
+//  full-screen back-swipe gesture view on iOS 26 that intercepts touches in the
+//  PlayerStrip area. Modal presentation avoids that infrastructure entirely.
 //
 
 import DHKit
