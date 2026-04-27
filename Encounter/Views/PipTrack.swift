@@ -31,8 +31,9 @@ struct PipTrack: View {
         Text("\(current)/\(maximum)")
           .font(.caption)
           .monospacedDigit()
-          .foregroundStyle(current == 0 ? .red : .primary)
+          .foregroundStyle(pipColor)
       }
+      .accessibilityElement(children: .ignore)
       .accessibilityLabel(Text("\(current) of \(maximum)"))
     } else {
       HStack(spacing: 3) {
@@ -43,12 +44,13 @@ struct PipTrack: View {
             .accessibilityHidden(true)
         }
       }
+      .accessibilityElement(children: .ignore)
       .accessibilityLabel(Text("\(current) of \(maximum)"))
       .accessibilityHidden(maximum == 0)
     }
   }
 
-  private var pipColor: Color {
+  var pipColor: Color {
     if let tint { return tint }
     guard maximum > 0 else { return .primary }
     let ratio = Double(current) / Double(maximum)
@@ -82,11 +84,14 @@ struct PipTrack: View {
     }
     HStack(spacing: 12) {
       Image(systemName: "bolt.fill").font(.caption).foregroundStyle(.secondary)
-      PipTrack(current: 3, maximum: 6, filledSymbol: "bolt.fill", emptySymbol: "bolt", tint: .primary)
+      PipTrack(
+        current: 3, maximum: 6, filledSymbol: "bolt.fill", emptySymbol: "bolt", tint: .primary)
     }
     HStack(spacing: 12) {
       Image(systemName: "shield.fill").font(.caption).foregroundStyle(.secondary)
-      PipTrack(current: 2, maximum: 3, filledSymbol: "shield.fill", emptySymbol: "shield", tint: .secondary)
+      PipTrack(
+        current: 2, maximum: 3, filledSymbol: "shield.fill", emptySymbol: "shield", tint: .secondary
+      )
     }
     Divider()
     HStack(spacing: 12) {

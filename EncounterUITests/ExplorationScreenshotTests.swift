@@ -29,10 +29,18 @@ class ExplorationScreenshotTests: ExplorationUITestCase {
     screenshotScene(named: "player-strip")
   }
 
+  func testPipTrackScene() throws {
+    navigate(to: "exploration.pip-track")
+    screenshotScene(named: "pip-track")
+  }
+
   func testAllScenesVisible() throws {
     XCTAssertTrue(
       app.buttons["exploration.design-language"].waitForExistence(timeout: 3),
       "Design language scene should be listed")
+    XCTAssertTrue(
+      app.buttons["exploration.pip-track"].waitForExistence(timeout: 3),
+      "Pip track scene should be listed")
     XCTAssertTrue(
       app.buttons["exploration.runner-row"].waitForExistence(timeout: 3),
       "Runner row scene should be listed")

@@ -100,4 +100,13 @@ import Testing
         + player.conditions.map(\.displayName).sorted().joined(separator: ", ")
     #expect(label == "Aric")
   }
+
+  // MARK: - Condition+UI: SF Symbol mapping
+
+  @Test func conditionSfSymbolsMappedCorrectly() {
+    #expect(Condition.hidden.sfSymbol == "eye.slash.fill")
+    #expect(Condition.restrained.sfSymbol == "link.circle.fill")
+    #expect(Condition.vulnerable.sfSymbol == "shield.slash.fill")
+    #expect(Condition.custom("Poisoned").sfSymbol == "questionmark.circle.fill")
+  }
 }

@@ -5,6 +5,10 @@
 //  Always-visible panel pinned to the bottom of EncounterRunnerView
 //  via .safeAreaInset(edge: .bottom). Shows all player slots.
 //
+//  The editingPlayer binding is set here and threads down to each row;
+//  the sheet itself is presented by EncounterRunnerView (outside safeAreaInset)
+//  so SwiftUI can anchor it to the top-level hosting controller.
+//
 
 import DHKit
 import DHModels
@@ -12,13 +16,14 @@ import SwiftUI
 
 struct PlayerStrip: View {
   let session: EncounterSession
+  @Binding var editingPlayer: PlayerState?
 
   var body: some View {
     VStack(spacing: 0) {
       Divider()
       VStack(spacing: 4) {
         ForEach(session.playerSlots) { player in
-          PlayerStripRow(player: player, session: session)
+          PlayerStripRow(player: player, session: session, editingPlayer: $editingPlayer)
         }
       }
       .padding(.horizontal)
@@ -29,6 +34,7 @@ struct PlayerStrip: View {
 }
 
 #Preview {
+  @Previewable @State var editingPlayer: PlayerState? = nil
   let session = EncounterSession(
     name: "Goblin Ambush",
     playerSlots: [
@@ -44,6 +50,9 @@ struct PlayerStrip: View {
   )
   VStack {
     Spacer()
-    PlayerStrip(session: session)
+    PlayerStrip(session: session, editingPlayer: $editingPlayer)
+  }
+  .sheet(item: $editingPlayer) { player in
+    PlayerEditPopover(player: player, session: session)
   }
 }

@@ -90,6 +90,8 @@
       }
     }
 
+    @State private var editingPlayer: PlayerState? = nil
+
     private func stripSection(label: String, subtitle: String, session: EncounterSession)
       -> some View
     {
@@ -101,7 +103,7 @@
             .font(.caption)
             .foregroundStyle(.secondary)
         }
-        PlayerStrip(session: session)
+        PlayerStrip(session: session, editingPlayer: $editingPlayer)
           .clipShape(.rect(cornerRadius: 10))
       }
     }

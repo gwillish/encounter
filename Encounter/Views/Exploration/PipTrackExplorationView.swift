@@ -157,17 +157,20 @@
       VStack(alignment: .leading, spacing: 12) {
         sectionHeader(
           "HP Gradient — fixed gallery",
-          subtitle: "Crimson above 66% · Orange 33–66% · Red below 33% · Thresholds at 4/6, 2/6, 0/6"
+          subtitle:
+            "Crimson above 66% · Orange 33–66% · Red below 33% · Thresholds at 4/6, 2/6, 0/6"
         )
         VStack(alignment: .leading, spacing: 8) {
           ForEach(
-            [(6, "6/6 — full", "Healthy"),
-             (5, "5/6 — 83%", ""),
-             (4, "4/6 — 67%", "Threshold ↓ orange"),
-             (3, "3/6 — 50%", ""),
-             (2, "2/6 — 33%", "Threshold ↓ red"),
-             (1, "1/6 — 17%", ""),
-             (0, "0/6 — empty", "")],
+            [
+              (6, "6/6 — full", "Healthy"),
+              (5, "5/6 — 83%", ""),
+              (4, "4/6 — 67%", "Threshold ↓ orange"),
+              (3, "3/6 — 50%", ""),
+              (2, "2/6 — 33%", "Threshold ↓ red"),
+              (1, "1/6 — 17%", ""),
+              (0, "0/6 — empty", ""),
+            ],
             id: \.0
           ) { hp, label, note in
             HStack(spacing: 12) {
@@ -203,11 +206,13 @@
         )
         VStack(alignment: .leading, spacing: 8) {
           ForEach(
-            [(14, 7, "HP — ~50%"),
-             (14, 14, "HP — full"),
-             (14, 0, "HP — empty"),
-             (15, 10, "Stress — neutral"),
-             (14, 5, "Armor — secondary")],
+            [
+              (14, 7, "HP — ~50%"),
+              (14, 14, "HP — full"),
+              (14, 0, "HP — empty"),
+              (15, 10, "Stress — neutral"),
+              (14, 5, "Armor — secondary"),
+            ],
             id: \.2
           ) { max, current, label in
             HStack(spacing: 12) {

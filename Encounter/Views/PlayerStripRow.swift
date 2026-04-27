@@ -5,7 +5,8 @@
 //  Compact player row inside the always-visible PlayerStrip.
 //  Row 1: name, active condition icons, stress pip track.
 //  Row 2: HP pip track, armor pip track.
-//  Tapping opens PlayerEditPopover for HP/Stress/Armor stepper controls.
+//  Tapping sets editingPlayer on the parent so EncounterRunnerView can
+//  present the PlayerEditPopover sheet from outside the safeAreaInset.
 //
 
 import DHKit
@@ -15,7 +16,7 @@ import SwiftUI
 struct PlayerStripRow: View {
   let player: PlayerState
   let session: EncounterSession
-  @State private var showPopover = false
+  @Binding var editingPlayer: PlayerState?
 
   private var sortedConditions: [Condition] {
     player.conditions.sorted { $0.displayName < $1.displayName }
@@ -23,7 +24,7 @@ struct PlayerStripRow: View {
 
   var body: some View {
     Button {
-      showPopover = true
+      editingPlayer = player
     } label: {
       VStack(alignment: .leading, spacing: 4) {
         HStack(spacing: 6) {
@@ -39,12 +40,9 @@ struct PlayerStripRow: View {
                 Image(systemName: condition.sfSymbol)
                   .font(.system(size: 8))
                   .foregroundStyle(.orange)
-                  .accessibilityLabel(condition.displayName)
-                  .accessibilityIdentifier(
-                    "runner.player-row.condition.\(condition.displayName.lowercased())"
-                  )
               }
             }
+            .accessibilityElement(children: .ignore)
           }
 
           Spacer()
@@ -82,6 +80,7 @@ struct PlayerStripRow: View {
       .foregroundStyle(.primary)
     }
     .buttonStyle(.plain)
+    .contentShape(Rectangle())
     .accessibilityIdentifier("runner.player-row")
     .accessibilityLabel(
       sortedConditions.isEmpty
@@ -89,14 +88,11 @@ struct PlayerStripRow: View {
         : player.name + ", " + sortedConditions.map(\.displayName).joined(separator: ", ")
     )
     .accessibilityHint("Opens player details")
-    .popover(isPresented: $showPopover) {
-      PlayerEditPopover(player: player, session: session)
-        .presentationCompactAdaptation(.popover)
-    }
   }
 }
 
 #Preview {
+  @Previewable @State var editingPlayer: PlayerState? = nil
   let session = EncounterSession(
     name: "Test",
     playerSlots: [
@@ -113,7 +109,10 @@ struct PlayerStripRow: View {
   )
   List {
     ForEach(session.playerSlots) { player in
-      PlayerStripRow(player: player, session: session)
+      PlayerStripRow(player: player, session: session, editingPlayer: $editingPlayer)
     }
+  }
+  .sheet(item: $editingPlayer) { player in
+    PlayerEditPopover(player: player, session: session)
   }
 }

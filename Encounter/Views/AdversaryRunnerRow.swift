@@ -21,9 +21,12 @@ struct AdversaryRunnerRow: View {
     return slot.customName ?? adversary?.name ?? "Unknown (\(slot.adversaryID))"
   }
 
+  private var sortedConditions: [Condition] {
+    slot.conditions.sorted { $0.displayName < $1.displayName }
+  }
+
   var body: some View {
     let adversary = compendium.adversary(id: slot.adversaryID)
-    let sortedConditions = slot.conditions.sorted { $0.displayName < $1.displayName }
 
     VStack(alignment: .leading, spacing: 6) {
       HStack(spacing: 6) {
