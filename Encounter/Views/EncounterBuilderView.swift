@@ -125,9 +125,19 @@ struct EncounterBuilderView: View {
       #endif
       .environment(compendium)
     }
-    .navigationDestination(item: $runSession) { session in
-      EncounterRunnerView(session: session, definition: draft)
-    }
+    #if os(macOS)
+      .sheet(item: $runSession) { session in
+        NavigationStack {
+          EncounterRunnerView(session: session, definition: draft)
+        }
+      }
+    #else
+      .fullScreenCover(item: $runSession) { session in
+        NavigationStack {
+          EncounterRunnerView(session: session, definition: draft)
+        }
+      }
+    #endif
     .confirmationDialog(
       "Reset Session?",
       isPresented: $showResetConfirmation,
