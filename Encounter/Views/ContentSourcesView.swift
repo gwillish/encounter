@@ -10,7 +10,7 @@ import DHModels
 import SwiftUI
 
 struct ContentSourcesView: View {
-  @Environment(ContentStore.self) private var contentStore
+  let contentStore: ContentStore
   @Environment(\.dismiss) private var dismiss
 
   @State private var removeTarget: ContentSource?
@@ -97,24 +97,15 @@ struct ContentSourcesView: View {
 
 #Preview("Empty") {
   NavigationStack {
-    ContentSourcesView()
+    ContentSourcesView(contentStore: PreviewData.contentStore())
   }
-  .environment(
-    ContentStore(
-      contentDirectory: .temporaryDirectory,
-      compendium: Compendium()
-    ))
 }
 
 #Preview("With sources") {
-  let store = ContentStore(
-    contentDirectory: .temporaryDirectory,
-    compendium: Compendium()
-  )
+  let store = PreviewData.contentStore()
   NavigationStack {
-    ContentSourcesView()
+    ContentSourcesView(contentStore: store)
   }
-  .environment(store)
   .task {
     await store.addSource(
       ContentSource(

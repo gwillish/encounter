@@ -16,14 +16,13 @@ import SwiftUI
 
 struct EncounterBuilderView: View {
   let definition: EncounterDefinition
+  let store: EncounterStore
+  let compendium: Compendium
+  let sessionRegistry: SessionRegistry
+  let sessionStore: SessionStore
+  let playerStore: PlayerStore
 
   @State private var draft: EncounterDefinition
-  @Environment(EncounterStore.self) private var store
-  @Environment(Compendium.self) private var compendium
-  @Environment(SessionRegistry.self) private var sessionRegistry
-  @Environment(SessionStore.self) private var sessionStore
-  @Environment(PlayerStore.self) private var playerStore
-
   @State private var showCompendium = false
   @State private var notesExpanded = false
   @State private var manualAdjustments: Set<DifficultyBudget.Adjustment> = []
@@ -32,8 +31,20 @@ struct EncounterBuilderView: View {
   @State private var saveTask: Task<Void, Never>?
   @State private var showResetConfirmation = false
 
-  init(definition: EncounterDefinition) {
+  init(
+    definition: EncounterDefinition,
+    store: EncounterStore,
+    compendium: Compendium,
+    sessionRegistry: SessionRegistry,
+    sessionStore: SessionStore,
+    playerStore: PlayerStore
+  ) {
     self.definition = definition
+    self.store = store
+    self.compendium = compendium
+    self.sessionRegistry = sessionRegistry
+    self.sessionStore = sessionStore
+    self.playerStore = playerStore
     _draft = State(initialValue: definition)
   }
 
@@ -110,6 +121,7 @@ struct EncounterBuilderView: View {
     .sheet(isPresented: $showCompendium) {
       NavigationStack {
         CompendiumBrowserView(
+          compendium: compendium,
           onSelect: { adversary in
             addAdversary(adversary)
             showCompendium = false
@@ -123,18 +135,23 @@ struct EncounterBuilderView: View {
       #if os(macOS)
         .frame(minWidth: 540, minHeight: 480)
       #endif
-      .environment(compendium)
     }
     #if os(macOS)
       .sheet(item: $runSession) { session in
         NavigationStack {
-          EncounterRunnerView(session: session, definition: draft)
+          EncounterRunnerView(
+            session: session, definition: draft,
+            compendium: compendium, sessionRegistry: sessionRegistry, sessionStore: sessionStore
+          )
         }
       }
     #else
       .fullScreenCover(item: $runSession) { session in
         NavigationStack {
-          EncounterRunnerView(session: session, definition: draft)
+          EncounterRunnerView(
+            session: session, definition: draft,
+            compendium: compendium, sessionRegistry: sessionRegistry, sessionStore: sessionStore
+          )
         }
       }
     #endif
@@ -264,27 +281,35 @@ struct EncounterBuilderView: View {
       attackModifier: "+5", attackName: "Great Axe",
       attackRange: .veryClose, damage: "2d10+4 phy"
     ))
-  let playerStore = PlayerStore(directory: .temporaryDirectory)
+  let playerStore = PreviewData.playerStore()
+  let sessionRegistry = PreviewData.sessionRegistry()
+  let sessionStore = PreviewData.sessionStore()
   return NavigationStack {
-    // Create and inject a matching definition so auto-save succeeds in preview
-    EncounterBuilderPreviewWrapper()
+    EncounterBuilderPreviewWrapper(
+      store: store, compendium: compendium,
+      sessionRegistry: sessionRegistry, sessionStore: sessionStore,
+      playerStore: playerStore
+    )
   }
-  .environment(store)
-  .environment(compendium)
-  .environment(SessionRegistry())
-  .environment(SessionStore(directory: .temporaryDirectory))
-  .environment(playerStore)
 }
 
 /// Preview wrapper that creates a definition in the store before showing the builder.
 private struct EncounterBuilderPreviewWrapper: View {
-  @Environment(EncounterStore.self) private var store
+  let store: EncounterStore
+  let compendium: Compendium
+  let sessionRegistry: SessionRegistry
+  let sessionStore: SessionStore
+  let playerStore: PlayerStore
   @State private var definition: EncounterDefinition?
 
   var body: some View {
     Group {
       if let definition {
-        EncounterBuilderView(definition: definition)
+        EncounterBuilderView(
+          definition: definition, store: store, compendium: compendium,
+          sessionRegistry: sessionRegistry, sessionStore: sessionStore,
+          playerStore: playerStore
+        )
       } else {
         ProgressView()
           .task {

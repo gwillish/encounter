@@ -28,9 +28,12 @@ private struct ResumeSheetPayload: Identifiable {
 // MARK: - ContentView
 
 struct ContentView: View {
-  @Environment(EncounterStore.self) private var store
-  @Environment(SessionRegistry.self) private var sessionRegistry
-  @Environment(SessionStore.self) private var sessionStore
+  let store: EncounterStore
+  let sessionRegistry: SessionRegistry
+  let sessionStore: SessionStore
+  let compendium: Compendium
+  let playerStore: PlayerStore
+  let contentStore: ContentStore
 
   @State private var encounterSelection: EncounterDefinition.ID?
 
@@ -110,7 +113,10 @@ struct ContentView: View {
     #if os(macOS)
       .sheet(item: $activeResumedTarget) { target in
         NavigationStack {
-          EncounterRunnerView(session: target.session, definition: target.definition)
+          EncounterRunnerView(
+            session: target.session, definition: target.definition,
+            compendium: compendium, sessionRegistry: sessionRegistry, sessionStore: sessionStore
+          )
           .toolbar {
             ToolbarItem(placement: .cancellationAction) {
               Button("Done") { activeResumedTarget = nil }
@@ -122,7 +128,10 @@ struct ContentView: View {
     #else
       .fullScreenCover(item: $activeResumedTarget) { target in
         NavigationStack {
-          EncounterRunnerView(session: target.session, definition: target.definition)
+          EncounterRunnerView(
+            session: target.session, definition: target.definition,
+            compendium: compendium, sessionRegistry: sessionRegistry, sessionStore: sessionStore
+          )
           .toolbar {
             ToolbarItem(placement: .cancellationAction) {
               Button("Done") { activeResumedTarget = nil }
@@ -173,9 +182,13 @@ struct ContentView: View {
       } content: {
         switch sidebarItem {
         case .encounters, nil:  // nil (sidebar deselected) falls through to Encounters
-          EncounterLibraryView(selection: $encounterSelection)
+          EncounterLibraryView(
+            store: store, playerStore: playerStore, compendium: compendium,
+            contentStore: contentStore, sessionRegistry: sessionRegistry,
+            sessionStore: sessionStore, selection: $encounterSelection
+          )
         case .party:
-          PartyOverviewView()
+          PartyOverviewView(playerStore: playerStore)
         }
       } detail: {
         NavigationStack {
@@ -183,8 +196,12 @@ struct ContentView: View {
             let id = encounterSelection,
             let definition = store.definitions.first(where: { $0.id == id })
           {
-            EncounterBuilderView(definition: definition)
-              .id(id)
+            EncounterBuilderView(
+              definition: definition, store: store, compendium: compendium,
+              sessionRegistry: sessionRegistry, sessionStore: sessionStore,
+              playerStore: playerStore
+            )
+            .id(id)
           } else {
             Text("Select an encounter")
               .foregroundStyle(.secondary)
@@ -201,14 +218,18 @@ struct ContentView: View {
       TabView {
         Tab("Encounters", systemImage: "list.bullet.clipboard") {
           NavigationStack {
-            EncounterLibraryView(selection: $encounterSelection)
+            EncounterLibraryView(
+              store: store, playerStore: playerStore, compendium: compendium,
+              contentStore: contentStore, sessionRegistry: sessionRegistry,
+              sessionStore: sessionStore, selection: $encounterSelection
+            )
           }
         }
         .accessibilityIdentifier("tab.encounters")
 
         Tab("Party", systemImage: "person.2") {
           NavigationStack {
-            PartyOverviewView()
+            PartyOverviewView(playerStore: playerStore)
           }
         }
         .accessibilityIdentifier("tab.party")
@@ -218,10 +239,12 @@ struct ContentView: View {
 }
 
 #Preview {
-  ContentView()
-    .environment(EncounterStore(directory: .temporaryDirectory))
-    .environment(Compendium())
-    .environment(SessionRegistry())
-    .environment(SessionStore(directory: .temporaryDirectory))
-    .environment(PlayerStore(directory: .temporaryDirectory))
+  ContentView(
+    store: PreviewData.encounterStore(),
+    sessionRegistry: PreviewData.sessionRegistry(),
+    sessionStore: PreviewData.sessionStore(),
+    compendium: PreviewData.compendium(),
+    playerStore: PreviewData.playerStore(),
+    contentStore: PreviewData.contentStore()
+  )
 }

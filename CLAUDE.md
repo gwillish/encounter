@@ -150,13 +150,39 @@ See `Encounter/Resources/README.md` for license attribution.
 
 ## Development Loop
 
-The primary iteration cycle is running unit tests from the terminal:
+### Testing pyramid
+
+| Tier | Tool | Speed | Use for |
+|---|---|---|---|
+| **1 — Model** | Swift Testing direct | ~0.1 ms | Model mutations, JSON decoding, persistence logic |
+| **2 — View structure** | ViewInspector (EncounterTests) | ~1 ms | Element presence, bindings, AX labels, conditional render |
+| **3 — Visual** | Xcode MCP `mcp__xcode__RenderPreview` | on-demand | Layout, colour, icon review during agent sessions |
+| **4 — End-to-end** | XCUITest (EncounterUITests) | ~60 s | Full navigation flows, session lifecycle, real UIKit |
+
+**Decision rule:** if the assertion can be expressed as "given this model state, the view
+should have this structure / label / binding behaviour" → write a ViewInspector test in
+`EncounterTests`. Only reach for XCUITest when the full running app and real UIKit are
+required.
+
+### Dependency injection rule
+
+`@Environment` is for system-provided SwiftUI values only (`\.dismiss`, `\.scenePhase`,
+`\.colorScheme`, etc.). All custom app stores (`Compendium`, `EncounterStore`,
+`SessionRegistry`, `SessionStore`, `PlayerStore`, `ContentStore`) are passed as explicit
+`init` parameters. `EncounterApp` is the sole composition root. See ADR-0041.
+
+### Preview helpers
+
+Use `PreviewData` factory methods (`PreviewData.compendium()`, `PreviewData.playerStore()`,
+etc.) in `#Preview` blocks. All return empty instances using `.temporaryDirectory`; no
+async loading or `.environment()` chains needed.
+
+### Primary iteration cycle
 
 ```bash
 xcodebuild test \
   -scheme Encounter \
-  -destination 'platform=macOS' \
-  -resultBundlePath TestResults.xcresult
+  -destination 'platform=macOS'
 ```
 
 This uses the `UnitTests` test plan (the scheme default) — UI tests are excluded so no
@@ -168,8 +194,7 @@ To include UI tests (e.g. before a PR or release):
 xcodebuild test \
   -scheme Encounter \
   -destination 'platform=macOS' \
-  -testPlan AllTests \
-  -resultBundlePath TestResults.xcresult
+  -testPlan AllTests
 ```
 
 All test output — including `print()` calls and `Logger` messages routed to stderr — is

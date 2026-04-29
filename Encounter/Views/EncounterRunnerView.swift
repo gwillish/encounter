@@ -25,10 +25,10 @@ import SwiftUI
 struct EncounterRunnerView: View {
   let session: EncounterSession
   let definition: EncounterDefinition
+  let compendium: Compendium
+  let sessionRegistry: SessionRegistry
+  let sessionStore: SessionStore
 
-  @Environment(Compendium.self) private var compendium
-  @Environment(SessionRegistry.self) private var sessionRegistry
-  @Environment(SessionStore.self) private var sessionStore
   @Environment(\.dismiss) private var dismiss
   @State private var expandedSlotID: UUID?
   @State private var showResetConfirmation = false
@@ -130,9 +130,12 @@ struct EncounterRunnerView: View {
   )
   let session = EncounterSession.make(from: definition, using: compendium)
   return NavigationStack {
-    EncounterRunnerView(session: session, definition: definition)
+    EncounterRunnerView(
+      session: session,
+      definition: definition,
+      compendium: compendium,
+      sessionRegistry: PreviewData.sessionRegistry(),
+      sessionStore: PreviewData.sessionStore()
+    )
   }
-  .environment(compendium)
-  .environment(SessionRegistry())
-  .environment(SessionStore(directory: .temporaryDirectory))
 }

@@ -12,8 +12,7 @@ import SwiftUI
 struct EncounterLibraryRow: View {
   let definition: EncounterDefinition
   let playerCount: Int?
-
-  @Environment(Compendium.self) private var compendium
+  let compendium: Compendium
 
   private var adversaryTypes: [AdversaryType] {
     definition.adversaryIDs.compactMap { compendium.adversary(id: $0)?.role }
@@ -46,23 +45,28 @@ struct EncounterLibraryRow: View {
 }
 
 #Preview("No party selected") {
-  EncounterLibraryRow(definition: EncounterDefinition(name: "Goblin Ambush"), playerCount: nil)
-    .padding()
-    .environment(Compendium())
+  EncounterLibraryRow(
+    definition: EncounterDefinition(name: "Goblin Ambush"),
+    playerCount: nil,
+    compendium: PreviewData.compendium()
+  )
+  .padding()
 }
 
 #Preview("Party of 4, no adversaries") {
-  EncounterLibraryRow(definition: EncounterDefinition(name: "Goblin Ambush"), playerCount: 4)
-    .padding()
-    .environment(Compendium())
+  EncounterLibraryRow(
+    definition: EncounterDefinition(name: "Goblin Ambush"),
+    playerCount: 4,
+    compendium: PreviewData.compendium()
+  )
+  .padding()
 }
 
 #Preview("Party of 4, rated encounter") {
   @Previewable @State var compendium = Compendium()
   var definition = EncounterDefinition(name: "Goblin Ambush")
   definition.adversaryIDs = ["ironguard-soldier", "ironguard-soldier", "thornwood-archer"]
-  return EncounterLibraryRow(definition: definition, playerCount: 4)
+  return EncounterLibraryRow(definition: definition, playerCount: 4, compendium: compendium)
     .padding()
-    .environment(compendium)
     .task { try? await compendium.load() }
 }

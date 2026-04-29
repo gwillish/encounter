@@ -10,7 +10,12 @@ import DHModels
 import SwiftUI
 
 struct EncounterLibraryView: View {
-  @Environment(EncounterStore.self) private var store
+  let store: EncounterStore
+  let playerStore: PlayerStore
+  let compendium: Compendium
+  let contentStore: ContentStore
+  let sessionRegistry: SessionRegistry
+  let sessionStore: SessionStore
 
   @Binding var selection: EncounterDefinition.ID?
   @State private var isCreating = false
@@ -37,7 +42,9 @@ struct EncounterLibraryView: View {
           definitions: store.definitions,
           selection: $selection,
           onRename: beginRename,
-          onDelete: beginDelete
+          onDelete: beginDelete,
+          playerStore: playerStore,
+          compendium: compendium
         )
       }
     }
@@ -74,9 +81,18 @@ struct EncounterLibraryView: View {
     }
     .sheet(isPresented: $isShowingSources) {
       NavigationStack {
-        ContentSourcesView()
+        ContentSourcesView(contentStore: contentStore)
       }
     }
+    #if !os(macOS)
+      .navigationDestination(for: EncounterDefinition.self) { definition in
+        EncounterBuilderView(
+          definition: definition, store: store, compendium: compendium,
+          sessionRegistry: sessionRegistry, sessionStore: sessionStore,
+          playerStore: playerStore
+        )
+      }
+    #endif
     .sheet(isPresented: $isShowingAbout) {
       AboutView()
     }
@@ -180,7 +196,14 @@ struct EncounterLibraryView: View {
 #Preview {
   @Previewable @State var selection: EncounterDefinition.ID? = nil
   NavigationStack {
-    EncounterLibraryView(selection: $selection)
+    EncounterLibraryView(
+      store: PreviewData.encounterStore(),
+      playerStore: PreviewData.playerStore(),
+      compendium: PreviewData.compendium(),
+      contentStore: PreviewData.contentStore(),
+      sessionRegistry: PreviewData.sessionRegistry(),
+      sessionStore: PreviewData.sessionStore(),
+      selection: $selection
+    )
   }
-  .environment(EncounterStore(directory: .temporaryDirectory))
 }

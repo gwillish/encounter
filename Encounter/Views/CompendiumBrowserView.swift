@@ -15,7 +15,7 @@ import DHModels
 import SwiftUI
 
 struct CompendiumBrowserView: View {
-  @Environment(Compendium.self) private var compendium
+  let compendium: Compendium
   @Environment(\.dismiss) private var dismiss
 
   let onSelect: ((Adversary) -> Void)?
@@ -26,9 +26,11 @@ struct CompendiumBrowserView: View {
   @State private var selectedType: AdversaryType?
 
   init(
+    compendium: Compendium,
     onSelect: ((Adversary) -> Void)? = nil,
     onSelectEnvironment: ((DaggerheartEnvironment) -> Void)? = nil
   ) {
+    self.compendium = compendium
     self.onSelect = onSelect
     self.onSelectEnvironment = onSelectEnvironment
   }
@@ -141,9 +143,8 @@ struct CompendiumBrowserView: View {
       flavorText: "The ceiling threatens to fall with every heavy blow."
     ))
   return NavigationStack {
-    CompendiumBrowserView()
+    CompendiumBrowserView(compendium: compendium)
   }
-  .environment(compendium)
 }
 
 #Preview("From Builder (with selection)") {
@@ -158,9 +159,9 @@ struct CompendiumBrowserView: View {
     ))
   return NavigationStack {
     CompendiumBrowserView(
+      compendium: compendium,
       onSelect: { adversary in print("Selected: \(adversary.name)") },
       onSelectEnvironment: { env in print("Selected: \(env.name)") }
     )
   }
-  .environment(compendium)
 }

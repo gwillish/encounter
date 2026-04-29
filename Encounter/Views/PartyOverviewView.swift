@@ -32,7 +32,7 @@ private enum PlayerFormDestination: Identifiable {
 }
 
 struct PartyOverviewView: View {
-  @Environment(PlayerStore.self) private var playerStore
+  let playerStore: PlayerStore
 
   @State private var playerFormDestination: PlayerFormDestination?
   @State private var deleteTarget: Player?
@@ -220,15 +220,13 @@ struct PartyOverviewView: View {
 }
 
 #Preview {
-  let store = PlayerStore(directory: .temporaryDirectory)
-  return NavigationStack {
-    PartyOverviewView()
+  NavigationStack {
+    PartyOverviewView(playerStore: PreviewData.playerStore())
   }
-  .environment(store)
 }
 
 #Preview("With players") {
-  let store = PlayerStore(directory: .temporaryDirectory)
+  let store = PreviewData.playerStore()
   let aric = Player(
     name: "Aric Stonehammer",
     maxHP: 6, maxStress: 6, evasion: 12,
@@ -252,7 +250,6 @@ struct PartyOverviewView: View {
     await store.addToParty(id: lira.id)
   }
   return NavigationStack {
-    PartyOverviewView()
+    PartyOverviewView(playerStore: store)
   }
-  .environment(store)
 }
