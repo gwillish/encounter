@@ -27,7 +27,7 @@ import XCTest
     func testResumePromptAppearsAfterRelaunch() throws {
       navigateToRunner()
       XCTAssertTrue(
-        app.collectionViews["runner.adversary-list"].waitForExistence(timeout: 5),
+        app.collectionViews["runner.list"].waitForExistence(timeout: 5),
         "Should be in the runner before backgrounding")
 
       // Background triggers scenePhase == .background → saveAll via performExpiringActivity
@@ -55,7 +55,7 @@ import XCTest
       // Tapping Resume dismisses the sheet and presents the runner full-screen
       app.buttons["resume.resume-button"].tap()
       XCTAssertTrue(
-        app.collectionViews["runner.adversary-list"].waitForExistence(timeout: 5),
+        app.collectionViews["runner.list"].waitForExistence(timeout: 5),
         "Runner adversary list should be visible after resuming")
       XCTAssertTrue(
         app.buttons["runner.done-button"].waitForExistence(timeout: 3),
@@ -68,7 +68,7 @@ import XCTest
     func testDismissingResumePromptDoesNotReprompt() throws {
       navigateToRunner()
       XCTAssertTrue(
-        app.collectionViews["runner.adversary-list"].waitForExistence(timeout: 5))
+        app.collectionViews["runner.list"].waitForExistence(timeout: 5))
 
       XCUIDevice.shared.press(.home)
       XCTAssertTrue(
