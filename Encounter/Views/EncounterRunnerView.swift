@@ -38,13 +38,13 @@ struct EncounterRunnerView: View {
     List {
       AdversaryRunnerSection(
         slots: sortedAdversarySlots,
-        expandedSlotID: $expandedItemID,
+        expandedItemID: $expandedItemID,
         session: session,
         compendium: compendium
       )
       PlayerRunnerSection(
         slots: session.playerSlots,
-        expandedPlayerID: $expandedItemID,
+        expandedItemID: $expandedItemID,
         session: session
       )
     }

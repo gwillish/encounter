@@ -26,12 +26,12 @@ struct PlayerRunnerRowTests {
 
   private static func makeSection(
     player: PlayerState,
-    expandedPlayerID: UUID? = nil
+    expandedItemID: UUID? = nil
   ) -> PlayerRunnerSection {
     let session = makeSession(player: player)
-    var id: UUID? = expandedPlayerID
+    var id: UUID? = expandedItemID
     let binding = Binding(get: { id }, set: { id = $0 })
-    return PlayerRunnerSection(slots: [player], expandedPlayerID: binding, session: session)
+    return PlayerRunnerSection(slots: [player], expandedItemID: binding, session: session)
   }
 
   private static func makeSection(
@@ -39,12 +39,12 @@ struct PlayerRunnerRowTests {
     binding: Binding<UUID?>
   ) -> PlayerRunnerSection {
     let session = makeSession(player: player)
-    return PlayerRunnerSection(slots: [player], expandedPlayerID: binding, session: session)
+    return PlayerRunnerSection(slots: [player], expandedItemID: binding, session: session)
   }
 
-  // MARK: - Button action sets expandedPlayerID
+  // MARK: - Button action sets expandedItemID
 
-  @Test func buttonTapSetsExpandedPlayerID() throws {
+  @Test func buttonTapSetsExpandedItemID() throws {
     let player = PlayerState(
       name: "Aric", maxHP: 6, maxStress: 6, evasion: 12,
       thresholdMajor: 5, thresholdSevere: 10, armorSlots: 3)
@@ -56,14 +56,14 @@ struct PlayerRunnerRowTests {
     try button.tap()
 
     #expect(
-      expandedID == player.id, "Tapping the row should set expandedPlayerID to the player's ID")
+      expandedID == player.id, "Tapping the row should set expandedItemID to the player's ID")
   }
 
-  @Test func expandedPlayerIDShowsCard() throws {
+  @Test func expandedItemIDShowsCard() throws {
     let player = PlayerState(
       name: "Aric", maxHP: 6, maxStress: 6, evasion: 12,
       thresholdMajor: 5, thresholdSevere: 10, armorSlots: 3)
-    let sut = Self.makeSection(player: player, expandedPlayerID: player.id)
+    let sut = Self.makeSection(player: player, expandedItemID: player.id)
 
     let buttons = try sut.inspect().findAll(ViewType.Button.self)
     let identifiers = buttons.compactMap { try? $0.accessibilityIdentifier() }

@@ -34,14 +34,14 @@ struct AdversaryRunnerRowTests {
 
   private static func makeSection(
     slot: AdversaryState,
-    expandedSlotID: UUID? = nil
+    expandedItemID: UUID? = nil
   ) -> (AdversaryRunnerSection, EncounterSession) {
     let session = EncounterSession(name: "Test", adversarySlots: [slot])
-    var id: UUID? = expandedSlotID
+    var id: UUID? = expandedItemID
     let binding = Binding(get: { id }, set: { id = $0 })
     let section = AdversaryRunnerSection(
       slots: [slot],
-      expandedSlotID: binding,
+      expandedItemID: binding,
       session: session,
       compendium: makeCompendium()
     )
