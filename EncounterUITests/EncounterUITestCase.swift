@@ -197,7 +197,7 @@ class EncounterUITestCase: XCTestCase {
     runButton.tap()
     XCTAssertTrue(
       app.collectionViews["runner.list"].waitForExistence(timeout: 5),
-      "Runner adversary list should appear")
+      "Runner list should appear")
   }
 
   // MARK: - Form helpers

@@ -78,7 +78,7 @@
         Section {
           PlayerRunnerSection(
             slots: fullSession.playerSlots,
-            expandedPlayerID: $expandedItemID,
+            expandedItemID: $expandedItemID,
             session: fullSession
           )
         } header: {
@@ -88,7 +88,7 @@
         Section {
           PlayerRunnerSection(
             slots: longNameSession.playerSlots,
-            expandedPlayerID: $expandedItemID,
+            expandedItemID: $expandedItemID,
             session: longNameSession
           )
         } header: {

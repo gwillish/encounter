@@ -56,7 +56,7 @@ import XCTest
       app.buttons["resume.resume-button"].tap()
       XCTAssertTrue(
         app.collectionViews["runner.list"].waitForExistence(timeout: 5),
-        "Runner adversary list should be visible after resuming")
+        "Runner list should be visible after resuming")
       XCTAssertTrue(
         app.buttons["runner.done-button"].waitForExistence(timeout: 3),
         "Done button should be visible in the full-screen runner cover")

@@ -3,7 +3,7 @@
 //  Encounter
 //
 //  ForEach over the sorted adversary slots in EncounterRunnerView.
-//  Drives the accordion via the expandedSlotID binding — only one
+//  Drives the accordion via the expandedItemID binding — only one
 //  card can be open at a time by design (single UUID stored).
 //
 
@@ -13,23 +13,23 @@ import SwiftUI
 
 struct AdversaryRunnerSection: View {
   let slots: [AdversaryState]
-  @Binding var expandedSlotID: UUID?
+  @Binding var expandedItemID: UUID?
   let session: EncounterSession
   let compendium: Compendium
 
   var body: some View {
     ForEach(slots) { slot in
-      if expandedSlotID == slot.id && !slot.isDefeated {
+      if expandedItemID == slot.id && !slot.isDefeated {
         AdversaryRunnerCard(
           slot: slot,
           session: session,
           compendium: compendium,
-          onCollapse: { expandedSlotID = nil }
+          onCollapse: { expandedItemID = nil }
         )
         .listRowSeparator(.hidden)
       } else {
         Button {
-          expandedSlotID = slot.id
+          expandedItemID = slot.id
         } label: {
           AdversaryRunnerRow(slot: slot, compendium: compendium)
             .opacity(slot.isDefeated ? 0.4 : 1.0)
