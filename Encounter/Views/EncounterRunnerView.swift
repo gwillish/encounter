@@ -2,24 +2,15 @@
 //  EncounterRunnerView.swift
 //  Encounter
 //
-//  Live encounter running screen. Pushed from EncounterBuilderView
-//  when the GM taps "Run Encounter".
+//  Live encounter running screen. Presented via fullScreenCover (iOS) /
+//  sheet (macOS) from EncounterBuilderView.
 //
 //  Layout:
 //   - Nav bar: encounter name + FearTrackerButton (trailing)
-//   - Scrollable adversary list (active first, defeated greyed at bottom)
-//   - PlayerStrip below the list in a VStack (NOT an overlay or safeAreaInset:
-//     UICollectionView.hitTest returns self for all points in its bounds, so
-//     any view rendered over it via overlay/safeAreaInset never receives touches.)
+//   - Scrollable list: adversary accordion rows first, player accordion rows below
 //
-//  Presented via fullScreenCover (iOS) / sheet (macOS) from EncounterBuilderView,
-//  NOT pushed via navigationDestination. NavigationStack push navigation adds a
-//  full-screen back-swipe gesture view on iOS 26 that intercepts touches in the
-//  PlayerStrip area. Modal presentation avoids that infrastructure entirely.
-//
-//  Player-edit sheet: EncounterRunnerContainer (below) owns editingPlayer state and
-//  presents PlayerEditPopover ABOVE the NavigationStack. A .sheet nested inside a
-//  NavigationStack inside a fullScreenCover is not reliably presented on iOS 26.
+//  Both adversary and player sections share a single expandedItemID binding so
+//  only one card can be open at a time across the whole list.
 //
 
 import DHKit
@@ -33,13 +24,10 @@ struct EncounterRunnerView: View {
   let sessionRegistry: SessionRegistry
   let sessionStore: SessionStore
 
-  @Binding var editingPlayer: PlayerState?
-
   @Environment(\.dismiss) private var dismiss
-  @State private var expandedSlotID: UUID?
+  @State private var expandedItemID: UUID?
   @State private var showResetConfirmation = false
 
-  // MARK: - Sorted slots (computed, non-mutating)
   // Active adversaries preserve original insertion order (stable sort).
   // Defeated adversaries accumulate at the bottom in defeat order.
   private var sortedAdversarySlots: [AdversaryState] {
@@ -47,55 +35,56 @@ struct EncounterRunnerView: View {
   }
 
   var body: some View {
-    VStack(spacing: 0) {
-      List {
-        AdversaryRunnerSection(
-          slots: sortedAdversarySlots,
-          expandedSlotID: $expandedSlotID,
-          session: session,
-          compendium: compendium
-        )
+    List {
+      AdversaryRunnerSection(
+        slots: sortedAdversarySlots,
+        expandedSlotID: $expandedItemID,
+        session: session,
+        compendium: compendium
+      )
+      PlayerRunnerSection(
+        slots: session.playerSlots,
+        expandedPlayerID: $expandedItemID,
+        session: session
+      )
+    }
+    .accessibilityIdentifier("runner.list")
+    .navigationTitle(session.name)
+    #if os(iOS)
+      .navigationBarTitleDisplayMode(.inline)
+    #endif
+    .toolbar {
+      ToolbarItem(placement: .primaryAction) {
+        FearTrackerButton(session: session)
+          .accessibilityIdentifier("runner.fear-tracker-button")
       }
-      .accessibilityIdentifier("runner.adversary-list")
-      .navigationTitle(session.name)
-      #if os(iOS)
-        .navigationBarTitleDisplayMode(.inline)
-      #endif
-      .toolbar {
-        ToolbarItem(placement: .primaryAction) {
-          FearTrackerButton(session: session)
-            .accessibilityIdentifier("runner.fear-tracker-button")
-        }
-        ToolbarItem(placement: .secondaryAction) {
-          Button("End Encounter") {
-            dismiss()
-          }
-          .accessibilityIdentifier("runner.end-button")
-        }
-        ToolbarItem(placement: .secondaryAction) {
-          Button("Reset Session") {
-            showResetConfirmation = true
-          }
-          .accessibilityIdentifier("runner.reset-button")
-        }
-      }
-      .confirmationDialog(
-        "Reset Session?",
-        isPresented: $showResetConfirmation,
-        titleVisibility: .visible
-      ) {
-        Button("Reset Session", role: .destructive) {
-          let sessionID = session.id
-          sessionRegistry.clearSession(for: definition.id)
-          Task { await sessionStore.delete(sessionID: sessionID) }
+      ToolbarItem(placement: .secondaryAction) {
+        Button("End Encounter") {
           dismiss()
         }
-        .accessibilityIdentifier("runner.reset-confirm-button")
-      } message: {
-        Text("The current session will be cleared. The encounter definition is not changed.")
+        .accessibilityIdentifier("runner.end-button")
       }
-
-      PlayerStrip(session: session, editingPlayer: $editingPlayer)
+      ToolbarItem(placement: .secondaryAction) {
+        Button("Reset Session") {
+          showResetConfirmation = true
+        }
+        .accessibilityIdentifier("runner.reset-button")
+      }
+    }
+    .confirmationDialog(
+      "Reset Session?",
+      isPresented: $showResetConfirmation,
+      titleVisibility: .visible
+    ) {
+      Button("Reset Session", role: .destructive) {
+        let sessionID = session.id
+        sessionRegistry.clearSession(for: definition.id)
+        Task { await sessionStore.delete(sessionID: sessionID) }
+        dismiss()
+      }
+      .accessibilityIdentifier("runner.reset-confirm-button")
+    } message: {
+      Text("The current session will be cleared. The encounter definition is not changed.")
     }
   }
 }
@@ -142,85 +131,33 @@ struct EncounterRunnerView: View {
 
 // MARK: - Presentation container
 
-/// Wraps EncounterRunnerView in a NavigationStack and presents PlayerEditPopover
-/// as a ZStack overlay rather than a UIKit sheet. iOS 26 does not reliably present
-/// a .sheet from within a fullScreenCover's NavigationStack content.
+/// Wraps EncounterRunnerView in a NavigationStack.
+/// When onDone is provided, adds a "Done" button used by the session-resume flow.
 struct EncounterRunnerContainer: View {
   let session: EncounterSession
   let definition: EncounterDefinition
   let compendium: Compendium
   let sessionRegistry: SessionRegistry
   let sessionStore: SessionStore
-  /// When provided, adds a "Done" button in the cancellation-action position.
-  /// Used by the session-resume flow in ContentView.
   var onDone: (() -> Void)? = nil
 
-  @State private var editingPlayer: PlayerState? = nil
-
   var body: some View {
-    ZStack(alignment: .bottom) {
-      NavigationStack {
-        EncounterRunnerView(
-          session: session,
-          definition: definition,
-          compendium: compendium,
-          sessionRegistry: sessionRegistry,
-          sessionStore: sessionStore,
-          editingPlayer: $editingPlayer
-        )
-        .toolbar {
-          if let onDone {
-            ToolbarItem(placement: .cancellationAction) {
-              Button("Done", action: onDone)
-                .accessibilityIdentifier("runner.done-button")
-            }
+    NavigationStack {
+      EncounterRunnerView(
+        session: session,
+        definition: definition,
+        compendium: compendium,
+        sessionRegistry: sessionRegistry,
+        sessionStore: sessionStore
+      )
+      .toolbar {
+        if let onDone {
+          ToolbarItem(placement: .cancellationAction) {
+            Button("Done", action: onDone)
+              .accessibilityIdentifier("runner.done-button")
           }
         }
       }
-
-      if editingPlayer != nil {
-        Color.black.opacity(0.4)
-          .ignoresSafeArea()
-          .onTapGesture { editingPlayer = nil }
-          .accessibilityHidden(true)
-      }
-
-      if let player = editingPlayer {
-        PlayerEditCard(player: player, session: session) {
-          editingPlayer = nil
-        }
-        .transition(.move(edge: .bottom))
-      }
     }
-    .animation(.easeInOut(duration: 0.25), value: editingPlayer != nil)
-  }
-}
-
-// MARK: - Player edit card (overlay presentation)
-
-/// Card that wraps PlayerEditPopover for overlay presentation inside the runner.
-private struct PlayerEditCard: View {
-  let player: PlayerState
-  let session: EncounterSession
-  let onDismiss: () -> Void
-
-  var body: some View {
-    VStack(spacing: 0) {
-      HStack {
-        Spacer()
-        Button(action: onDismiss) {
-          Image(systemName: "xmark.circle.fill")
-            .font(.title3)
-            .foregroundStyle(.secondary)
-        }
-        .accessibilityLabel("Close player edit")
-        .padding([.top, .trailing])
-      }
-      PlayerEditPopover(player: player, session: session)
-    }
-    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-    .padding(.horizontal)
-    .padding(.bottom)
-    .accessibilityIdentifier("runner.player-edit-card")
   }
 }

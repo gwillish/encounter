@@ -75,7 +75,7 @@ final class RunnerUITests: EncounterUITestCase {
   func testEndEncounterReturnsToBuilderWithActiveSession() throws {
     navigateToRunner()
     XCTAssertTrue(
-      app.collectionViews["runner.adversary-list"].waitForExistence(timeout: 5),
+      app.collectionViews["runner.list"].waitForExistence(timeout: 5),
       "Should be in the runner")
 
     tapEndEncounter()
@@ -106,7 +106,7 @@ final class RunnerUITests: EncounterUITestCase {
   func testResetSessionFromRunner() throws {
     navigateToRunner()
     XCTAssertTrue(
-      app.collectionViews["runner.adversary-list"].waitForExistence(timeout: 5),
+      app.collectionViews["runner.list"].waitForExistence(timeout: 5),
       "Should be in the runner")
 
     tapResetSessionFromRunner()
@@ -125,7 +125,7 @@ final class RunnerUITests: EncounterUITestCase {
   func testResetSessionFromBuilder() throws {
     navigateToRunner()
     XCTAssertTrue(
-      app.collectionViews["runner.adversary-list"].waitForExistence(timeout: 5))
+      app.collectionViews["runner.list"].waitForExistence(timeout: 5))
 
     tapEndEncounter()
 
@@ -154,23 +154,23 @@ final class RunnerUITests: EncounterUITestCase {
       "Reset Session should disappear after confirming reset")
   }
 
-  // MARK: - Player strip row → edit sheet
+  // MARK: - Player runner row → expanded card
 
-  /// Tapping a player strip row opens the PlayerEditPopover sheet.
-  /// Condition toggle logic and AX label content are covered at the ViewInspector
-  /// tier by PlayerConditionsSectionTests and PlayerStripRowTests.
-  func testPlayerStripRowTapOpensEditSheet() throws {
+  /// Tapping a player row in the list expands the PlayerRunnerCard inline.
+  /// Stat control presence and condition toggle logic are covered at the ViewInspector
+  /// tier by PlayerRunnerCardTests and PlayerConditionsSectionTests.
+  func testPlayerRunnerRowTapExpandsCard() throws {
     navigateToRunner()
 
     let playerRow = app.buttons.matching(identifier: "runner.player-row").firstMatch
     XCTAssertTrue(
-      playerRow.waitForExistence(timeout: 5), "Player row should be visible in the strip")
+      playerRow.waitForExistence(timeout: 5), "Player row should be visible in the list")
     playerRow.tap()
 
-    // The sheet is open when a stat button from PlayerEditPopover is accessible.
+    // The card is expanded when a stat button from PlayerRunnerCard is accessible.
     XCTAssertTrue(
       app.buttons["runner.player-edit.hp.decrement"].waitForExistence(timeout: 5),
-      "HP decrement button should appear — confirms PlayerEditPopover sheet opened")
+      "HP decrement button should appear — confirms PlayerRunnerCard expanded")
   }
 
   // MARK: - Stress button

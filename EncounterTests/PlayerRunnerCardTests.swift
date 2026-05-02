@@ -1,8 +1,8 @@
 //
-//  PlayerEditPopoverTests.swift
+//  PlayerRunnerCardTests.swift
 //  EncounterTests
 //
-//  ViewInspector unit tests for PlayerEditPopover.
+//  ViewInspector unit tests for PlayerRunnerCard.
 //  Validates stat row presence, armor section visibility, and AX identifiers.
 //
 
@@ -15,8 +15,8 @@ import ViewInspector
 @testable import Encounter
 
 @MainActor
-@Suite("PlayerEditPopover")
-struct PlayerEditPopoverTests {
+@Suite("PlayerRunnerCard")
+struct PlayerRunnerCardTests {
 
   private static func makeSession(armorSlots: Int = 3) -> EncounterSession {
     EncounterSession(
@@ -34,7 +34,7 @@ struct PlayerEditPopoverTests {
 
   @Test func hpAndStressStatRowsAlwaysPresent() throws {
     let session = Self.makeSession()
-    let sut = PlayerEditPopover(player: session.playerSlots[0], session: session)
+    let sut = PlayerRunnerCard(player: session.playerSlots[0], session: session, onCollapse: {})
 
     let buttons = try sut.inspect().findAll(ViewType.Button.self)
     let identifiers = buttons.compactMap { try? $0.accessibilityIdentifier() }
@@ -47,7 +47,7 @@ struct PlayerEditPopoverTests {
 
   @Test func armorStatRowPresentWhenArmorSlotsNonZero() throws {
     let session = Self.makeSession(armorSlots: 3)
-    let sut = PlayerEditPopover(player: session.playerSlots[0], session: session)
+    let sut = PlayerRunnerCard(player: session.playerSlots[0], session: session, onCollapse: {})
 
     let buttons = try sut.inspect().findAll(ViewType.Button.self)
     let identifiers = buttons.compactMap { try? $0.accessibilityIdentifier() }
@@ -58,7 +58,7 @@ struct PlayerEditPopoverTests {
 
   @Test func armorStatRowAbsentWhenArmorSlotsIsZero() throws {
     let session = Self.makeSession(armorSlots: 0)
-    let sut = PlayerEditPopover(player: session.playerSlots[0], session: session)
+    let sut = PlayerRunnerCard(player: session.playerSlots[0], session: session, onCollapse: {})
 
     let buttons = try sut.inspect().findAll(ViewType.Button.self)
     let identifiers = buttons.compactMap { try? $0.accessibilityIdentifier() }
@@ -71,13 +71,25 @@ struct PlayerEditPopoverTests {
 
   @Test func conditionsSectionIsEmbedded() throws {
     let session = Self.makeSession()
-    let sut = PlayerEditPopover(player: session.playerSlots[0], session: session)
+    let sut = PlayerRunnerCard(player: session.playerSlots[0], session: session, onCollapse: {})
 
     let buttons = try sut.inspect().findAll(ViewType.Button.self)
     let identifiers = buttons.compactMap { try? $0.accessibilityIdentifier() }
 
     #expect(
       identifiers.contains("runner.player-edit.condition.hidden"),
-      "PlayerConditionsSection should be embedded — its buttons should appear in the popover")
+      "PlayerConditionsSection should be embedded — its buttons should appear in the card")
+  }
+
+  // MARK: - Collapse button
+
+  @Test func collapseButtonPresent() throws {
+    let session = Self.makeSession()
+    let sut = PlayerRunnerCard(player: session.playerSlots[0], session: session, onCollapse: {})
+
+    let buttons = try sut.inspect().findAll(ViewType.Button.self)
+    let identifiers = buttons.compactMap { try? $0.accessibilityIdentifier() }
+
+    #expect(identifiers.contains("runner.player-card.collapse-button"))
   }
 }

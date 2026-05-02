@@ -1,6 +1,6 @@
 # ADR-0022: Encounter runner UX — accordion cards, player strip, fear tracker
 
-**Status:** Accepted
+**Status:** Superseded by [ADR-0042](0042-player-runner-section.md)
 **Date:** 2026-03-17
 
 ## Context

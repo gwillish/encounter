@@ -196,7 +196,7 @@ class EncounterUITestCase: XCTestCase {
       runButton.waitForExistence(timeout: 5), "Run Encounter button should appear in overflow menu")
     runButton.tap()
     XCTAssertTrue(
-      app.collectionViews["runner.adversary-list"].waitForExistence(timeout: 5),
+      app.collectionViews["runner.list"].waitForExistence(timeout: 5),
       "Runner adversary list should appear")
   }
 

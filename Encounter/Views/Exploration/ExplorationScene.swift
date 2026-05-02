@@ -50,8 +50,8 @@
         },
         ExplorationScene(
           id: "exploration.player-strip",
-          title: "Player Strip",
-          subtitle: "Strip with four players in varied states"
+          title: "Player Runner",
+          subtitle: "PlayerRunnerSection rows collapsed and expanded"
         ) {
           PlayerStripExplorationView()
         },

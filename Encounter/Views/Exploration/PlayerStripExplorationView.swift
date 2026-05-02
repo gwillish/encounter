@@ -3,8 +3,8 @@
   //  PlayerStripExplorationView.swift
   //  Encounter
   //
-  //  Exploration scene showing PlayerStrip and PlayerStripRow in varied states.
-  //  Uses real components with hardcoded sample data — no live stores needed.
+  //  Exploration scene showing PlayerRunnerSection (collapsed and expanded)
+  //  in varied player states. Uses real components with hardcoded sample data.
   //
 
   import DHKit
@@ -71,40 +71,29 @@
   // MARK: - View
 
   struct PlayerStripExplorationView: View {
+    @State private var expandedItemID: UUID? = nil
+
     var body: some View {
-      ScrollView {
-        VStack(alignment: .leading, spacing: 32) {
-          stripSection(
-            label: "Four players — varied states",
-            subtitle:
-              "Row 1: name · conditions · stress — Row 2: HP · armor",
+      List {
+        Section {
+          PlayerRunnerSection(
+            slots: fullSession.playerSlots,
+            expandedPlayerID: $expandedItemID,
             session: fullSession
           )
-          stripSection(
-            label: "Edge cases",
-            subtitle: "Very long name · Minimum HP + max stress + multiple conditions",
+        } header: {
+          Text("Four players — varied states")
+        }
+
+        Section {
+          PlayerRunnerSection(
+            slots: longNameSession.playerSlots,
+            expandedPlayerID: $expandedItemID,
             session: longNameSession
           )
+        } header: {
+          Text("Edge cases — long name · max stress")
         }
-        .padding()
-      }
-    }
-
-    @State private var editingPlayer: PlayerState? = nil
-
-    private func stripSection(label: String, subtitle: String, session: EncounterSession)
-      -> some View
-    {
-      VStack(alignment: .leading, spacing: 8) {
-        VStack(alignment: .leading, spacing: 2) {
-          Text(label)
-            .font(.headline)
-          Text(subtitle)
-            .font(.caption)
-            .foregroundStyle(.secondary)
-        }
-        PlayerStrip(session: session, editingPlayer: $editingPlayer)
-          .clipShape(.rect(cornerRadius: 10))
       }
     }
   }
@@ -112,7 +101,7 @@
   #Preview {
     NavigationStack {
       PlayerStripExplorationView()
-        .navigationTitle("Player Strip")
+        .navigationTitle("Player Runner")
     }
   }
 #endif
