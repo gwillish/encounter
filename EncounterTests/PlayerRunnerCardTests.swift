@@ -92,4 +92,23 @@ struct PlayerRunnerCardTests {
 
     #expect(identifiers.contains("runner.player-card.collapse-button"))
   }
+
+  @Test func collapseButtonInvokesOnCollapse() throws {
+    let session = Self.makeSession()
+    var didCollapse = false
+    let sut = PlayerRunnerCard(
+      player: session.playerSlots[0],
+      session: session,
+      onCollapse: { didCollapse = true }
+    )
+
+    let buttons = try sut.inspect().findAll(ViewType.Button.self)
+    let collapseButton = try #require(
+      buttons.first(where: { (try? $0.accessibilityIdentifier()) == "runner.player-card.collapse-button" }),
+      "Collapse button should be present"
+    )
+    try collapseButton.tap()
+
+    #expect(didCollapse, "Tapping collapse button should invoke onCollapse")
+  }
 }
