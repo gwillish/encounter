@@ -15,6 +15,8 @@ import SwiftUI
 struct PlayerRunnerRow: View {
   let player: PlayerState
 
+  @ScaledMetric(relativeTo: .caption2) private var conditionIconSize: CGFloat = 8
+
   private var sortedConditions: [Condition] {
     player.conditions.sorted { $0.displayName < $1.displayName }
   }
@@ -32,7 +34,7 @@ struct PlayerRunnerRow: View {
           HStack(spacing: 3) {
             ForEach(sortedConditions, id: \.self) { condition in
               Image(systemName: condition.sfSymbol)
-                .font(.system(size: 8))
+                .font(.system(size: conditionIconSize))
                 .foregroundStyle(.orange)
             }
           }

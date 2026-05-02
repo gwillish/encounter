@@ -1,6 +1,6 @@
 #if DEBUG
   //
-  //  PlayerStripExplorationView.swift
+  //  PlayerRunnerExplorationView.swift
   //  Encounter
   //
   //  Exploration scene showing PlayerRunnerSection (collapsed and expanded)
@@ -70,7 +70,7 @@
 
   // MARK: - View
 
-  struct PlayerStripExplorationView: View {
+  struct PlayerRunnerExplorationView: View {
     @State private var expandedItemID: UUID? = nil
 
     var body: some View {
@@ -100,7 +100,7 @@
 
   #Preview {
     NavigationStack {
-      PlayerStripExplorationView()
+      PlayerRunnerExplorationView()
         .navigationTitle("Player Runner")
     }
   }

@@ -49,11 +49,11 @@
           RunnerRowExplorationView()
         },
         ExplorationScene(
-          id: "exploration.player-strip",
+          id: "exploration.player-runner",
           title: "Player Runner",
           subtitle: "PlayerRunnerSection rows collapsed and expanded"
         ) {
-          PlayerStripExplorationView()
+          PlayerRunnerExplorationView()
         },
       ]
     }

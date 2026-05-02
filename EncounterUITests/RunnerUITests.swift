@@ -97,8 +97,13 @@ final class RunnerUITests: EncounterUITestCase {
       "Reset Session should appear in builder toolbar when a session is active")
     // Dismiss the overflow without tapping Reset.
     app.buttons["Reset Session"].tap()  // will show dialog
-    // Dismiss dialog by tapping cancel (swipe down on action sheet).
-    app.navigationBars.firstMatch.tap()
+    // Dismiss without confirming. iOS shows a Cancel button; macOS dismisses on Escape.
+    let cancel = app.buttons["Cancel"].firstMatch
+    if cancel.waitForExistence(timeout: 3) {
+      cancel.tap()
+    } else {
+      app.typeKey(.escape, modifierFlags: [])
+    }
   }
 
   /// Tapping "Reset Session" from the runner, then confirming, clears the session

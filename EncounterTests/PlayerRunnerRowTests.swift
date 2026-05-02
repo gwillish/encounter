@@ -20,13 +20,25 @@ import ViewInspector
 @Suite("PlayerRunnerRow")
 struct PlayerRunnerRowTests {
 
+  private static func makeSession(player: PlayerState) -> EncounterSession {
+    EncounterSession(name: "Test", playerSlots: [player])
+  }
+
   private static func makeSection(
     player: PlayerState,
     expandedPlayerID: UUID? = nil
   ) -> PlayerRunnerSection {
-    let session = EncounterSession(name: "Test", playerSlots: [player])
+    let session = makeSession(player: player)
     var id: UUID? = expandedPlayerID
     let binding = Binding(get: { id }, set: { id = $0 })
+    return PlayerRunnerSection(slots: [player], expandedPlayerID: binding, session: session)
+  }
+
+  private static func makeSection(
+    player: PlayerState,
+    binding: Binding<UUID?>
+  ) -> PlayerRunnerSection {
+    let session = makeSession(player: player)
     return PlayerRunnerSection(slots: [player], expandedPlayerID: binding, session: session)
   }
 
@@ -37,15 +49,31 @@ struct PlayerRunnerRowTests {
       name: "Aric", maxHP: 6, maxStress: 6, evasion: 12,
       thresholdMajor: 5, thresholdSevere: 10, armorSlots: 3)
     var expandedID: UUID? = nil
-    let session = EncounterSession(name: "Test", playerSlots: [player])
     let binding = Binding(get: { expandedID }, set: { expandedID = $0 })
-    let sut = PlayerRunnerSection(slots: [player], expandedPlayerID: binding, session: session)
+    let sut = Self.makeSection(player: player, binding: binding)
 
     let button = try sut.inspect().find(ViewType.Button.self)
     try button.tap()
 
     #expect(
       expandedID == player.id, "Tapping the row should set expandedPlayerID to the player's ID")
+  }
+
+  @Test func expandedPlayerIDShowsCard() throws {
+    let player = PlayerState(
+      name: "Aric", maxHP: 6, maxStress: 6, evasion: 12,
+      thresholdMajor: 5, thresholdSevere: 10, armorSlots: 3)
+    let sut = Self.makeSection(player: player, expandedPlayerID: player.id)
+
+    let buttons = try sut.inspect().findAll(ViewType.Button.self)
+    let identifiers = buttons.compactMap { try? $0.accessibilityIdentifier() }
+
+    #expect(
+      identifiers.contains("runner.player-card.collapse-button"),
+      "When player is expanded, PlayerRunnerCard's collapse button should be present")
+    #expect(
+      !identifiers.contains("runner.player-row"),
+      "When player is expanded, the collapsed row button should not be present")
   }
 
   // MARK: - Accessibility label
