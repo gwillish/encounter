@@ -25,6 +25,8 @@ Encounter/
 ├── docs/
 │   ├── data-schema.md          # Daggerheart JSON schema reference + source links
 │   ├── first-principles.md     # Product principles — what the app is and isn't
+│   ├── ui-development.md       # UI testing strategy, ViewInspector/XCUITest patterns, iOS 26 quirks
+│   ├── ui-vocabulary.md        # Screen names, component glossary, navigation map
 │   └── decisions/              # Architecture Decision Records (ADRs)
 │       └── README.md           # ADR format, lifecycle, and superseded process
 ├── README.md                   # Project overview
@@ -301,6 +303,10 @@ Test coverage priorities:
 4. UI flows for encounter setup and live tracking (UITests)
 
 Always run a clean build and full test suite after making changes. Never reuse stale test output or cached build results. Use `swift build` and `swift test` fresh each time.
+
+For ViewInspector patterns, XCUITest element querying, AX tree debugging, and iOS 26
+SwiftUI quirks, see [`docs/ui-development.md`](docs/ui-development.md).
+
 ---
 
 ## Architecture Decision Records

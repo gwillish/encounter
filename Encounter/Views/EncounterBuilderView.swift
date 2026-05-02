@@ -138,21 +138,17 @@ struct EncounterBuilderView: View {
     }
     #if os(macOS)
       .sheet(item: $runSession) { session in
-        NavigationStack {
-          EncounterRunnerView(
-            session: session, definition: draft,
-            compendium: compendium, sessionRegistry: sessionRegistry, sessionStore: sessionStore
-          )
-        }
+        EncounterRunnerContainer(
+          session: session, definition: draft,
+          compendium: compendium, sessionRegistry: sessionRegistry, sessionStore: sessionStore
+        )
       }
     #else
       .fullScreenCover(item: $runSession) { session in
-        NavigationStack {
-          EncounterRunnerView(
-            session: session, definition: draft,
-            compendium: compendium, sessionRegistry: sessionRegistry, sessionStore: sessionStore
-          )
-        }
+        EncounterRunnerContainer(
+          session: session, definition: draft,
+          compendium: compendium, sessionRegistry: sessionRegistry, sessionStore: sessionStore
+        )
       }
     #endif
     .confirmationDialog(

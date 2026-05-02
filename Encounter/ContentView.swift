@@ -112,33 +112,19 @@ struct ContentView: View {
     }
     #if os(macOS)
       .sheet(item: $activeResumedTarget) { target in
-        NavigationStack {
-          EncounterRunnerView(
-            session: target.session, definition: target.definition,
-            compendium: compendium, sessionRegistry: sessionRegistry, sessionStore: sessionStore
-          )
-          .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-              Button("Done") { activeResumedTarget = nil }
-              .accessibilityIdentifier("runner.done-button")
-            }
-          }
-        }
+        EncounterRunnerContainer(
+          session: target.session, definition: target.definition,
+          compendium: compendium, sessionRegistry: sessionRegistry, sessionStore: sessionStore,
+          onDone: { activeResumedTarget = nil }
+        )
       }
     #else
       .fullScreenCover(item: $activeResumedTarget) { target in
-        NavigationStack {
-          EncounterRunnerView(
-            session: target.session, definition: target.definition,
-            compendium: compendium, sessionRegistry: sessionRegistry, sessionStore: sessionStore
-          )
-          .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-              Button("Done") { activeResumedTarget = nil }
-              .accessibilityIdentifier("runner.done-button")
-            }
-          }
-        }
+        EncounterRunnerContainer(
+          session: target.session, definition: target.definition,
+          compendium: compendium, sessionRegistry: sessionRegistry, sessionStore: sessionStore,
+          onDone: { activeResumedTarget = nil }
+        )
       }
     #endif
   }

@@ -147,7 +147,9 @@ class EncounterUITestCase: XCTestCase {
 
   /// Taps "End Encounter" from the runner's secondary-action overflow menu.
   func tapEndEncounter() {
-    let overflow = app.buttons["OverflowBarButtonItem"]
+    // Use firstMatch: when the runner fullScreenCover is on top of the builder,
+    // both nav bars contribute an OverflowBarButtonItem to the AX tree.
+    let overflow = app.buttons.matching(identifier: "OverflowBarButtonItem").firstMatch
     XCTAssertTrue(
       overflow.waitForExistence(timeout: 5),
       "Overflow button should be in runner toolbar")
@@ -162,7 +164,8 @@ class EncounterUITestCase: XCTestCase {
 
   /// Taps "Reset Session" from the runner's secondary-action overflow and confirms the dialog.
   func tapResetSessionFromRunner() {
-    let overflow = app.buttons["OverflowBarButtonItem"]
+    // Use firstMatch: runner fullScreenCover and builder both have overflow buttons in the AX tree.
+    let overflow = app.buttons.matching(identifier: "OverflowBarButtonItem").firstMatch
     XCTAssertTrue(
       overflow.waitForExistence(timeout: 5),
       "Overflow button should be in runner toolbar")

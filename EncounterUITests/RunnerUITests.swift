@@ -154,56 +154,23 @@ final class RunnerUITests: EncounterUITestCase {
       "Reset Session should disappear after confirming reset")
   }
 
-  // MARK: - Player condition toggles
+  // MARK: - Player strip row → edit sheet
 
-  /// Tapping a player row opens the edit popover; toggling a condition updates
-  /// the AX label on the strip row; removing the condition clears it.
-  func testPlayerConditionToggleShowsAndHidesInStripRow() throws {
+  /// Tapping a player strip row opens the PlayerEditPopover sheet.
+  /// Condition toggle logic and AX label content are covered at the ViewInspector
+  /// tier by PlayerConditionsSectionTests and PlayerStripRowTests.
+  func testPlayerStripRowTapOpensEditSheet() throws {
     navigateToRunner()
 
-    // Tap the first player row to open the edit popover.
     let playerRow = app.buttons.matching(identifier: "runner.player-row").firstMatch
     XCTAssertTrue(
       playerRow.waitForExistence(timeout: 5), "Player row should be visible in the strip")
     playerRow.tap()
 
-    // Apply the Hidden condition in the popover.
-    let hiddenButton = app.buttons["runner.player-edit.condition.hidden"]
+    // The sheet is open when a stat button from PlayerEditPopover is accessible.
     XCTAssertTrue(
-      hiddenButton.waitForExistence(timeout: 3),
-      "Hidden condition button should appear in the popover")
-    hiddenButton.tap()
-
-    // Dismiss the popover by swiping down.
-    app.swipeDown()
-
-    // The strip row's AX label should now include "Hidden".
-    let rowWithCondition = app.buttons.matching(identifier: "runner.player-row").firstMatch
-    XCTAssertTrue(
-      rowWithCondition.waitForExistence(timeout: 3), "Player row should be visible after dismiss")
-    XCTAssertTrue(
-      rowWithCondition.label.contains("Hidden"),
-      "Player row label '\(rowWithCondition.label)' should contain 'Hidden' after applying condition"
-    )
-
-    // Re-open the popover and remove the condition.
-    rowWithCondition.tap()
-    let hiddenButtonAgain = app.buttons["runner.player-edit.condition.hidden"]
-    XCTAssertTrue(hiddenButtonAgain.waitForExistence(timeout: 3))
-    hiddenButtonAgain.tap()
-
-    // Dismiss again.
-    app.swipeDown()
-
-    // The strip row's AX label should no longer include "Hidden".
-    let rowWithoutCondition = app.buttons.matching(identifier: "runner.player-row").firstMatch
-    XCTAssertTrue(
-      rowWithoutCondition.waitForExistence(timeout: 3), "Player row should be visible after dismiss"
-    )
-    XCTAssertFalse(
-      rowWithoutCondition.label.contains("Hidden"),
-      "Player row label '\(rowWithoutCondition.label)' should not contain 'Hidden' after removing condition"
-    )
+      app.buttons["runner.player-edit.hp.decrement"].waitForExistence(timeout: 5),
+      "HP decrement button should appear — confirms PlayerEditPopover sheet opened")
   }
 
   // MARK: - Stress button

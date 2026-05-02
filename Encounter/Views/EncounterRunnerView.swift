@@ -17,6 +17,10 @@
 //  full-screen back-swipe gesture view on iOS 26 that intercepts touches in the
 //  PlayerStrip area. Modal presentation avoids that infrastructure entirely.
 //
+//  Player-edit sheet: EncounterRunnerContainer (below) owns editingPlayer state and
+//  presents PlayerEditPopover ABOVE the NavigationStack. A .sheet nested inside a
+//  NavigationStack inside a fullScreenCover is not reliably presented on iOS 26.
+//
 
 import DHKit
 import DHModels
@@ -29,10 +33,11 @@ struct EncounterRunnerView: View {
   let sessionRegistry: SessionRegistry
   let sessionStore: SessionStore
 
+  @Binding var editingPlayer: PlayerState?
+
   @Environment(\.dismiss) private var dismiss
   @State private var expandedSlotID: UUID?
   @State private var showResetConfirmation = false
-  @State private var editingPlayer: PlayerState?
 
   // MARK: - Sorted slots (computed, non-mutating)
   // Active adversaries preserve original insertion order (stable sort).
@@ -92,9 +97,6 @@ struct EncounterRunnerView: View {
 
       PlayerStrip(session: session, editingPlayer: $editingPlayer)
     }
-    .sheet(item: $editingPlayer) { player in
-      PlayerEditPopover(player: player, session: session)
-    }
   }
 }
 
@@ -129,13 +131,96 @@ struct EncounterRunnerView: View {
     ]
   )
   let session = EncounterSession.make(from: definition, using: compendium)
-  return NavigationStack {
-    EncounterRunnerView(
-      session: session,
-      definition: definition,
-      compendium: compendium,
-      sessionRegistry: PreviewData.sessionRegistry(),
-      sessionStore: PreviewData.sessionStore()
-    )
+  return EncounterRunnerContainer(
+    session: session,
+    definition: definition,
+    compendium: compendium,
+    sessionRegistry: PreviewData.sessionRegistry(),
+    sessionStore: PreviewData.sessionStore()
+  )
+}
+
+// MARK: - Presentation container
+
+/// Wraps EncounterRunnerView in a NavigationStack and presents PlayerEditPopover
+/// as a ZStack overlay rather than a UIKit sheet. iOS 26 does not reliably present
+/// a .sheet from within a fullScreenCover's NavigationStack content.
+struct EncounterRunnerContainer: View {
+  let session: EncounterSession
+  let definition: EncounterDefinition
+  let compendium: Compendium
+  let sessionRegistry: SessionRegistry
+  let sessionStore: SessionStore
+  /// When provided, adds a "Done" button in the cancellation-action position.
+  /// Used by the session-resume flow in ContentView.
+  var onDone: (() -> Void)? = nil
+
+  @State private var editingPlayer: PlayerState? = nil
+
+  var body: some View {
+    ZStack(alignment: .bottom) {
+      NavigationStack {
+        EncounterRunnerView(
+          session: session,
+          definition: definition,
+          compendium: compendium,
+          sessionRegistry: sessionRegistry,
+          sessionStore: sessionStore,
+          editingPlayer: $editingPlayer
+        )
+        .toolbar {
+          if let onDone {
+            ToolbarItem(placement: .cancellationAction) {
+              Button("Done", action: onDone)
+                .accessibilityIdentifier("runner.done-button")
+            }
+          }
+        }
+      }
+
+      if editingPlayer != nil {
+        Color.black.opacity(0.4)
+          .ignoresSafeArea()
+          .onTapGesture { editingPlayer = nil }
+          .accessibilityHidden(true)
+      }
+
+      if let player = editingPlayer {
+        PlayerEditCard(player: player, session: session) {
+          editingPlayer = nil
+        }
+        .transition(.move(edge: .bottom))
+      }
+    }
+    .animation(.easeInOut(duration: 0.25), value: editingPlayer != nil)
+  }
+}
+
+// MARK: - Player edit card (overlay presentation)
+
+/// Card that wraps PlayerEditPopover for overlay presentation inside the runner.
+private struct PlayerEditCard: View {
+  let player: PlayerState
+  let session: EncounterSession
+  let onDismiss: () -> Void
+
+  var body: some View {
+    VStack(spacing: 0) {
+      HStack {
+        Spacer()
+        Button(action: onDismiss) {
+          Image(systemName: "xmark.circle.fill")
+            .font(.title3)
+            .foregroundStyle(.secondary)
+        }
+        .accessibilityLabel("Close player edit")
+        .padding([.top, .trailing])
+      }
+      PlayerEditPopover(player: player, session: session)
+    }
+    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+    .padding(.horizontal)
+    .padding(.bottom)
+    .accessibilityIdentifier("runner.player-edit-card")
   }
 }
