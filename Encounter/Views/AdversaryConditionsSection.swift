@@ -36,12 +36,14 @@ struct AdversaryConditionsSection: View {
             .font(.caption)
             .buttonStyle(.bordered)
             .tint(active ? .orange : nil)
-            .accessibilityAddTraits(active ? .isSelected : [])
+            .accessibilityValue(active ? "active" : "inactive")
+            .accessibilityHint(active ? "Removes this condition" : "Applies this condition")
             .accessibilityIdentifier(
               "runner.adversary-card.condition.\(condition.displayName.lowercased())"
             )
           }
         }
+        .padding(.horizontal, 4)
       }
     }
   }

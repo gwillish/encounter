@@ -8,7 +8,6 @@
 
 import DHKit
 import DHModels
-import Foundation
 import Testing
 
 @testable import Encounter
@@ -74,31 +73,6 @@ import Testing
     let (session, player) = makeSession()
     session.removeCondition(.restrained, from: player.id)
     #expect(session.playerSlots[0].conditions.isEmpty)
-  }
-
-  // MARK: - Strip row accessibility label
-
-  @Test func conditionNamesIncludedInAccessibilityLabelWhenActive() {
-    let (session, player) = makeSession()
-    session.applyCondition(.restrained, to: player.id)
-    let updated = session.playerSlots[0]
-    let label =
-      updated.conditions.isEmpty
-      ? updated.name
-      : updated.name + ", "
-        + updated.conditions.map(\.displayName).sorted().joined(separator: ", ")
-    #expect(label.contains("Restrained"))
-    #expect(label.contains("Aric"))
-  }
-
-  @Test func accessibilityLabelIsNameOnlyWhenNoConditions() {
-    let (_, player) = makeSession()
-    let label =
-      player.conditions.isEmpty
-      ? player.name
-      : player.name + ", "
-        + player.conditions.map(\.displayName).sorted().joined(separator: ", ")
-    #expect(label == "Aric")
   }
 
   // MARK: - Condition+UI: SF Symbol mapping

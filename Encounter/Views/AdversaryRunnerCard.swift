@@ -27,13 +27,9 @@ struct AdversaryRunnerCard: View {
   @State private var nameError: String?
   @FocusState private var isNameFieldFocused: Bool
 
-  private var displayName: String {
-    let adversary = compendium.adversary(id: slot.adversaryID)
-    return slot.customName ?? adversary?.name ?? "Unknown (\(slot.adversaryID))"
-  }
-
   var body: some View {
     let adversary = compendium.adversary(id: slot.adversaryID)
+    let displayName = slot.customName ?? adversary?.name ?? "Unknown (\(slot.adversaryID))"
     let major = adversary.map { "\($0.thresholdMajor)" } ?? "—"
     let severe = adversary.map { "\($0.thresholdSevere)" } ?? "—"
 
@@ -156,7 +152,8 @@ struct AdversaryRunnerCard: View {
   }
 
   private func beginRename() {
-    pendingName = displayName
+    let adversary = compendium.adversary(id: slot.adversaryID)
+    pendingName = slot.customName ?? adversary?.name ?? "Unknown (\(slot.adversaryID))"
     nameError = nil
     isEditingName = true
     isNameFieldFocused = true

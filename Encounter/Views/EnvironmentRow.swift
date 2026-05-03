@@ -18,13 +18,7 @@ struct EnvironmentRow: View {
         Text(environment.name)
           .font(.body)
         if environment.isHomebrew {
-          Text(environment.source)
-            .font(.caption2)
-            .foregroundStyle(.white)
-            .padding(.horizontal, 5)
-            .padding(.vertical, 2)
-            .background(.blue)
-            .clipShape(.capsule)
+          SourceBadgeView(label: environment.source)
         }
       }
       Text(environment.description)

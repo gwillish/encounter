@@ -33,13 +33,7 @@ struct AdversaryDetailView: View {
               .font(.caption)
               .foregroundStyle(.secondary)
             if adversary.source != "srd" {
-              Text(adversary.source)
-                .font(.caption2)
-                .foregroundStyle(.white)
-                .padding(.horizontal, 5)
-                .padding(.vertical, 2)
-                .background(.blue)
-                .clipShape(.capsule)
+              SourceBadgeView(label: adversary.source)
             }
           }
           Text(adversary.description)

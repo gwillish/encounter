@@ -38,23 +38,22 @@ struct AdversaryRunnerSection: View {
         .buttonStyle(.plain)
         .disabled(slot.isDefeated)
         .accessibilityIdentifier("runner.adversary-row")
-        .accessibilityLabel(
-          {
-            let name = slot.customName ?? slot.adversaryID
-            var parts: [String] = [name]
-            if slot.isDefeated {
-              parts.append("defeated")
-            }
-            if !slot.conditions.isEmpty {
-              let conditionNames = slot.conditions.map(\.displayName).sorted().joined(
-                separator: ", ")
-              parts.append("Conditions: \(conditionNames)")
-            }
-            return parts.joined(separator: ", ")
-          }()
-        )
+        .accessibilityLabel(rowLabel(for: slot))
         .accessibilityHint(slot.isDefeated ? "" : "Tap to expand")
       }
     }
+  }
+
+  private func rowLabel(for slot: AdversaryState) -> String {
+    let name = slot.customName ?? slot.adversaryID
+    var parts: [String] = [name]
+    if slot.isDefeated {
+      parts.append("defeated")
+    }
+    if !slot.conditions.isEmpty {
+      let conditionNames = slot.conditions.map(\.displayName).sorted().joined(separator: ", ")
+      parts.append("Conditions: \(conditionNames)")
+    }
+    return parts.joined(separator: ", ")
   }
 }

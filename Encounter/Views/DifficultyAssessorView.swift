@@ -35,15 +35,6 @@ struct DifficultyAssessorView: View {
 
   private var isPulsing: Bool { rating?.category == .likelyTPK }
 
-  private func toggleBinding(for adj: DifficultyBudget.Adjustment) -> Binding<Bool> {
-    Binding(
-      get: { manualAdjustments.contains(adj) },
-      set: { on in
-        if on { manualAdjustments.insert(adj) } else { manualAdjustments.remove(adj) }
-      }
-    )
-  }
-
   @State private var animating = false
 
   var body: some View {

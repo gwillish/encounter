@@ -5,7 +5,6 @@
 //  Capsule badge showing an adversary's role type (e.g. "Minion", "Bruiser").
 //
 
-import DHKit
 import DHModels
 import SwiftUI
 

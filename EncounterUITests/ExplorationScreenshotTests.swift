@@ -24,9 +24,9 @@ class ExplorationScreenshotTests: ExplorationUITestCase {
     screenshotScene(named: "runner-row")
   }
 
-  func testPlayerStripScene() throws {
-    navigate(to: "exploration.player-strip")
-    screenshotScene(named: "player-strip")
+  func testPlayerRunnerScene() throws {
+    navigate(to: "exploration.player-runner")
+    screenshotScene(named: "player-runner")
   }
 
   func testPipTrackScene() throws {
@@ -45,8 +45,8 @@ class ExplorationScreenshotTests: ExplorationUITestCase {
       app.buttons["exploration.runner-row"].waitForExistence(timeout: 3),
       "Runner row scene should be listed")
     XCTAssertTrue(
-      app.buttons["exploration.player-strip"].waitForExistence(timeout: 3),
-      "Player strip scene should be listed")
+      app.buttons["exploration.player-runner"].waitForExistence(timeout: 3),
+      "Player runner scene should be listed")
     screenshotScene(named: "exploration-root")
   }
 }

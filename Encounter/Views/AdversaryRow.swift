@@ -18,13 +18,7 @@ struct AdversaryRow: View {
         Text(adversary.name)
           .font(.body)
         if adversary.isHomebrew {
-          Text(adversary.source)
-            .font(.caption2)
-            .foregroundStyle(.white)
-            .padding(.horizontal, 5)
-            .padding(.vertical, 2)
-            .background(.blue)
-            .clipShape(.capsule)
+          SourceBadgeView(label: adversary.source)
         }
       }
       Text("\(adversary.role.rawValue) · Tier \(adversary.tier) · DC \(adversary.difficulty)")
