@@ -1,6 +1,6 @@
 # ADR-0040: Encounters as the default landing screen
 
-**Status:** Accepted
+**Status:** Superseded by [ADR-0043](0043-platform-navigation-architecture.md)
 **Date:** 2026-04-25
 
 ## Context

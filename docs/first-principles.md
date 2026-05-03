@@ -108,6 +108,24 @@ Future local-network sharing (GM and player apps on the same table network) and
 eventual remote support for distributed play are valid extensions of this
 foundation — not requirements that change the core.
 
+## 12. iOS, iPadOS, and macOS are all first-class platform targets
+
+*This supersedes Principle 9.*
+
+iOS, iPadOS, and macOS each receive a navigation model and interaction idiom
+appropriate to their input model and screen size:
+
+- **iOS** — push navigation; single-column screens; at-the-table primary device
+- **iPadOS** — split-view with toolbar mode switching; covers both prep and run at the table
+- **macOS** — split-view with menu-driven mode switching; primary prep device
+
+Each platform gets a distinct root layout. There is no shared-layout compromise.
+`#if os(iOS)` / `#if os(macOS)` conditional compilation is used where platforms
+diverge; shared components are platform-agnostic and used by all three.
+
+visionOS is a supported build target but receives no platform-specific design
+work at this stage — it inherits the iOS layout.
+
 ---
 
 *These principles are intended to be stable. If a principle needs to change,

@@ -1,6 +1,6 @@
 # ADR-0019: macOS NavigationSplitView, iOS NavigationStack
 
-**Status:** Accepted
+**Status:** Superseded by [ADR-0043](0043-platform-navigation-architecture.md)
 **Date:** 2026-03-17
 
 ## Context

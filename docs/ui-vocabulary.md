@@ -63,42 +63,70 @@ Screenshots of all four proposals rendered in the app (iOS + macOS) are in `docs
 
 ## Navigation Map
 
+### iOS / visionOS
+
 ```mermaid
 flowchart TD
-    APP([App Launch]) --> CV[ContentView]
+    APP([App Launch]) --> CV[ContentView\nNavigationStack]
+    CV --> ROOT[EncounterAndPartyRootView\ntoolbar toggle: Encounters|Compendium]
 
-    CV -->|in-flight sessions| RP[ResumePromptView\nsheet]
-    RP -->|resume| ER
-    RP -->|resume| ER2
+    ROOT -->|Encounters mode| ENC_LIST[Encounter list + Party roster]
+    ROOT -->|Compendium mode| COMP_ROOT[CompendiumRootView]
 
-    subgraph iOS/visionOS
-        CV --> TAB_PARTY[Party tab]
-        CV --> TAB_ENC[Encounters tab]
-        TAB_PARTY --> PO[PartyOverviewView]
-        TAB_ENC --> EL[EncounterLibraryView]
-        EL -->|NavigationLink| EB[EncounterBuilderView]
-        EB -->|Run Encounter| ER[EncounterRunnerView\nfullScreenCover]
+    ENC_LIST -->|tap encounter row| EE[EncounterEditorView]
+    EE -->|Run / Resume| ER[EncounterRunnerView\npush]
+    ER -->|Pause| EE
+    ER -->|End| ENC_LIST
+
+    EE -->|sheet| CSS[CompendiumSelectorSheet]
+    CSS -->|onSelect| EE
+
+    COMP_ROOT -->|push| AD[AdversaryDetailView]
+    COMP_ROOT -->|sheet| ACF[AdversaryCreatorForm]
+    COMP_ROOT -->|sheet| DHPE[DHPackExportSheet]
+
+    ENC_LIST -->|sheet| PF[PlayerForm]
+```
+
+### macOS / iPadOS
+
+```mermaid
+flowchart TD
+    APP([App Launch]) --> CV[ContentView\nNavigationSplitView]
+    CV -->|AppWindowMode| MODE{Window Mode}
+
+    MODE -->|encounterPrep| PREP[3-panel layout]
+    MODE -->|compendiumManagement| COMP[2-panel layout]
+    MODE -->|runningEncounter| RUN[2-panel layout]
+
+    subgraph Encounter Prep
+        PREP --> LEFT_P[EncounterAndPartyPanel\nleft sidebar]
+        PREP --> CENTER_P[EncounterEditorView\ncenter column]
+        PREP --> RIGHT_P[CompendiumUtilityPanel\nright panel]
+        LEFT_P -->|selection| CENTER_P
+        RIGHT_P -->|onSelect| CENTER_P
+        CENTER_P -->|Run button| MODE
+        LEFT_P -->|sheet| PF2[PlayerForm]
     end
 
-    subgraph macOS
-        CV --> SIDEBAR[Sidebar]
-        SIDEBAR -->|Party item| PO2[PartyOverviewView]
-        SIDEBAR -->|Encounters item| EL2[EncounterLibraryView]
-        EL2 -->|selection| EB2[EncounterBuilderView\ndetail column]
-        EB2 -->|Run Encounter| ER2[EncounterRunnerView\nsheet]
+    subgraph Compendium Management
+        COMP --> LEFT_C[CompendiumAdversaryListPanel\nleft sidebar]
+        COMP --> RIGHT_C[AdversaryInspectorView\nright panel]
+        LEFT_C -->|selection| RIGHT_C
+        LEFT_C -->|sheet| ACF2[AdversaryCreatorForm]
+        LEFT_C -->|sheet| DHPE2[DHPackExportSheet]
+        RIGHT_C -->|Edit button| ACF2
     end
 
-    PO -->|sheet| PF[PlayerForm\nadd / edit]
-    EB -->|sheet| CB[CompendiumBrowserView]
-    CB -->|push| AD[AdversaryDetailView]
-    CB -->|push| ED[EnvironmentDetailView]
+    subgraph Run Mode
+        RUN --> LEFT_R[RunnerListPanel\nleft sidebar]
+        RUN --> RIGHT_R[RunnerDetailPanel\nright panel]
+        LEFT_R -->|expand row| RIGHT_R
+        LEFT_R -->|Pause| MODE
+        LEFT_R -->|End| MODE
+    end
 
-    EL -->|sheet| CS[ContentSourcesView]
-    EL -->|sheet| AB[AboutView]
-
-    ER --> PS[PlayerStrip\npinned bottom]
-    PS -->|popover| PE[PlayerEditPopover]
-    ER -->|toolbar popover| FT[FearTrackerButton popover]
+    CENTER_P -->|sheet| CSS2[CompendiumSelectorSheet]
 ```
 
 ---
@@ -107,22 +135,262 @@ flowchart TD
 
 ### ContentView
 
-Root container. On **iOS/visionOS** it is a `TabView` with two tabs. On **macOS** it is
-a three-column `NavigationSplitView` (sidebar → content → detail).
+Root container. Platform-specific navigation structure driven by `AppWindowMode` (macOS/iPadOS) or `iOSRootMode` (iOS/visionOS). See [ADR-0043](decisions/0043-platform-navigation-architecture.md).
 
 | Platform | Navigation model |
 |---|---|
-| iOS / visionOS | TabView — Party tab, Encounters tab |
-| macOS | NavigationSplitView — sidebar, content pane, detail pane |
+| iOS / visionOS | `NavigationStack` wrapping `EncounterAndPartyRootView` |
+| iPadOS | `NavigationSplitView` (3-panel in prep mode, 2-panel in compendium/run mode) |
+| macOS | `NavigationSplitView` (3-panel in prep mode, 2-panel in compendium/run mode) |
+
+---
+
+### `EncounterAndPartyRootView` — iOS root
+
+Single root screen for the iOS encounters workflow.
+
+**Layout**
+
+```
+┌─────────────────────────────────┐
+│  [Toolbar: ← Encounters | Compendium →]  │
+├─────────────────────────────────┤
+│  Encounter list (scrollable)    │
+│  ┌───────────────────────────┐  │
+│  │ EncounterLibraryRow       │  │  ← includes in-progress badge
+│  │ EncounterLibraryRow       │  │
+│  └───────────────────────────┘  │
+│  Divider                        │
+│  Party roster                   │
+│  ┌───────────────────────────┐  │
+│  │ PartyRosterRow            │  │  ← includes hide/unhide
+│  └───────────────────────────┘  │
+└─────────────────────────────────┘
+```
 
 **Accessibility identifiers**
 
 | Element | Identifier |
 |---|---|
-| Party tab (iOS) | `tab.party` |
-| Encounters tab (iOS) | `tab.encounters` |
-| Sidebar "Party" item (macOS) | `sidebar.party` |
-| Sidebar "Encounters" item (macOS) | `sidebar.encounters` |
+| Root mode toggle | `root.mode-toggle` |
+| Encounter row | `root.encounter-row` |
+| Party row | `root.party-row` |
+| In-progress badge | `library.row.in-progress-badge` |
+| Resume button (row) | `library.row.resume-button` |
+| Hide player button | `party.hide-button` |
+| Unhide player button | `party.unhide-button` |
+
+---
+
+### `CompendiumRootView` — iOS compendium
+
+Full-screen adversary list shown when the toolbar toggle is set to Compendium.
+
+**Layout**
+
+```
+┌─────────────────────────────────┐
+│  [Toolbar: ← Encounters | Compendium →]  │
+│  [Import DHPack] [Export] [+]   │
+├─────────────────────────────────┤
+│  AdversaryFilterBar             │
+├─────────────────────────────────┤
+│  Section: SRD (129 adversaries) │
+│  Section: [DHPack name]         │
+│  Section: Local                 │
+└─────────────────────────────────┘
+```
+
+---
+
+### `EncounterAndPartyPanel` — macOS/iPadOS sidebar (prep mode)
+
+Left panel of the 3-panel layout in encounter prep mode.
+
+**Layout**
+
+```
+┌─────────────────────────────────┐
+│  [+ New Encounter]              │
+│  Encounter list                 │
+│  ┌───────────────────────────┐  │
+│  │ EncounterLibraryRow       │  │
+│  └───────────────────────────┘  │
+│  ─────────────────────────────  │
+│  Party                  [+]     │
+│  ┌───────────────────────────┐  │
+│  │ PartyRosterRow            │  │
+│  └───────────────────────────┘  │
+└─────────────────────────────────┘
+```
+
+---
+
+### `CompendiumUtilityPanel` — macOS/iPadOS right panel (prep mode)
+
+Always-visible compendium panel in encounter prep mode. Replaces the Browse Compendium sheet.
+
+**Layout**
+
+```
+┌─────────────────────────────────┐
+│  AdversaryFilterBar             │
+├─────────────────────────────────┤
+│  Filtered adversary list        │
+│  ┌───────────────────────────┐  │
+│  │ AdversaryRow              │  │  ← tap to add to selected encounter
+│  └───────────────────────────┘  │
+├─────────────────────────────────┤
+│  [Import DHPack]                │
+└─────────────────────────────────┘
+```
+
+**Accessibility identifiers**
+
+| Element | Identifier |
+|---|---|
+| Utility panel root | `compendium.utility-panel` |
+| Filter bar | `compendium.filter-bar` |
+
+---
+
+### `CompendiumAdversaryListPanel` — macOS/iPadOS sidebar (compendium mode)
+
+Left panel when `AppWindowMode == .compendiumManagement`.
+
+**Layout**
+
+```
+┌─────────────────────────────────┐
+│  AdversaryFilterBar             │
+│  [+] [Import] [Export]          │
+├─────────────────────────────────┤
+│  Section: SRD                   │
+│  Section: [DHPack name]         │
+│  Section: Local                 │
+└─────────────────────────────────┘
+```
+
+---
+
+### `AdversaryInspectorView` — macOS/iPadOS right panel (compendium mode)
+
+Detail/editor panel for a selected adversary in compendium management mode.
+
+**States**
+
+| State | Display |
+|---|---|
+| No selection | Empty state placeholder |
+| SRD / DHPack adversary | Read-only stat card |
+| Local adversary | Stat card + Edit button → `AdversaryCreatorForm` |
+
+**Accessibility identifiers**
+
+| Element | Identifier |
+|---|---|
+| Inspector root | `compendium.inspector` |
+
+---
+
+### `RunnerListPanel` — macOS/iPadOS sidebar (run mode)
+
+Left panel when `AppWindowMode == .runningEncounter(_)`.
+
+**Layout**
+
+```
+┌─────────────────────────────────┐
+│  [Pause]            [End]       │
+│  🔥 Fear: 3         [+] [-]     │
+├─────────────────────────────────┤
+│  AdversaryRunnerSection         │
+│  ┌───────────────────────────┐  │
+│  │ AdversaryRunnerRow        │  │
+│  │ AdversaryRunnerCard (exp.)│  │
+│  └───────────────────────────┘  │
+│  PlayerRunnerSection            │
+│  ┌───────────────────────────┐  │
+│  │ PlayerRunnerRow           │  │
+│  └───────────────────────────┘  │
+└─────────────────────────────────┘
+```
+
+**Accessibility identifiers**
+
+| Element | Identifier |
+|---|---|
+| List panel root | `runner.list-panel` |
+| Pause button | `runner.pause-button` |
+
+---
+
+### `RunnerDetailPanel` — macOS/iPadOS right panel (run mode)
+
+Reference view showing stats for the currently expanded adversary or player.
+
+**States**
+
+| State | Display |
+|---|---|
+| Nothing expanded | Placeholder |
+| Adversary expanded | `AdversaryStatReference` + `FeatureSectionsView` |
+| Player expanded | `PlayerRunnerCard` content |
+
+**Accessibility identifiers**
+
+| Element | Identifier |
+|---|---|
+| Detail panel root | `runner.detail-panel` |
+
+---
+
+### `AdversaryCreatorForm` — all platforms
+
+Multi-step form for creating or editing a local adversary. Presented as `.sheet` on all platforms.
+
+**Steps**
+
+1. Identity — name, type, tier; SRD peer reference panel
+2. Stats — HP, stress, difficulty, thresholds, evasion; soft range indicators
+3. Attack & Features — attack stats; feature list (add passive/action/reaction)
+4. Review — stat card preview; out-of-range summary; Save
+
+**Accessibility identifiers**
+
+| Element | Identifier |
+|---|---|
+| Form root | `adversary-creator.form` |
+| Step indicator | `adversary-creator.step` |
+| Next button | `adversary-creator.next-button` |
+| Back button | `adversary-creator.back-button` |
+| Save button | `adversary-creator.save-button` |
+
+---
+
+### `CompendiumSelectorSheet` — all platforms
+
+Modal adversary selector opened from the encounter editor. Selection-only — no create or export.
+
+**Accessibility identifiers**
+
+| Element | Identifier |
+|---|---|
+| Sheet root | `compendium.selector-sheet` |
+| Filter bar | `compendium.filter-bar` |
+
+---
+
+### `DHPackExportSheet` — all platforms
+
+Multi-select sheet for exporting local adversaries as a `.dhpack` file.
+
+**Accessibility identifiers**
+
+| Element | Identifier |
+|---|---|
+| Sheet root | `dhpack-export.sheet` |
+| Export button | `dhpack-export.export-button` |
 
 ---
 
@@ -717,16 +985,19 @@ Reusable components that appear across multiple screens.
 
 ## Platform Layout Differences
 
-| Feature | iOS / visionOS | macOS |
-|---|---|---|
-| Root navigation | TabView (Party, Encounters) | NavigationSplitView (sidebar + content + detail) |
-| Encounter runner presentation | `fullScreenCover` | Sheet |
-| List actions | Swipe actions (trailing) | Context menus |
-| Navigation bar style | `.large` on main screens, `.inline` on modals | Standard |
-| Numeric input keyboard | `.numberPad` on relevant fields | Standard text input |
-| About screen access | Toolbar button in Encounters tab | Menu bar command |
-| New encounter dialog | `.alert` with text field | `.alert` with text field |
-| Compendium sheet sizing | Adaptive | `minWidth: 540, minHeight: 480` |
+| Feature | iOS / visionOS | iPadOS | macOS |
+|---|---|---|---|
+| Root navigation | `NavigationStack` | `NavigationSplitView` (3-panel) | `NavigationSplitView` (3-panel) |
+| Mode switch control | Segmented toolbar toggle | Segmented toolbar toggle | Menu command (`View →`) |
+| Encounter runner presentation | Push on `NavigationStack` | Same-window mode swap | Same-window mode swap |
+| Party location | Bottom of root screen | Bottom of left sidebar | Bottom of left sidebar |
+| Compendium in prep mode | Sheet (`CompendiumSelectorSheet`) | Right utility panel (always visible) | Right utility panel (always visible) |
+| Compendium management mode | Full-screen `CompendiumRootView` (toolbar toggle) | 2-panel split (sidebar + inspector) | 2-panel split (sidebar + inspector) |
+| List actions | Swipe actions (trailing) | Context menus + swipe | Context menus |
+| Navigation bar style | `.large` on main screens, `.inline` on pushed screens | Standard | Standard |
+| Numeric input keyboard | `.numberPad` on relevant fields | Adapts to keyboard/touch | Standard text input |
+| About screen access | Toolbar button | Toolbar button | Menu bar command |
+| New encounter dialog | `.alert` with text field | `.alert` with text field | `.alert` with text field |
 
 ---
 
@@ -736,16 +1007,21 @@ Reusable components that appear across multiple screens.
 |---|---|
 | **Encounter** | A saved encounter definition (name, adversaries, environment, notes) |
 | **Session** | A live, in-progress run of an encounter (mutable state) |
+| **SessionPhase** | Lifecycle state of a session: `.running` (active) or `.paused` (saved, resumable) |
 | **Adversary slot** | One instance of an adversary in a live session (has its own HP, stress, name, conditions) |
 | **Player slot** | One player character's runtime state (current HP, stress, armor, conditions) |
-| **Active Party** | Players currently assigned to participate in encounters |
-| **Roster** | All saved players, including those not in the active party |
+| **Party** | The single active party roster; one party per app instance |
+| **Hidden player** | A party member temporarily excluded from active sessions (global flag, not deleted) |
 | **Compendium** | The full catalog of available adversaries and environments |
-| **Content pack** (.dhpack) | A bundle of homebrew adversaries/environments importable into the Compendium |
+| **Content pack** (.dhpack) | A bundle of adversaries/environments; importable (read-only) or exportable from local adversaries |
+| **SRD adversaries** | Bundled, read-only adversaries from the Daggerheart SRD |
+| **Local adversaries** | Custom adversaries created in the app and stored in the `homebrew/` directory |
+| **AppWindowMode** | macOS/iPadOS window state enum: `.encounterPrep`, `.compendiumManagement`, `.runningEncounter` |
+| **iOSRootMode** | iOS root screen state: `.encounters` or `.compendium` |
 | **Budget Points (BP)** | Difficulty currency; each adversary costs BP; GM adjustments shift the total |
 | **Fear pool** | Shared GM resource tracked live in the runner; spent for monster actions |
 | **Condition** | A named status (e.g., Restrained, Vulnerable) toggled on a slot during a session |
 | **Threshold** | HP damage bracket (Minor / Major / Severe) at which special effects trigger |
 | **PipTrack** | The visual HP/Stress indicator — circles for small values, "X/Y" text for large ones |
-| **PlayerStrip** | The always-visible player panel pinned to the bottom of the runner screen |
 | **Accordion** | The runner's single-expand pattern: tapping a slot expands it and collapses the previous one |
+| **In-progress badge** | Visual indicator on an encounter row when a paused session exists for that encounter |
