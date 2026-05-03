@@ -64,14 +64,9 @@ struct ResumePromptView: View {
           .accessibilityHidden(true)
         Text(target.definition.name)
           .font(.title2.bold())
-        let activeCount = target.session.activeAdversaries.count
-        Text(
-          activeCount == 1
-            ? "1 adversary still active"
-            : "\(activeCount) adversaries still active"
-        )
-        .font(.subheadline)
-        .foregroundStyle(.secondary)
+        Text(activeAdversariesLabel(count: target.session.activeAdversaries.count, suffix: "still active"))
+          .font(.subheadline)
+          .foregroundStyle(.secondary)
       }
       Button("Resume Encounter") {
         onResume(target)
@@ -95,19 +90,18 @@ struct ResumePromptView: View {
           Text(target.definition.name)
             .font(.headline)
             .foregroundStyle(.primary)
-          let activeCount = target.session.activeAdversaries.count
-          Text(
-            activeCount == 1
-              ? "1 adversary active"
-              : "\(activeCount) adversaries active"
-          )
-          .font(.caption)
-          .foregroundStyle(.secondary)
+          Text(activeAdversariesLabel(count: target.session.activeAdversaries.count, suffix: "active"))
+            .font(.caption)
+            .foregroundStyle(.secondary)
         }
       }
       .buttonStyle(.plain)
       .accessibilityIdentifier("resume.session-\(target.id)")
     }
+  }
+
+  private func activeAdversariesLabel(count: Int, suffix: String) -> String {
+    count == 1 ? "1 adversary \(suffix)" : "\(count) adversaries \(suffix)"
   }
 }
 

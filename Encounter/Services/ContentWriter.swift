@@ -127,13 +127,8 @@ public struct ContentWriter: Sendable {
   /// Read adversaries for a source pack from disk. Returns `[]` if not yet written.
   @concurrent
   nonisolated public func readAdversaries(sourceID: String) async throws -> [Adversary] {
-    let url = sourcesDirectory.appending(path: "\(sourceID)/adversaries.json")
-    guard FileManager.default.fileExists(atPath: url.path(percentEncoded: false)) else { return [] }
-    do {
-      return try JSONDecoder().decode([Adversary].self, from: Data(contentsOf: url))
-    } catch {
-      throw ContentStoreError.readFailed(sourceID: sourceID, underlying: error)
-    }
+    try readSourcePackFile(
+      at: sourcesDirectory.appending(path: "\(sourceID)/adversaries.json"), sourceID: sourceID)
   }
 
   /// Read environments for a source pack from disk. Returns `[]` if not yet written.
@@ -141,10 +136,16 @@ public struct ContentWriter: Sendable {
   nonisolated public func readEnvironments(sourceID: String) async throws
     -> [DaggerheartEnvironment]
   {
-    let url = sourcesDirectory.appending(path: "\(sourceID)/environments.json")
+    try readSourcePackFile(
+      at: sourcesDirectory.appending(path: "\(sourceID)/environments.json"), sourceID: sourceID)
+  }
+
+  nonisolated private func readSourcePackFile<T: Decodable>(at url: URL, sourceID: String) throws
+    -> [T]
+  {
     guard FileManager.default.fileExists(atPath: url.path(percentEncoded: false)) else { return [] }
     do {
-      return try JSONDecoder().decode([DaggerheartEnvironment].self, from: Data(contentsOf: url))
+      return try JSONDecoder().decode([T].self, from: Data(contentsOf: url))
     } catch {
       throw ContentStoreError.readFailed(sourceID: sourceID, underlying: error)
     }

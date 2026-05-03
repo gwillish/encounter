@@ -27,13 +27,7 @@ struct EnvironmentDetailView: View {
       Section {
         VStack(alignment: .leading, spacing: 6) {
           if environment.source != "srd" {
-            Text(environment.source)
-              .font(.caption2)
-              .foregroundStyle(.white)
-              .padding(.horizontal, 5)
-              .padding(.vertical, 2)
-              .background(.blue)
-              .clipShape(.capsule)
+            SourceBadgeView(label: environment.source)
           }
           Text(environment.description)
             .font(.subheadline)

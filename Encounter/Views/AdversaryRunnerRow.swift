@@ -16,10 +16,7 @@ struct AdversaryRunnerRow: View {
   let slot: AdversaryState
   let compendium: Compendium
 
-  private var displayName: String {
-    let adversary = compendium.adversary(id: slot.adversaryID)
-    return slot.customName ?? adversary?.name ?? "Unknown (\(slot.adversaryID))"
-  }
+  @ScaledMetric(relativeTo: .caption2) private var conditionIconSize: CGFloat = 8
 
   private var sortedConditions: [Condition] {
     slot.conditions.sorted { $0.displayName < $1.displayName }
@@ -27,6 +24,7 @@ struct AdversaryRunnerRow: View {
 
   var body: some View {
     let adversary = compendium.adversary(id: slot.adversaryID)
+    let displayName = slot.customName ?? adversary?.name ?? "Unknown (\(slot.adversaryID))"
 
     VStack(alignment: .leading, spacing: 6) {
       HStack(spacing: 6) {
@@ -50,7 +48,7 @@ struct AdversaryRunnerRow: View {
           HStack(spacing: 3) {
             ForEach(sortedConditions, id: \.self) { condition in
               Image(systemName: condition.sfSymbol)
-                .font(.system(size: 8))
+                .font(.system(size: conditionIconSize))
                 .foregroundStyle(.orange)
             }
           }
