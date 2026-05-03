@@ -4,8 +4,10 @@
 //
 //  Always-visible difficulty budget panel pinned via .safeAreaInset(edge: .bottom).
 //
-//  Auto-detected adjustments (multipleSolos, noBigThreats) are shown
-//  as read-only labels. GM-discretionary adjustments are Toggle rows.
+//  Auto-detected adjustments (multipleSolos, noBigThreats, lowerTierAdversary) are
+//  shown as read-only labels. GM-discretionary adjustments are Toggle rows.
+//  lowerTierAdversary moves to the auto-detected list when the roster triggers it;
+//  it remains a manual toggle when the roster has no lower-tier adversaries.
 //
 
 import DHKit
@@ -16,12 +18,18 @@ struct DifficultyAssessorView: View {
   let rating: DifficultyBudget.Rating?
   let autoAdjustments: Set<DifficultyBudget.Adjustment>
   @Binding var manualAdjustments: Set<DifficultyBudget.Adjustment>
+  let partyTier: Int?
+  let playerCount: Int
 
-  // Only these four adjustments can be toggled manually.
-  // multipleSolos and noBigThreats are auto-detected from the roster.
+  // All four GM-discretionary adjustments; lowerTierAdversary is suppressed
+  // from this list when it is already present in autoAdjustments.
   private static let manualCases: [DifficultyBudget.Adjustment] = [
     .easierFight, .harderFight, .boostedDamage, .lowerTierAdversary,
   ]
+
+  private var effectiveManualCases: [DifficultyBudget.Adjustment] {
+    Self.manualCases.filter { !autoAdjustments.contains($0) }
+  }
 
   private var difficultyColor: Color {
     switch rating?.category {
@@ -62,6 +70,13 @@ struct DifficultyAssessorView: View {
           }
         }
 
+        // Party context line
+        if let partyTier {
+          Text("Party: T\(partyTier) · \(playerCount) \(playerCount == 1 ? "player" : "players")")
+            .font(.caption)
+            .foregroundStyle(.secondary)
+        }
+
         // Auto-detected adjustments (informational, non-interactive)
         if !autoAdjustments.isEmpty {
           VStack(alignment: .leading, spacing: 2) {
@@ -74,8 +89,9 @@ struct DifficultyAssessorView: View {
         }
 
         // Manual GM-discretionary toggles
+        // lowerTierAdversary is excluded when auto-detected (see effectiveManualCases)
         VStack(alignment: .leading, spacing: 4) {
-          ForEach(Self.manualCases, id: \.self) { adj in
+          ForEach(effectiveManualCases, id: \.self) { adj in
             let isOn = manualAdjustments.contains(adj)
             HStack(spacing: 6) {
               Image(systemName: isOn ? "checkmark.square.fill" : "square")
@@ -107,26 +123,33 @@ struct DifficultyAssessorView: View {
   }
 }
 
-#Preview("On Budget — 4 players, 14 BP spent") {
+#Preview("On Budget — T2 party, 4 players, 14 BP spent") {
   @Previewable @State var manual: Set<DifficultyBudget.Adjustment> = []
   let rating = DifficultyBudget.Rating(budget: 14, cost: 14, remaining: 0)
-  DifficultyAssessorView(rating: rating, autoAdjustments: [], manualAdjustments: $manual)
-    .padding()
+  DifficultyAssessorView(
+    rating: rating, autoAdjustments: [], manualAdjustments: $manual,
+    partyTier: 2, playerCount: 4
+  )
+  .padding()
 }
 
-#Preview("Dangerous — over budget") {
+#Preview("Dangerous — over budget, lower-tier auto-detected") {
   @Previewable @State var manual: Set<DifficultyBudget.Adjustment> = []
   let rating = DifficultyBudget.Rating(budget: 14, cost: 19, remaining: -5)
   DifficultyAssessorView(
     rating: rating,
-    autoAdjustments: [.multipleSolos],
-    manualAdjustments: $manual
+    autoAdjustments: [.multipleSolos, .lowerTierAdversary],
+    manualAdjustments: $manual,
+    partyTier: 2, playerCount: 4
   )
   .padding()
 }
 
 #Preview("No players configured") {
   @Previewable @State var manual: Set<DifficultyBudget.Adjustment> = []
-  DifficultyAssessorView(rating: nil, autoAdjustments: [], manualAdjustments: $manual)
-    .padding()
+  DifficultyAssessorView(
+    rating: nil, autoAdjustments: [], manualAdjustments: $manual,
+    partyTier: nil, playerCount: 0
+  )
+  .padding()
 }
