@@ -64,9 +64,12 @@ struct ResumePromptView: View {
           .accessibilityHidden(true)
         Text(target.definition.name)
           .font(.title2.bold())
-        Text(activeAdversariesLabel(count: target.session.activeAdversaries.count, suffix: "still active"))
-          .font(.subheadline)
-          .foregroundStyle(.secondary)
+        Text(
+          activeAdversariesLabel(
+            count: target.session.activeAdversaries.count, suffix: "still active")
+        )
+        .font(.subheadline)
+        .foregroundStyle(.secondary)
       }
       Button("Resume Encounter") {
         onResume(target)
@@ -90,9 +93,11 @@ struct ResumePromptView: View {
           Text(target.definition.name)
             .font(.headline)
             .foregroundStyle(.primary)
-          Text(activeAdversariesLabel(count: target.session.activeAdversaries.count, suffix: "active"))
-            .font(.caption)
-            .foregroundStyle(.secondary)
+          Text(
+            activeAdversariesLabel(count: target.session.activeAdversaries.count, suffix: "active")
+          )
+          .font(.caption)
+          .foregroundStyle(.secondary)
         }
       }
       .buttonStyle(.plain)

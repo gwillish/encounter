@@ -883,6 +883,107 @@ struct DifficultyBudgetTests {
     #expect(DifficultyBudget.Adjustment.noBigThreats.pointValue == 1)
     #expect(DifficultyBudget.Adjustment.harderFight.pointValue == 2)
   }
+
+  // MARK: Tier Utilities
+
+  @Test(arguments: [(1, 1), (2, 2), (4, 2), (5, 3), (7, 3), (8, 4), (10, 4)])
+  func tierForLevel(level: Int, expectedTier: Int) {
+    #expect(DifficultyBudget.tier(forLevel: level) == expectedTier)
+  }
+
+  @Test func partyTierSinglePlayer() {
+    #expect(DifficultyBudget.partyTier(levels: [1]) == 1)
+  }
+
+  @Test func partyTierFourPlayers() {
+    // median 3.5 → ceil 4 → T2
+    #expect(DifficultyBudget.partyTier(levels: [2, 3, 4, 5]) == 2)
+  }
+
+  @Test func partyTierTwoPlayers() {
+    // median 4.5 → ceil 5 → T3
+    #expect(DifficultyBudget.partyTier(levels: [4, 5]) == 3)
+  }
+
+  @Test func partyTierThreePlayers() {
+    // median 8 → T4
+    #expect(DifficultyBudget.partyTier(levels: [7, 8, 9]) == 4)
+  }
+
+  @Test func partyTierEmptyReturnsOne() {
+    // Model returns 1 for empty input as a safe default.
+    // Note: EncounterBuilderView.partyTier returns nil for empty party (suppresses
+    // the party tier UI line); this is intentionally different from the model default.
+    #expect(DifficultyBudget.partyTier(levels: []) == 1)
+  }
+
+  // MARK: lowerTierAdversary Auto-Detection
+
+  @Test func lowerTierAdversaryAutoDetected() {
+    let adjustments = DifficultyBudget.suggestedAdjustments(
+      adversaryTypes: [.standard],
+      adversaryTiers: [1],
+      partyTier: 2
+    )
+    #expect(adjustments.contains(.lowerTierAdversary))
+  }
+
+  @Test func lowerTierAdversaryNotDetectedMatchingTier() {
+    let adjustments = DifficultyBudget.suggestedAdjustments(
+      adversaryTypes: [.standard],
+      adversaryTiers: [2],
+      partyTier: 2
+    )
+    #expect(!adjustments.contains(.lowerTierAdversary))
+  }
+
+  @Test func lowerTierAdversaryNotDetectedAbovePartyTier() {
+    let adjustments = DifficultyBudget.suggestedAdjustments(
+      adversaryTypes: [.standard],
+      adversaryTiers: [3],
+      partyTier: 2
+    )
+    #expect(!adjustments.contains(.lowerTierAdversary))
+  }
+
+  @Test func lowerTierAdversaryNotDetectedEmptyTiers() {
+    // adversaryTiers omitted — zip truncates to empty, no lower-tier detection
+    let adjustments = DifficultyBudget.suggestedAdjustments(
+      adversaryTypes: [.standard],
+      adversaryTiers: [],
+      partyTier: 2
+    )
+    #expect(!adjustments.contains(.lowerTierAdversary))
+  }
+
+  @Test func lowerTierAdversaryNotDetectedForUnknownTierZero() {
+    // tier 0 means "unknown" — must not trigger lowerTierAdversary
+    let adjustments = DifficultyBudget.suggestedAdjustments(
+      adversaryTypes: [.standard],
+      adversaryTiers: [0],
+      partyTier: 2
+    )
+    #expect(!adjustments.contains(.lowerTierAdversary))
+  }
+
+  @Test func lowerTierAdversaryNotDetectedNilPartyTier() {
+    let adjustments = DifficultyBudget.suggestedAdjustments(
+      adversaryTypes: [.standard],
+      adversaryTiers: [1],
+      partyTier: nil
+    )
+    #expect(!adjustments.contains(.lowerTierAdversary))
+  }
+
+  @Test func lowerTierAdversaryDetectionWithMismatchedArrayLengths() {
+    // zip truncates to shorter array; first adversary is T1 vs party T3 → detected
+    let adjustments = DifficultyBudget.suggestedAdjustments(
+      adversaryTypes: [.standard, .standard],
+      adversaryTiers: [1],
+      partyTier: 3
+    )
+    #expect(adjustments.contains(.lowerTierAdversary))
+  }
 }
 
 // MARK: - Environment

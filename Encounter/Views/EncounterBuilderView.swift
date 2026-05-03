@@ -60,8 +60,22 @@ struct EncounterBuilderView: View {
     draft.adversaryIDs.compactMap { compendium.adversary(id: $0)?.role }
   }
 
+  private var adversaryTiers: [Int] {
+    draft.adversaryIDs.compactMap { compendium.adversary(id: $0)?.tier }
+  }
+
+  private var partyTier: Int? {
+    let levels = playerStore.activePartyPlayers.map(\.level)
+    guard !levels.isEmpty else { return nil }
+    return DifficultyBudget.partyTier(levels: levels)
+  }
+
   private var autoAdjustments: Set<DifficultyBudget.Adjustment> {
-    DifficultyBudget.suggestedAdjustments(adversaryTypes: adversaryTypes)
+    DifficultyBudget.suggestedAdjustments(
+      adversaryTypes: adversaryTypes,
+      adversaryTiers: adversaryTiers,
+      partyTier: partyTier
+    )
   }
 
   private var budgetAdjustment: Int {
@@ -83,6 +97,7 @@ struct EncounterBuilderView: View {
       AdversaryRosterSection(
         adversaryIDs: draft.adversaryIDs,
         compendium: compendium,
+        partyTier: partyTier,
         onBrowse: { showCompendium = true },
         onRemove: removeAdversary(at:)
       )
@@ -102,7 +117,9 @@ struct EncounterBuilderView: View {
         DifficultyAssessorView(
           rating: difficultyRating,
           autoAdjustments: autoAdjustments,
-          manualAdjustments: $manualAdjustments
+          manualAdjustments: $manualAdjustments,
+          partyTier: partyTier,
+          playerCount: playerStore.activePartyPlayers.count
         )
         .listRowInsets(EdgeInsets())
       }
