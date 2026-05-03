@@ -6,7 +6,6 @@
 //  Amber = below party tier, Red = above party tier, hidden when matching or partyTier is nil.
 //
 
-import DHModels
 import SwiftUI
 
 struct TierBadgeView: View {

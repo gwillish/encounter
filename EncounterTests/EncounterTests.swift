@@ -984,6 +984,16 @@ struct DifficultyBudgetTests {
     )
     #expect(adjustments.contains(.lowerTierAdversary))
   }
+
+  @Test func lowerTierAdversaryNotDetectedWhenAllMatchPartyTier() {
+    // multiple adversaries all at party tier — no lower-tier detection
+    let adjustments = DifficultyBudget.suggestedAdjustments(
+      adversaryTypes: [.standard, .bruiser, .minion],
+      adversaryTiers: [2, 2, 2],
+      partyTier: 2
+    )
+    #expect(!adjustments.contains(.lowerTierAdversary))
+  }
 }
 
 // MARK: - Environment

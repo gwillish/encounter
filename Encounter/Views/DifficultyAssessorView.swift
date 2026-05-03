@@ -31,6 +31,11 @@ struct DifficultyAssessorView: View {
     Self.manualCases.filter { !autoAdjustments.contains($0) }
   }
 
+  // Stable display order: iterate allCases (declaration order) keeping only those in autoAdjustments.
+  private var sortedAutoAdjustments: [DifficultyBudget.Adjustment] {
+    DifficultyBudget.Adjustment.allCases.filter { autoAdjustments.contains($0) }
+  }
+
   private var difficultyColor: Color {
     switch rating?.category {
     case .tooEasy: return .teal
@@ -80,7 +85,7 @@ struct DifficultyAssessorView: View {
         // Auto-detected adjustments (informational, non-interactive)
         if !autoAdjustments.isEmpty {
           VStack(alignment: .leading, spacing: 2) {
-            ForEach(Array(autoAdjustments), id: \.self) { adj in
+            ForEach(sortedAutoAdjustments, id: \.self) { adj in
               Label(adj.displayName, systemImage: "checkmark.circle.fill")
                 .font(.caption)
                 .foregroundStyle(.secondary)

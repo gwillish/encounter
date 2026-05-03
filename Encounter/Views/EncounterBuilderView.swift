@@ -192,6 +192,9 @@ struct EncounterBuilderView: View {
     .onChange(of: draft.name) { _, _ in
       saveDebounced()
     }
+    .onChange(of: autoAdjustments) { _, newAuto in
+      manualAdjustments.subtract(newAuto)
+    }
   }
 
   // MARK: - Toolbar
