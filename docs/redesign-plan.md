@@ -186,12 +186,12 @@ New file: `Encounter/Views/CompendiumSelectorSheet.swift`
 - Replaces `CompendiumBrowserView` as the selection-mode entry point from the encounter editor
 
 **Issues for this milestone:**
-- [ ] DHKit PR: add `SessionPhase`, `pause()`, `resume()` to `EncounterSession`
-- [ ] App: update `SessionStore` to persist `SessionPhase` (save/load round-trip)
-- [ ] `PlayerStore`: `hiddenPlayerIDs` persistence + hide/show methods
-- [ ] `EncounterLibraryRow`: in-progress indicator + resume label
-- [ ] `AdversaryFilterBar` shared component
-- [ ] `CompendiumSelectorSheet` shared component
+- [ ] #102 DHKit PR: add `SessionPhase`, `pause()`, `resume()` to `EncounterSession`
+- [ ] #103 App: update `SessionStore` to persist `SessionPhase` (save/load round-trip)
+- [ ] #104 `PlayerStore`: `hiddenPlayerIDs` persistence + hide/show methods
+- [ ] #105 `EncounterLibraryRow`: in-progress indicator + resume label
+- [ ] #106 `AdversaryFilterBar` shared component
+- [ ] #107 `CompendiumSelectorSheet` shared component
 
 ---
 
@@ -235,10 +235,10 @@ Replace the `TabView` iOS branch with a `NavigationStack` wrapping `EncounterAnd
 Simplify resume state: replace the 6-variable resume state machine with paused sessions visible inline in the encounter list. `ResumePromptView` is retired.
 
 **Issues for this milestone:**
-- [ ] `EncounterAndPartyRootView`: encounter list + party section + toolbar toggle
-- [ ] `CompendiumRootView`: adversary list with filter, grouped sections, import/export
-- [ ] `ContentView` iOS branch: replace TabView with NavigationStack, simplify resume state
-- [ ] Retire `ResumePromptView`, `PartyOverviewView` (iOS tab usage)
+- [ ] #108 `EncounterAndPartyRootView`: encounter list + party section + toolbar toggle
+- [ ] #109 `CompendiumRootView`: adversary list with filter, grouped sections, import/export
+- [ ] #110 `ContentView` iOS branch: replace TabView with NavigationStack, simplify resume state
+- [ ] #111 Retire `ResumePromptView`, `PartyOverviewView` (iOS tab usage)
 
 ### Milestone 3: iOS Encounter Editor and Run Mode
 
@@ -261,10 +261,10 @@ Critical file: `Encounter/Views/EncounterRunnerView.swift`
 - No change to the accordion runner list or player section
 
 **Issues for this milestone:**
-- [ ] `EncounterEditorView`: replace `.fullScreenCover` runner presentation with `NavigationLink` push
-- [ ] `EncounterEditorView`: replace `CompendiumBrowserView` sheet with `CompendiumSelectorSheet` (depends on M1e)
-- [ ] `EncounterEditorView`: show Resume label and behavior when a paused session exists (depends on M1a + M1c)
-- [ ] `EncounterRunnerView`: Pause action + session lifecycle wiring
+- [ ] #112 `EncounterEditorView`: replace `.fullScreenCover` runner presentation with `NavigationLink` push
+- [ ] #113 `EncounterEditorView`: replace `CompendiumBrowserView` sheet with `CompendiumSelectorSheet` (depends on #107)
+- [ ] #114 `EncounterEditorView`: show Resume label and behavior when a paused session exists (depends on #102 + #105)
+- [ ] #115 `EncounterRunnerView`: Pause action + session lifecycle wiring
 
 ---
 
@@ -364,20 +364,20 @@ Per ADR-0047.
 - Add `Credits.rtf` to bundle resources (Copy Bundle Resources build phase)
 
 **Issues for this milestone:**
-- [ ] `AppWindowMode` enum + `NavigationSplitView` 3-panel structure + column visibility transitions in `ContentView`
-- [ ] iPadOS segmented toolbar mode picker (`NSToolbarItemGroup` centered in toolbar, `ContentView`)
-- [ ] `EncounterAndPartyPanel` sidebar (prep mode)
-- [ ] `CompendiumUtilityPanel` right panel (prep mode)
-- [ ] `EncounterEditorView` conditional Browse button suppression on macOS/iPadOS
-- [ ] `Commands` block in `EncounterApp.swift`: File menu, Encounter menu, View menu + all keyboard shortcuts (ADR-0047)
-- [ ] Inspector toggle wiring: `.inspectorTrackingSeparator` + `.toggleInspector`; open by default in prep mode
-- [ ] Sidebar bottom bars: `EncounterAndPartyPanel` (encounter list section + party section)
-- [ ] Run button in encounter prep toolbar (contributed by `EncounterEditorView`)
-- [ ] Drag and drop: `CompendiumUtilityPanel` rows → `EncounterEditorView` adversary list
-- [ ] Window and panel size constraints: min window 900×560pt, sidebar 240–360pt, inspector 280–400pt
-- [ ] `@SceneStorage` state restoration for `AppWindowMode` and `selectedEncounterID`
-- [ ] Tooltips (`.help()`) on all prep-mode interactive controls
-- [ ] Mac polish: Dock menu override, Spotlight keywords (`Info.plist`), `Credits.rtf` in bundle
+- [ ] #116 `AppWindowMode` enum + `NavigationSplitView` 3-panel structure + column visibility transitions in `ContentView`
+- [ ] #117 iPadOS segmented toolbar mode picker (`NSToolbarItemGroup` centered in toolbar, `ContentView`)
+- [ ] #118 `EncounterAndPartyPanel` sidebar (prep mode)
+- [ ] #119 `CompendiumUtilityPanel` right panel (prep mode)
+- [ ] #120 `EncounterEditorView` conditional Browse button suppression on macOS/iPadOS
+- [ ] #121 `Commands` block in `EncounterApp.swift`: File menu, Encounter menu, View menu + all keyboard shortcuts (ADR-0047)
+- [ ] #122 Inspector toggle wiring: `.inspectorTrackingSeparator` + `.toggleInspector`; open by default in prep mode
+- [ ] #123 Sidebar bottom bars: `EncounterAndPartyPanel` (encounter list section + party section)
+- [ ] #124 Run button in encounter prep toolbar (contributed by `EncounterEditorView`)
+- [ ] #125 Drag and drop: `CompendiumUtilityPanel` rows → `EncounterEditorView` adversary list
+- [ ] #126 Window and panel size constraints: min window 900×560pt, sidebar 240–360pt, inspector 280–400pt
+- [ ] #127 `@SceneStorage` state restoration for `AppWindowMode` and `selectedEncounterID`
+- [ ] #128 Tooltips (`.help()`) on all prep-mode interactive controls
+- [ ] #129 Mac polish: Dock menu override, Spotlight keywords (`Info.plist`), `Credits.rtf` in bundle
 
 ### Milestone 5: macOS/iPadOS — Compendium Management Mode (2-panel)
 
@@ -409,10 +409,10 @@ Per ADR-0047.
 - All bottom bar buttons have `.help("…")` tooltips
 
 **Issues for this milestone:**
-- [ ] `CompendiumAdversaryListPanel` with grouped sections + filter + bottom bar actions (Add, Import, Export)
-- [ ] `AdversaryInspectorView` with read-only and edit paths
-- [ ] Inspector open by default in compendium mode
-- [ ] Tooltips on all compendium-mode interactive controls
+- [ ] #130 `CompendiumAdversaryListPanel` with grouped sections + filter + bottom bar actions (Add, Import, Export)
+- [ ] #131 `AdversaryInspectorView` with read-only and edit paths
+- [ ] #132 Inspector open by default in compendium mode
+- [ ] #133 Tooltips on all compendium-mode interactive controls
 
 ### Milestone 6: macOS/iPadOS — Run Mode (2-panel)
 
@@ -452,12 +452,12 @@ Per ADR-0047.
 - All run-mode toolbar and panel controls have `.help("…")` tooltips
 
 **Issues for this milestone:**
-- [ ] `RunnerListPanel` with adversary + player sections (Pause/End controls removed — they are in the toolbar)
-- [ ] `RunnerDetailPanel` for adversary/player detail in split
-- [ ] Run mode activation/deactivation wired through `AppWindowMode`
-- [ ] Run mode toolbar items: Pause, End, Fear Tracker (contributed by mode switch)
-- [ ] Inspector hidden by default in run mode
-- [ ] Tooltips on all run-mode interactive controls
+- [ ] #134 `RunnerListPanel` with adversary + player sections (Pause/End controls removed — they are in the toolbar)
+- [ ] #135 `RunnerDetailPanel` for adversary/player detail in split
+- [ ] #136 Run mode activation/deactivation wired through `AppWindowMode`
+- [ ] #137 Run mode toolbar items: Pause, End, Fear Tracker (contributed by mode switch)
+- [ ] #138 Inspector hidden by default in run mode
+- [ ] #139 Tooltips on all run-mode interactive controls
 
 ---
 
@@ -482,12 +482,12 @@ New file: `Encounter/Views/AdversaryCreatorForm.swift`
 - Edit mode: pre-fills all steps with existing local adversary data
 
 **Issues for this milestone:**
-- [ ] `ContentStore`: `saveLocalAdversary(_:)` and `deleteLocalAdversary(id:)` methods (unblocks all form steps)
-- [ ] `AdversaryCreatorForm` step 1: Identity + reference panel
-- [ ] `AdversaryCreatorForm` step 2: Stats + soft range indicators
-- [ ] `AdversaryCreatorForm` step 3: Attack & features list
-- [ ] `AdversaryCreatorForm` step 4: Review + save to local source
-- [ ] Edit mode: pre-fill from existing local adversary
+- [ ] #140 `ContentStore`: `saveLocalAdversary(_:)` and `deleteLocalAdversary(id:)` methods (unblocks all form steps)
+- [ ] #41 `AdversaryCreatorForm` step 1: Identity + reference panel
+- [ ] #42 `AdversaryCreatorForm` step 2: Stats + soft range indicators
+- [ ] #43 `AdversaryCreatorForm` step 3: Attack & features list
+- [ ] #44 `AdversaryCreatorForm` step 4: Review + save to local source
+- [ ] #141 Edit mode: pre-fill from existing local adversary
 
 ### Milestone 8: DHPack Export
 
@@ -498,8 +498,8 @@ New file: `Encounter/Views/DHPackExportSheet.swift`
 - "Export Selected" → assembles `DHPackContent` → writes temporary `.dhpack` → presents `ShareLink`
 
 **Issues for this milestone:**
-- [ ] `DHPackExportSheet` with multi-select and share sheet integration
-- [ ] `ContentStore`: `exportPack(adversaryIDs:) async -> URL` helper method
+- [ ] #21 `DHPackExportSheet` with multi-select and share sheet integration
+- [ ] #142 `ContentStore`: `exportPack(adversaryIDs:) async -> URL` helper method
 
 ---
 
