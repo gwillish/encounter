@@ -11,18 +11,87 @@ SwiftUI views.
 
 ## Testing Pyramid
 
-The four-tier pyramid is defined in `CLAUDE.md`. Short form:
+The five-tier pyramid is defined in `CLAUDE.md`. Short form:
 
 | Tier | Tool | Speed | Use for |
 |---|---|---|---|
 | 1 — Model | Swift Testing direct | ~0.1 ms | Model mutations, JSON decoding, persistence |
 | 2 — View structure | ViewInspector (`EncounterTests`) | ~1 ms | Element presence, bindings, AX labels, conditional render |
-| 3 — Visual | Xcode MCP `RenderPreview` | on-demand | Layout, colour, icon review during agent sessions |
-| 4 — End-to-end | XCUITest (`EncounterUITests`) | ~60 s | Full navigation flows, session lifecycle, real UIKit |
+| 3 — Snapshot | swift-snapshot-testing (`EncounterTests`, iOS Simulator) | ~50–100 ms | Visual regression — layout, colour, icon states as PNGs |
+| 4 — Visual | Xcode MCP `RenderPreview` | on-demand | Layout, colour, icon review during agent sessions |
+| 5 — End-to-end | XCUITest (`EncounterUITests`) | ~60 s | Full navigation flows, session lifecycle, real UIKit |
 
 **Decision rule:** if the assertion is "given this model state, the view should have this
-structure / label / binding behavior" → write a ViewInspector test. Only reach for XCUITest
-when the full running app is required.
+structure / label / binding behavior" → write a ViewInspector test. Add a snapshot test
+when the visual output itself matters (colour gradients, icon rendering, layout). Only
+reach for XCUITest when the full running app is required.
+
+---
+
+## Snapshot Testing
+
+`pointfreeco/swift-snapshot-testing` 1.19.2 — Tier 3 visual regression tests.
+
+### How it works
+
+- Tests are in `EncounterTests/` and guarded `#if os(iOS)`.
+- Reference PNGs live in `EncounterTests/__Snapshots__/<SuiteName>/`.
+- First run records (test fails by design). Subsequent runs compare pixel-for-pixel.
+- To regenerate: delete the PNG file and re-run.
+- Run on iOS Simulator (`platform=iOS Simulator,name=iPhone 17 Pro`), not macOS.
+  The macOS app sandbox blocks filesystem writes; the Simulator process does not.
+
+### Why iOS Simulator only
+
+macOS unit tests run inside `Encounter.app`'s sandboxed process. The app sandbox
+blocks writes to the source tree, so `assertSnapshot` can't write `__Snapshots__/`.
+iOS Simulator test processes run outside any app sandbox and CAN write to host
+filesystem paths (the standard way snapshot libraries work on iOS).
+
+### Running snapshot tests
+
+```bash
+# Record new snapshots (first run — will fail, that's expected)
+xcodebuild test \
+  -scheme Encounter \
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
+  -only-testing:EncounterTests/TierBadgeViewSnapshotTests
+
+# Verify comparison passes (second run)
+xcodebuild test \
+  -scheme Encounter \
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
+  -only-testing:EncounterTests/TierBadgeViewSnapshotTests
+```
+
+### Parallel clone naming
+
+xcodebuild runs Swift Testing suites in parallel using multiple simulator clones.
+Each clone writes its own snapshot copy: `normal.1.png` (clone 1), `normal.2.png`
+(clone 2). Both files are committed; both are used as references on subsequent runs.
+
+### Adding a new snapshot test
+
+1. Create `MySuiteSnapshotTests.swift` in `EncounterTests/`, wrapped in `#if os(iOS)`.
+2. Import `SnapshotTesting` and call `assertSnapshot(of: myView, as: .image(layout: SnapshotLayout.row))`.
+3. Run on iOS Simulator once to record; run again to verify.
+4. Commit the PNG files in `__Snapshots__/` alongside the test file.
+
+### Layout presets (`SnapshotHelpers.swift`)
+
+```swift
+SnapshotLayout.row    // 390 × 80 pt  — component row
+SnapshotLayout.card   // 390 × 200 pt — card panel
+SnapshotLayout.badge  // 200 × 44 pt  — small badge
+```
+
+### Current suites
+
+| Suite | Components | States |
+|---|---|---|
+| `TierBadgeViewSnapshotTests` | `TierBadgeView` | below, above, matching tier |
+| `PipTrackSnapshotTests` | `PipTrack` | HP full/half/critical, stress, armor, text fallback |
+| `AdversaryRunnerRowSnapshotTests` | `AdversaryRunnerRow` | normal, damaged, high stress, conditions, solo, defeated, unknown |
 
 ---
 

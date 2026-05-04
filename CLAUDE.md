@@ -158,13 +158,19 @@ See `Encounter/Resources/README.md` for license attribution.
 |---|---|---|---|
 | **1 — Model** | Swift Testing direct | ~0.1 ms | Model mutations, JSON decoding, persistence logic |
 | **2 — View structure** | ViewInspector (EncounterTests) | ~1 ms | Element presence, bindings, AX labels, conditional render |
-| **3 — Visual** | Xcode MCP `mcp__xcode__RenderPreview` | on-demand | Layout, colour, icon review during agent sessions |
-| **4 — End-to-end** | XCUITest (EncounterUITests) | ~60 s | Full navigation flows, session lifecycle, real UIKit |
+| **3 — Snapshot** | swift-snapshot-testing (EncounterTests, iOS Simulator) | ~50–100 ms | Visual regression — layout, colour, icon states captured as PNGs |
+| **4 — Visual** | Xcode MCP `mcp__xcode__RenderPreview` | on-demand | Layout, colour, icon review during agent sessions |
+| **5 — End-to-end** | XCUITest (EncounterUITests) | ~60 s | Full navigation flows, session lifecycle, real UIKit |
 
 **Decision rule:** if the assertion can be expressed as "given this model state, the view
 should have this structure / label / binding behaviour" → write a ViewInspector test in
-`EncounterTests`. Only reach for XCUITest when the full running app and real UIKit are
-required.
+`EncounterTests`. Add a snapshot test when the visual output itself is what matters (colour
+gradients, icon rendering, layout at size). Only reach for XCUITest when the full running
+app and real UIKit are required.
+
+**Snapshot tests run on iOS Simulator only** (`#if os(iOS)` guard). Reference PNGs live in
+`EncounterTests/__Snapshots__/` and are committed to the repo. Delete a PNG and re-run to
+regenerate it.
 
 ### Dependency injection rule
 

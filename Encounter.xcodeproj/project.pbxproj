@@ -13,6 +13,7 @@
 		5B67DAEC49BC4CA58D0F68CB /* DHKit in Frameworks */ = {isa = PBXBuildFile; productRef = 696E5A197EC643C8822586E5 /* DHKit */; };
 		720CFEA27FDB4C618D811F30 /* DHModels in Frameworks */ = {isa = PBXBuildFile; productRef = 372D78F7B37E42698659576B /* DHModels */; };
 		CF8BC2B4C4DFAF5CE05866D8 /* ViewInspector in Frameworks */ = {isa = PBXBuildFile; productRef = 5C13F094DDFC652F1F5FD889 /* ViewInspector */; };
+		E2B6361671554B1E9DFFC927 /* SnapshotTesting in Frameworks */ = {isa = PBXBuildFile; productRef = 28130F1F34EC4A899761668E /* SnapshotTesting */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -87,6 +88,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				CF8BC2B4C4DFAF5CE05866D8 /* ViewInspector in Frameworks */,
+				E2B6361671554B1E9DFFC927 /* SnapshotTesting in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -169,6 +171,7 @@
 			name = EncounterTests;
 			packageProductDependencies = (
 				5C13F094DDFC652F1F5FD889 /* ViewInspector */,
+				28130F1F34EC4A899761668E /* SnapshotTesting */,
 			);
 			productName = EncounterTests;
 			productReference = 1A8F7BA72F660D3900548E3A /* EncounterTests.xctest */;
@@ -239,6 +242,7 @@
 				1AD61A3E2F74D40B00296F39 /* XCRemoteSwiftPackageReference "swift-oslog" */,
 				6E36C5CB9EA54972BB735840 /* XCRemoteSwiftPackageReference "DHModels" */,
 				F36026598457CF9B8914E497 /* XCRemoteSwiftPackageReference "ViewInspector" */,
+				83D04672906E469FA18C3143 /* XCRemoteSwiftPackageReference "swift-snapshot-testing" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 1A8F7B9B2F660D3800548E3A /* Products */;
@@ -692,6 +696,14 @@
 				kind = branch;
 			};
 		};
+		83D04672906E469FA18C3143 /* XCRemoteSwiftPackageReference "swift-snapshot-testing" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/pointfreeco/swift-snapshot-testing";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.17.0;
+			};
+		};
 		F36026598457CF9B8914E497 /* XCRemoteSwiftPackageReference "ViewInspector" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/nalexn/ViewInspector";
@@ -717,6 +729,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 1AD61A3E2F74D40B00296F39 /* XCRemoteSwiftPackageReference "swift-oslog" */;
 			productName = OSLogging;
+		};
+		28130F1F34EC4A899761668E /* SnapshotTesting */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 83D04672906E469FA18C3143 /* XCRemoteSwiftPackageReference "swift-snapshot-testing" */;
+			productName = SnapshotTesting;
 		};
 		372D78F7B37E42698659576B /* DHModels */ = {
 			isa = XCSwiftPackageProductDependency;
