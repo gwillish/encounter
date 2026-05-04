@@ -172,6 +172,15 @@ app and real UIKit are required.
 `EncounterTests/__Snapshots__/` and are committed to the repo. Delete a PNG and re-run to
 regenerate it.
 
+```bash
+xcodebuild test \
+  -scheme Encounter \
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro'
+```
+
+First run records new snapshots (tests fail by design). Second run compares and passes.
+To regenerate a single suite: add `-only-testing:EncounterTests/<SuiteName>`.
+
 ### Dependency injection rule
 
 `@Environment` is for system-provided SwiftUI values only (`\.dismiss`, `\.scenePhase`,
