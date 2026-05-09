@@ -220,6 +220,62 @@ import Testing
     #expect(registry.sessions.isEmpty)
   }
 
+  // MARK: - SessionPhase persistence
+
+  @Test func pausedPhaseRoundTrips() async throws {
+    let dir = tempDir()
+    defer { try? FileManager.default.removeItem(at: dir) }
+    let store = SessionStore(directory: dir)
+    let (session, _) = makeSession()
+    session.pause()
+
+    await store.save(session)
+
+    let registry = SessionRegistry()
+    await store.load(into: registry)
+
+    let defID = try #require(session.definitionID)
+    let restored = try #require(registry.sessions[defID])
+    #expect(restored.phase == .paused)
+  }
+
+  @Test func runningPhaseRoundTrips() async throws {
+    let dir = tempDir()
+    defer { try? FileManager.default.removeItem(at: dir) }
+    let store = SessionStore(directory: dir)
+    let (session, _) = makeSession()
+    // pause then resume to exercise the full cycle
+    session.pause()
+    session.resume()
+
+    await store.save(session)
+
+    let registry = SessionRegistry()
+    await store.load(into: registry)
+
+    let defID = try #require(session.definitionID)
+    let restored = try #require(registry.sessions[defID])
+    #expect(restored.phase == .running)
+  }
+
+  @Test func pausedSessionLoadsIntoRegistryWithoutAutoResume() async throws {
+    let dir = tempDir()
+    defer { try? FileManager.default.removeItem(at: dir) }
+    let store = SessionStore(directory: dir)
+    let (session, _) = makeSession()
+    session.pause()
+    await store.save(session)
+
+    let registry = SessionRegistry()
+    await store.load(into: registry)
+
+    // The session must be in the registry so the UI can show an in-progress badge,
+    // but it must remain paused — SessionStore never auto-resumes a loaded session.
+    let defID = try #require(session.definitionID)
+    let restored = try #require(registry.sessions[defID])
+    #expect(restored.phase == .paused)
+  }
+
   // MARK: - corrupt file resilience
 
   @Test func loadIgnoresCorruptFile() async throws {
