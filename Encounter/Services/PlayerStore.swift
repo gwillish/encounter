@@ -133,7 +133,7 @@ public final class PlayerStore {
   }
 
   /// Reveal a previously hidden player. No-op if not hidden.
-  public func showPlayer(id: UUID) async {
+  public func revealPlayer(id: UUID) async {
     hiddenPlayerIDs.remove(id)
     await persist()
   }
@@ -163,7 +163,7 @@ public final class PlayerStore {
 
   // MARK: - Load
 
-  /// Reads `players.json` and `party.json` from `directory`.
+  /// Reads `players.json`, `party.json`, and `hidden-players.json` from `directory`.
   ///
   /// Missing files are treated as empty state (first launch). Corrupt files
   /// are skipped and `loadError` is set.
