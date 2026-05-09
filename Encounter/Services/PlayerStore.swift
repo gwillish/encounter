@@ -50,12 +50,17 @@ public final class PlayerStore {
   /// Non-nil if the last `load()` or a persist operation failed.
   public private(set) var loadError: (any Error)?
 
+  /// Player IDs that are hidden from the active encounter roster.
+  /// This is a roster-wide flag — independent of party membership.
+  public private(set) var hiddenPlayerIDs: Set<UUID> = []
+
   // MARK: - Storage
 
   private var directory: URL
 
   private var playersURL: URL { directory.appending(path: "players.json") }
   private var partyURL: URL { directory.appending(path: "party.json") }
+  private var hiddenURL: URL { directory.appending(path: "hidden-players.json") }
 
   // MARK: - Init
 
@@ -80,13 +85,16 @@ public final class PlayerStore {
     directory = newDirectory
     players = []
     party = Party(name: "Active Party")
+    hiddenPlayerIDs = []
   }
 
   // MARK: - Computed
 
-  /// Active party members resolved in party order.
+  /// Active party members resolved in party order, excluding hidden players.
   public var activePartyPlayers: [Player] {
-    party.playerIDs.compactMap { id in players.first { $0.id == id } }
+    party.playerIDs
+      .filter { !hiddenPlayerIDs.contains($0) }
+      .compactMap { id in players.first { $0.id == id } }
   }
 
   // MARK: - Player Operations
@@ -107,11 +115,26 @@ public final class PlayerStore {
     await persist()
   }
 
-  /// Removes the player from the roster and from the party, then persists.
+  /// Removes the player from the roster, the party, and hidden IDs, then persists.
   /// No-op if the ID is not found.
   public func deletePlayer(id: UUID) async {
     players.removeAll { $0.id == id }
     party.playerIDs.removeAll { $0 == id }
+    hiddenPlayerIDs.remove(id)
+    await persist()
+  }
+
+  // MARK: - Hide / Show
+
+  /// Hide a player from the active encounter roster. No-op if already hidden.
+  public func hidePlayer(id: UUID) async {
+    hiddenPlayerIDs.insert(id)
+    await persist()
+  }
+
+  /// Reveal a previously hidden player. No-op if not hidden.
+  public func showPlayer(id: UUID) async {
+    hiddenPlayerIDs.remove(id)
     await persist()
   }
 
@@ -130,10 +153,11 @@ public final class PlayerStore {
     await persist()
   }
 
-  /// Wipes all players and resets the party to empty. Requires confirmation in UI.
+  /// Wipes all players, resets the party to empty, and clears hidden IDs.
   public func resetAll() async {
     players = []
     party = Party(name: "Active Party")
+    hiddenPlayerIDs = []
     await persist()
   }
 
@@ -159,6 +183,11 @@ public final class PlayerStore {
       {
         party = decoded
       }
+      if let data = try? Data(contentsOf: hiddenURL),
+        let decoded = try? decoder.decode(Set<UUID>.self, from: data)
+      {
+        hiddenPlayerIDs = decoded
+      }
     } catch {
       loadError = error
     }
@@ -175,9 +204,11 @@ public final class PlayerStore {
   private func persist() async {
     let playersCopy = players
     let partyCopy = party
+    let hiddenCopy = hiddenPlayerIDs
     do {
       try await Self.writeJSON(playersCopy, to: playersURL)
       try await Self.writeJSON(partyCopy, to: partyURL)
+      try await Self.writeJSON(hiddenCopy, to: hiddenURL)
     } catch {
       loadError = error
     }
