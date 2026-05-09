@@ -8,8 +8,7 @@ import Testing
 
 @testable import Encounter
 
-@MainActor
-@Suite("AdversaryFilterBar.filter")
+@Suite("[Adversary].filtered")
 struct AdversaryFilterBarTests {
 
   private let goblinMinion = Adversary(
@@ -35,56 +34,58 @@ struct AdversaryFilterBarTests {
   // MARK: - Search text
 
   @Test func emptySearchReturnsAll() {
-    let result = AdversaryFilterBar.filter(all, searchText: "", tier: nil, type: nil)
+    let result = all.filtered(searchText: "", tier: nil, type: nil)
     #expect(result.count == 3)
   }
 
   @Test func searchTextFiltersName() {
-    let result = AdversaryFilterBar.filter(all, searchText: "Goblin", tier: nil, type: nil)
+    let result = all.filtered(searchText: "Goblin", tier: nil, type: nil)
     #expect(result.map(\.id) == ["goblin"])
   }
 
   @Test func searchTextIsCaseInsensitive() {
-    let result = AdversaryFilterBar.filter(all, searchText: "goblin", tier: nil, type: nil)
+    let result = all.filtered(searchText: "goblin", tier: nil, type: nil)
     #expect(result.map(\.id) == ["goblin"])
   }
 
   @Test func searchTextIsPartialMatch() {
-    let result = AdversaryFilterBar.filter(all, searchText: "shadow", tier: nil, type: nil)
+    let result = all.filtered(searchText: "shadow", tier: nil, type: nil)
     #expect(result.map(\.id) == ["shadow-skulk"])
   }
 
   // MARK: - Tier filter
 
   @Test func nilTierReturnsAll() {
-    let result = AdversaryFilterBar.filter(all, searchText: "", tier: nil, type: nil)
-    #expect(result.count == 3)
+    // nil tier does not filter; type=.bruiser confirms orcBruiser (tier 2) is not excluded
+    let result = all.filtered(searchText: "", tier: nil, type: .bruiser)
+    #expect(result.map(\.id) == ["orc-bruiser"])
   }
 
   @Test func tierFilterIncludesOnlyMatchingTier() {
-    let result = AdversaryFilterBar.filter(all, searchText: "", tier: 1, type: nil)
+    let result = all.filtered(searchText: "", tier: 1, type: nil)
     #expect(result.map(\.id).sorted() == ["goblin", "shadow-skulk"])
   }
 
   @Test func tierFilterExcludesNonMatchingTier() {
-    let result = AdversaryFilterBar.filter(all, searchText: "", tier: 3, type: nil)
+    let result = all.filtered(searchText: "", tier: 3, type: nil)
     #expect(result.isEmpty)
   }
 
   // MARK: - Type filter
 
   @Test func nilTypeReturnsAll() {
-    let result = AdversaryFilterBar.filter(all, searchText: "", tier: nil, type: nil)
-    #expect(result.count == 3)
+    // nil type does not filter; tier=1 confirms both tier-1 types are returned
+    let result = all.filtered(searchText: "", tier: 1, type: nil)
+    #expect(result.map(\.id).sorted() == ["goblin", "shadow-skulk"])
   }
 
   @Test func typeFilterIncludesOnlyMatchingType() {
-    let result = AdversaryFilterBar.filter(all, searchText: "", tier: nil, type: .minion)
+    let result = all.filtered(searchText: "", tier: nil, type: .minion)
     #expect(result.map(\.id) == ["goblin"])
   }
 
   @Test func typeFilterExcludesNonMatchingType() {
-    let result = AdversaryFilterBar.filter(all, searchText: "", tier: nil, type: .solo)
+    let result = all.filtered(searchText: "", tier: nil, type: .solo)
     #expect(result.isEmpty)
   }
 
@@ -92,23 +93,42 @@ struct AdversaryFilterBarTests {
 
   @Test func searchAndTierComposeWithAND() {
     // Both goblin and shadow-skulk are tier 1; only goblin matches "Goblin"
-    let result = AdversaryFilterBar.filter(all, searchText: "Goblin", tier: 1, type: nil)
+    let result = all.filtered(searchText: "Goblin", tier: 1, type: nil)
     #expect(result.map(\.id) == ["goblin"])
   }
 
   @Test func searchAndTypeComposeWithAND() {
-    // Both goblin and orc-bruiser could match "o"; only orc-bruiser is .bruiser
-    let result = AdversaryFilterBar.filter(all, searchText: "o", tier: nil, type: .bruiser)
+    let result = all.filtered(searchText: "o", tier: nil, type: .bruiser)
     #expect(result.map(\.id) == ["orc-bruiser"])
   }
 
   @Test func allThreeFiltersComposeWithAND() {
-    let result = AdversaryFilterBar.filter(all, searchText: "Goblin", tier: 1, type: .minion)
+    // "o" matches all three adversaries; tier 1 narrows to goblin + shadow-skulk;
+    // type .minion eliminates shadow-skulk — each filter contributes.
+    let result = all.filtered(searchText: "o", tier: 1, type: .minion)
     #expect(result.map(\.id) == ["goblin"])
   }
 
   @Test func composedFiltersYieldEmptyWhenNoMatch() {
-    let result = AdversaryFilterBar.filter(all, searchText: "Goblin", tier: 2, type: .minion)
+    let result = all.filtered(searchText: "Goblin", tier: 2, type: .minion)
     #expect(result.isEmpty)
+  }
+
+  // MARK: - Edge cases
+
+  @Test func emptyArrayReturnsEmpty() {
+    let result = [Adversary]().filtered(searchText: "Goblin", tier: 1, type: .minion)
+    #expect(result.isEmpty)
+  }
+
+  @Test func whitespaceSearchReturnsEmpty() {
+    // Whitespace is treated as a non-empty search string — no results
+    let result = all.filtered(searchText: "   ", tier: nil, type: nil)
+    #expect(result.isEmpty)
+  }
+
+  @Test func multiWordSearchMatchesFullName() {
+    let result = all.filtered(searchText: "Orc Bruiser", tier: nil, type: nil)
+    #expect(result.map(\.id) == ["orc-bruiser"])
   }
 }
