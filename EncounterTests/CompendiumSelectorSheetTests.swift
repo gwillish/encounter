@@ -40,12 +40,17 @@ struct CompendiumSelectorSheetTests {
     )
   }
 
+  // MARK: - Filter bar
+
   @Test func showsAdversaryFilterBar() throws {
     let sut = makeSUT()
-    // AdversaryFilterBar renders tier and type Pickers; at least 2 should be present.
-    let pickers = try sut.inspect().findAll(ViewType.Picker.self)
-    #expect(pickers.count >= 2)
+    // "All tiers" is a unique string rendered only by AdversaryFilterBar's tier Picker.
+    let texts = try sut.inspect().findAll(ViewType.Text.self).compactMap { try? $0.string() }
+    #expect(texts.contains("All tiers"), "AdversaryFilterBar tier picker should be present")
+    #expect(texts.contains("All types"), "AdversaryFilterBar type picker should be present")
   }
+
+  // MARK: - Adversary rows
 
   @Test func adversaryRowTapCallsOnSelect() throws {
     let goblin = Self.makeAdversary(id: "goblin", name: "Goblin")
@@ -63,15 +68,23 @@ struct CompendiumSelectorSheetTests {
     #expect(selected?.id == "goblin")
   }
 
-  @Test func importDHPackButtonPresent() throws {
+  @Test func emptyCompendiumShowsEmptyState() throws {
     let sut = makeSUT()
     let texts = try sut.inspect().findAll(ViewType.Text.self).compactMap { try? $0.string() }
-    #expect(texts.contains("Import DHPack"))
+    #expect(texts.contains("No Adversaries"))
   }
+
+  // MARK: - Toolbar buttons
 
   @Test func doneButtonPresent() throws {
     let sut = makeSUT()
     let texts = try sut.inspect().findAll(ViewType.Text.self).compactMap { try? $0.string() }
     #expect(texts.contains("Done"))
+  }
+
+  @Test func importDHPackButtonPresent() throws {
+    let sut = makeSUT()
+    let texts = try sut.inspect().findAll(ViewType.Text.self).compactMap { try? $0.string() }
+    #expect(texts.contains("Import DHPack"))
   }
 }

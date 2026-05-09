@@ -12,6 +12,12 @@ import DHModels
 import SwiftUI
 import UniformTypeIdentifiers
 
+extension UTType {
+  // Force-unwrap is intentional: type is declared in this app's Info.plist.
+  // A nil result means the identifier was mistyped — crash loudly at dev time.
+  fileprivate static let dhpack = UTType("gwillish.Encounter.dhpack")!
+}
+
 struct CompendiumSelectorSheet: View {
   let compendium: Compendium
   let contentStore: ContentStore
@@ -33,20 +39,15 @@ struct CompendiumSelectorSheet: View {
 
   var body: some View {
     NavigationStack {
-      VStack(spacing: 0) {
-        AdversaryFilterBar(
-          searchText: $searchText,
-          selectedTier: $selectedTier,
-          selectedType: $selectedType
-        )
-        Divider()
+      Group {
         if filteredAdversaries.isEmpty {
           ContentUnavailableView(
             "No Adversaries",
             systemImage: "magnifyingglass",
             description: Text("Try a different search or filter.")
           )
-          .frame(maxHeight: .infinity)
+          .frame(maxWidth: .infinity, maxHeight: .infinity)
+          .accessibilityIdentifier("compendium.selector-sheet.empty-state")
         } else {
           List(filteredAdversaries) { adversary in
             Button {
@@ -56,10 +57,13 @@ struct CompendiumSelectorSheet: View {
               AdversaryRow(adversary: adversary)
             }
             .buttonStyle(.plain)
-            .accessibilityIdentifier("compendium.adversary-row")
-            .accessibilityValue(adversary.name)
+            .accessibilityIdentifier("compendium.adversary-row.\(adversary.id)")
+            .accessibilityLabel(adversary.name)
           }
         }
+      }
+      .safeAreaInset(edge: .top, spacing: 0) {
+        filterBarHeader
       }
       .navigationTitle("Add Adversary")
       #if os(iOS)
@@ -67,7 +71,7 @@ struct CompendiumSelectorSheet: View {
       #endif
       .accessibilityIdentifier("compendium.selector-sheet")
       .toolbar {
-        ToolbarItem(placement: .cancellationAction) {
+        ToolbarItem(placement: .confirmationAction) {
           Button("Done") { dismiss() }
             .accessibilityIdentifier("compendium.selector-sheet.done-button")
         }
@@ -82,7 +86,7 @@ struct CompendiumSelectorSheet: View {
       }
       .fileImporter(
         isPresented: $isImporting,
-        allowedContentTypes: [UTType("gwillish.Encounter.dhpack") ?? .json]
+        allowedContentTypes: [.dhpack]
       ) { result in
         guard case .success(let url) = result else { return }
         guard url.startAccessingSecurityScopedResource() else { return }
@@ -92,6 +96,18 @@ struct CompendiumSelectorSheet: View {
         }
       }
     }
+  }
+
+  private var filterBarHeader: some View {
+    VStack(spacing: 0) {
+      AdversaryFilterBar(
+        searchText: $searchText,
+        selectedTier: $selectedTier,
+        selectedType: $selectedType
+      )
+      Divider()
+    }
+    .background(.regularMaterial)
   }
 }
 
