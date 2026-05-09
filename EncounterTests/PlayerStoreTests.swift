@@ -321,11 +321,16 @@ import Testing
 
   @Test func hidePhantomIDIsTrackedButDoesNotAffectActivePartyPlayers() async {
     let store = makeStore()
+    let real = makePlayer(name: "Aric")
+    await store.addPlayer(real)
+    await store.addToParty(id: real.id)
     let phantom = UUID()
-    // ID not in players or party.
+    // Phantom ID — not in players or party.
     await store.hidePlayer(id: phantom)
     #expect(store.hiddenPlayerIDs.contains(phantom))
-    #expect(store.activePartyPlayers.isEmpty)
+    // Real party member is unaffected.
+    #expect(store.activePartyPlayers.count == 1)
+    #expect(store.activePartyPlayers[0].id == real.id)
   }
 
   @Test func deletePlayerAlsoRemovesFromHiddenIDs() async {
@@ -352,7 +357,7 @@ import Testing
     #expect(store2.hiddenPlayerIDs.contains(player.id))
   }
 
-  @Test func revealAfterReloadRoundTrips() async {
+  @Test func hideThenRevealPersistsEmptyHiddenState() async {
     let dir = FileManager.default.temporaryDirectory
       .appending(path: UUID().uuidString, directoryHint: .isDirectory)
     defer { try? FileManager.default.removeItem(at: dir) }
@@ -387,12 +392,22 @@ import Testing
     let dir = FileManager.default.temporaryDirectory
       .appending(path: UUID().uuidString, directoryHint: .isDirectory)
     defer { try? FileManager.default.removeItem(at: dir) }
-    try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+    // Seed a valid player so we can confirm other files still load.
+    let seed = PlayerStore(directory: dir)
+    let player = makePlayer()
+    await seed.addPlayer(player)
+    // Overwrite hidden-players.json with corrupt data.
     let corruptData = Data("not valid json".utf8)
     try? corruptData.write(to: dir.appending(path: "hidden-players.json"))
 
     let store = PlayerStore(directory: dir)
     await store.load()
+    // Corrupt hidden file silently degrades — no error surfaced.
+    #expect(store.loadError == nil)
+    // Other files (players.json) were still read correctly.
+    #expect(store.players.count == 1)
+    #expect(store.players[0].id == player.id)
+    // Hidden state falls back to empty.
     #expect(store.hiddenPlayerIDs.isEmpty)
   }
 
@@ -403,6 +418,36 @@ import Testing
     await store.hidePlayer(id: player.id)
     await store.resetAll()
     #expect(store.hiddenPlayerIDs.isEmpty)
+  }
+
+  @Test func resetAllPersistsEmptyHiddenIDs() async {
+    let dir = FileManager.default.temporaryDirectory
+      .appending(path: UUID().uuidString, directoryHint: .isDirectory)
+    defer { try? FileManager.default.removeItem(at: dir) }
+    let store1 = PlayerStore(directory: dir)
+    let player = makePlayer()
+    await store1.addPlayer(player)
+    await store1.hidePlayer(id: player.id)
+    await store1.resetAll()
+
+    let store2 = PlayerStore(directory: dir)
+    await store2.load()
+    #expect(store2.hiddenPlayerIDs.isEmpty)
+  }
+
+  @Test func hidingMiddlePlayerPreservesPartyOrder() async {
+    let store = makeStore()
+    let p1 = makePlayer(name: "Zara")
+    let p2 = makePlayer(name: "Aric")
+    let p3 = makePlayer(name: "Mira")
+    await store.addPlayer(p1)
+    await store.addPlayer(p2)
+    await store.addPlayer(p3)
+    await store.addToParty(id: p1.id)
+    await store.addToParty(id: p2.id)
+    await store.addToParty(id: p3.id)
+    await store.hidePlayer(id: p2.id)
+    #expect(store.activePartyPlayers.map(\.name) == ["Zara", "Mira"])
   }
 
   // MARK: - relocate
