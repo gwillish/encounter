@@ -173,8 +173,12 @@ Single root screen for the iOS encounters workflow.
 | Element | Identifier |
 |---|---|
 | Root mode toggle | `root.mode-toggle` |
-| Encounter row | `root.encounter-row` |
-| Party row | `root.party-row` |
+| New Encounter button | `library.create-button` |
+| New name field (alert) | `library.new-name-field` |
+| Rename field (alert) | `library.rename-field` |
+| Add Player button | `party.add-button` |
+| Encounter row | `root.encounter-row.<encounter-id>` |
+| Party row | `root.party-row.<player-id>` |
 | In-progress badge | `library.row.in-progress-badge` |
 | Resume button (row) | `library.row.resume-button` |
 | Hide player button | `party.hide-button` |

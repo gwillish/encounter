@@ -29,6 +29,7 @@
     @State private var isConfirmingDeleteEncounter = false
     @State private var deleteEncounterTarget: EncounterDefinition?
     @State private var actionError: String?
+    @State private var isShowingActionError = false
     @State private var isAddingPlayer = false
     @State private var editPlayerTarget: Player?
     @State private var deletePlayerTarget: Player?
@@ -132,6 +133,11 @@
           Task { await playerStore.updatePlayer(updated) }
         }
       }
+      .alert("Action Failed", isPresented: $isShowingActionError) {
+        Button("OK", role: .cancel) { actionError = nil }
+      } message: {
+        Text(actionError ?? "")
+      }
     }
 
     // MARK: - Toolbar
@@ -180,7 +186,7 @@
                   isPaused: pausedDefinitionIDs.contains(definition.id)
                 )
               }
-              .accessibilityIdentifier("root.encounter-row")
+              .accessibilityIdentifier("root.encounter-row.\(definition.id)")
               .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                 Button(role: .destructive) {
                   beginDeleteEncounter(definition)
@@ -242,7 +248,7 @@
         }
       }
       .opacity(hidden ? 0.5 : 1.0)
-      .accessibilityIdentifier("root.party-row")
+      .accessibilityIdentifier("root.party-row.\(player.id)")
       .accessibilityLabel(hidden ? "\(player.name), hidden" : player.name)
       .swipeActions(edge: .trailing, allowsFullSwipe: false) {
         Button(role: .destructive) {
@@ -295,6 +301,7 @@
           try await store.create(name: finalName)
         } catch {
           actionError = error.localizedDescription
+          isShowingActionError = true
         }
       }
     }
@@ -308,14 +315,14 @@
     private func commitRenameEncounter() {
       guard var target = renameTarget else { return }
       let trimmed = renameText.trimmingCharacters(in: .whitespaces)
-      guard !trimmed.isEmpty else { return }
-      target.name = trimmed
+      target.name = trimmed.isEmpty ? target.name : trimmed
       renameTarget = nil
       Task {
         do {
           try await store.save(target)
         } catch {
           actionError = error.localizedDescription
+          isShowingActionError = true
         }
       }
     }
@@ -333,6 +340,7 @@
           try await store.delete(id: target.id)
         } catch {
           actionError = error.localizedDescription
+          isShowingActionError = true
         }
       }
     }
