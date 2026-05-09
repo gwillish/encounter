@@ -30,6 +30,14 @@ struct EncounterLibraryView: View {
   @State private var isShowingSources = false
   @State private var isShowingAbout = false
 
+  private var pausedDefinitionIDs: Set<UUID> {
+    Set(
+      sessionRegistry.sessions.values
+        .filter { $0.phase == .paused }
+        .compactMap { $0.definitionID }
+    )
+  }
+
   var body: some View {
     Group {
       if store.isLoading {
@@ -45,7 +53,7 @@ struct EncounterLibraryView: View {
           onDelete: beginDelete,
           playerStore: playerStore,
           compendium: compendium,
-          sessionRegistry: sessionRegistry
+          pausedDefinitionIDs: pausedDefinitionIDs
         )
       }
     }

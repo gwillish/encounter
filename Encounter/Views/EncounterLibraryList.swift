@@ -16,19 +16,11 @@ struct EncounterLibraryList: View {
   let onDelete: (EncounterDefinition) -> Void
   let playerStore: PlayerStore
   let compendium: Compendium
-  let sessionRegistry: SessionRegistry
+  let pausedDefinitionIDs: Set<UUID>
 
   private var partyCount: Int? {
     let count = playerStore.activePartyPlayers.count
     return count > 0 ? count : nil
-  }
-
-  private var pausedDefinitionIDs: Set<UUID> {
-    Set(
-      sessionRegistry.sessions.values
-        .filter { $0.phase == .paused }
-        .compactMap { $0.definitionID }
-    )
   }
 
   var body: some View {
@@ -107,7 +99,7 @@ struct EncounterLibraryList: View {
       onDelete: { _ in },
       playerStore: PreviewData.playerStore(),
       compendium: PreviewData.compendium(),
-      sessionRegistry: PreviewData.sessionRegistry()
+      pausedDefinitionIDs: []
     )
   }
 }

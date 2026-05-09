@@ -77,28 +77,34 @@ struct EncounterLibraryRowTests {
 
   // MARK: - isPaused badge and resume label
 
-  @Test func showsInProgressBadgeWhenPaused() throws {
+  @Test func pausedRowShowsBadgeAndResumeLabel() throws {
     let def = EncounterDefinition(name: "Test")
     let sut = EncounterLibraryRow(
       definition: def, playerCount: nil, compendium: Compendium(), isPaused: true)
     let strings = try sut.inspect().findAll(ViewType.Text.self).compactMap { try? $0.string() }
     #expect(strings.contains("In Progress"))
-  }
-
-  @Test func showsResumeLabelWhenPaused() throws {
-    let def = EncounterDefinition(name: "Test")
-    let sut = EncounterLibraryRow(
-      definition: def, playerCount: nil, compendium: Compendium(), isPaused: true)
-    let strings = try sut.inspect().findAll(ViewType.Text.self).compactMap { try? $0.string() }
     #expect(strings.contains("Resume"))
   }
 
-  @Test func showsNeitherBadgeNorResumeLabelWhenNotPaused() throws {
+  @Test func notPausedRowShowsNeitherBadgeNorResumeLabel() throws {
+    // playerCount: 4 with no adversaries produces "No adversaries added" as the caption,
+    // confirming that other text is rendered while badge/resume are absent.
     let def = EncounterDefinition(name: "Test")
     let sut = EncounterLibraryRow(
-      definition: def, playerCount: nil, compendium: Compendium(), isPaused: false)
+      definition: def, playerCount: 4, compendium: Compendium(), isPaused: false)
     let strings = try sut.inspect().findAll(ViewType.Text.self).compactMap { try? $0.string() }
+    #expect(strings.contains("No adversaries added"), "Caption should be present as a control")
     #expect(!strings.contains("In Progress"))
     #expect(!strings.contains("Resume"))
+  }
+
+  @Test func pausedRowSuppressesDifficultySummary() throws {
+    // A row that would normally show a difficulty caption should show "Resume" instead.
+    let def = EncounterDefinition(name: "Test")
+    let sut = EncounterLibraryRow(
+      definition: def, playerCount: 4, compendium: Compendium(), isPaused: true)
+    let strings = try sut.inspect().findAll(ViewType.Text.self).compactMap { try? $0.string() }
+    #expect(strings.contains("Resume"))
+    #expect(!strings.contains("No adversaries added"))
   }
 }
