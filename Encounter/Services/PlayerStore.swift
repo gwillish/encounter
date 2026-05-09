@@ -126,7 +126,9 @@ public final class PlayerStore {
 
   // MARK: - Hide / Show
 
-  /// Hide a player from the active encounter roster. No-op if already hidden.
+  /// Hide a UUID from the active encounter roster. No-op if already hidden.
+  /// The UUID need not belong to a current player — phantom IDs are tracked and
+  /// will persist until explicitly revealed or `resetAll()` is called.
   public func hidePlayer(id: UUID) async {
     hiddenPlayerIDs.insert(id)
     await persist()
