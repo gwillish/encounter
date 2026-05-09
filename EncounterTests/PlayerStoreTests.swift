@@ -247,6 +247,112 @@ import Testing
     #expect(store.loadError == nil)
   }
 
+  // MARK: - hidePlayer / showPlayer
+
+  @Test func hidePlayerAddsToHiddenIDs() async {
+    let store = makeStore()
+    let player = makePlayer()
+    await store.addPlayer(player)
+    await store.hidePlayer(id: player.id)
+    #expect(store.hiddenPlayerIDs.contains(player.id))
+  }
+
+  @Test func showPlayerRemovesFromHiddenIDs() async {
+    let store = makeStore()
+    let player = makePlayer()
+    await store.addPlayer(player)
+    await store.hidePlayer(id: player.id)
+    await store.showPlayer(id: player.id)
+    #expect(!store.hiddenPlayerIDs.contains(player.id))
+  }
+
+  @Test func hideIsIdempotent() async {
+    let store = makeStore()
+    let player = makePlayer()
+    await store.addPlayer(player)
+    await store.hidePlayer(id: player.id)
+    await store.hidePlayer(id: player.id)
+    #expect(store.hiddenPlayerIDs.count == 1)
+  }
+
+  @Test func showVisiblePlayerIsNoOp() async {
+    let store = makeStore()
+    let player = makePlayer()
+    await store.addPlayer(player)
+    await store.showPlayer(id: player.id)
+    #expect(store.hiddenPlayerIDs.isEmpty)
+  }
+
+  @Test func hiddenPlayerExcludedFromActivePartyPlayers() async {
+    let store = makeStore()
+    let p1 = makePlayer(name: "Aric")
+    let p2 = makePlayer(name: "Lira")
+    await store.addPlayer(p1)
+    await store.addPlayer(p2)
+    await store.addToParty(id: p1.id)
+    await store.addToParty(id: p2.id)
+    await store.hidePlayer(id: p1.id)
+    #expect(store.activePartyPlayers.count == 1)
+    #expect(store.activePartyPlayers[0].id == p2.id)
+  }
+
+  @Test func hiddenPlayerNotInPartyIsTracked() async {
+    let store = makeStore()
+    let player = makePlayer()
+    await store.addPlayer(player)
+    // Not added to party — hidden is a roster-wide flag.
+    await store.hidePlayer(id: player.id)
+    #expect(store.hiddenPlayerIDs.contains(player.id))
+  }
+
+  @Test func deletePlayerAlsoRemovesFromHiddenIDs() async {
+    let store = makeStore()
+    let player = makePlayer()
+    await store.addPlayer(player)
+    await store.hidePlayer(id: player.id)
+    await store.deletePlayer(id: player.id)
+    #expect(!store.hiddenPlayerIDs.contains(player.id))
+    #expect(store.players.isEmpty)
+  }
+
+  @Test func hiddenIDsRoundTripsThroughPersistence() async throws {
+    let dir = FileManager.default.temporaryDirectory
+      .appending(path: UUID().uuidString, directoryHint: .isDirectory)
+    defer { try? FileManager.default.removeItem(atPath: dir.path) }
+    let store1 = PlayerStore(directory: dir)
+    let player = makePlayer()
+    await store1.addPlayer(player)
+    await store1.hidePlayer(id: player.id)
+
+    let store2 = PlayerStore(directory: dir)
+    await store2.load()
+    #expect(store2.hiddenPlayerIDs.contains(player.id))
+  }
+
+  @Test func showAfterReloadRoundTrips() async throws {
+    let dir = FileManager.default.temporaryDirectory
+      .appending(path: UUID().uuidString, directoryHint: .isDirectory)
+    defer { try? FileManager.default.removeItem(atPath: dir.path) }
+    let store1 = PlayerStore(directory: dir)
+    let player = makePlayer()
+    await store1.addPlayer(player)
+    await store1.hidePlayer(id: player.id)
+    await store1.showPlayer(id: player.id)
+
+    let store2 = PlayerStore(directory: dir)
+    await store2.load()
+    #expect(!store2.hiddenPlayerIDs.contains(player.id))
+  }
+
+  @Test func resetAllClearsHiddenIDs() async {
+    let store = makeStore()
+    let player = makePlayer()
+    await store.addPlayer(player)
+    await store.hidePlayer(id: player.id)
+    await store.resetAll()
+    #expect(store.hiddenPlayerIDs.isEmpty)
+  }
+
   // MARK: - relocate
 
   @Test func relocateClearsInMemoryState() async {
