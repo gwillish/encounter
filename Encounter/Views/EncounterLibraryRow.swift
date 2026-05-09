@@ -13,6 +13,7 @@ struct EncounterLibraryRow: View {
   let definition: EncounterDefinition
   let playerCount: Int?
   let compendium: Compendium
+  var isPaused: Bool = false
 
   private var adversaryTypes: [AdversaryType] {
     definition.adversaryIDs.compactMap { compendium.adversary(id: $0)?.role }
@@ -32,9 +33,24 @@ struct EncounterLibraryRow: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: 2) {
-      Text(definition.name)
-        .font(.body)
-      if let summaryText {
+      HStack(spacing: 6) {
+        Text(definition.name)
+          .font(.body)
+        if isPaused {
+          Text("In Progress")
+            .font(.caption2)
+            .fontWeight(.semibold)
+            .padding(.horizontal, 6)
+            .padding(.vertical, 2)
+            .background(.tint.opacity(0.15), in: Capsule())
+            .foregroundStyle(.tint)
+        }
+      }
+      if isPaused {
+        Text("Resume")
+          .font(.caption)
+          .foregroundStyle(.tint)
+      } else if let summaryText {
         Text(summaryText)
           .font(.caption)
           .foregroundStyle(.secondary)
@@ -49,6 +65,16 @@ struct EncounterLibraryRow: View {
     definition: EncounterDefinition(name: "Goblin Ambush"),
     playerCount: nil,
     compendium: PreviewData.compendium()
+  )
+  .padding()
+}
+
+#Preview("In Progress — paused session") {
+  EncounterLibraryRow(
+    definition: EncounterDefinition(name: "Goblin Ambush"),
+    playerCount: nil,
+    compendium: PreviewData.compendium(),
+    isPaused: true
   )
   .padding()
 }

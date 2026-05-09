@@ -74,4 +74,31 @@ struct EncounterLibraryRowTests {
     let texts = try sut.inspect().findAll(ViewType.Text.self)
     #expect(texts.count == 1, "No summary when adversaries cannot be resolved from compendium")
   }
+
+  // MARK: - isPaused badge and resume label
+
+  @Test func showsInProgressBadgeWhenPaused() throws {
+    let def = EncounterDefinition(name: "Test")
+    let sut = EncounterLibraryRow(
+      definition: def, playerCount: nil, compendium: Compendium(), isPaused: true)
+    let strings = try sut.inspect().findAll(ViewType.Text.self).compactMap { try? $0.string() }
+    #expect(strings.contains("In Progress"))
+  }
+
+  @Test func showsResumeLabelWhenPaused() throws {
+    let def = EncounterDefinition(name: "Test")
+    let sut = EncounterLibraryRow(
+      definition: def, playerCount: nil, compendium: Compendium(), isPaused: true)
+    let strings = try sut.inspect().findAll(ViewType.Text.self).compactMap { try? $0.string() }
+    #expect(strings.contains("Resume"))
+  }
+
+  @Test func showsNeitherBadgeNorResumeLabelWhenNotPaused() throws {
+    let def = EncounterDefinition(name: "Test")
+    let sut = EncounterLibraryRow(
+      definition: def, playerCount: nil, compendium: Compendium(), isPaused: false)
+    let strings = try sut.inspect().findAll(ViewType.Text.self).compactMap { try? $0.string() }
+    #expect(!strings.contains("In Progress"))
+    #expect(!strings.contains("Resume"))
+  }
 }
