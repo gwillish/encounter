@@ -30,7 +30,8 @@ struct EncounterLibraryListTests {
         onRename: { _ in },
         onDelete: { _ in },
         playerStore: PlayerStore(directory: .temporaryDirectory),
-        compendium: Compendium()
+        compendium: Compendium(),
+        sessionRegistry: SessionRegistry()
       )
       let texts = try sut.inspect().findAll(ViewType.Text.self)
       let strings = texts.compactMap { try? $0.string() }
@@ -46,7 +47,8 @@ struct EncounterLibraryListTests {
       onRename: { _ in },
       onDelete: { _ in },
       playerStore: PlayerStore(directory: .temporaryDirectory),
-      compendium: Compendium()
+      compendium: Compendium(),
+      sessionRegistry: SessionRegistry()
     )
     let names = try sut.inspect().findAll(ViewType.Text.self)
     #expect(names.isEmpty, "Empty definitions produce no text rows")

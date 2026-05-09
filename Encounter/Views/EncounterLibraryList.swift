@@ -16,35 +16,49 @@ struct EncounterLibraryList: View {
   let onDelete: (EncounterDefinition) -> Void
   let playerStore: PlayerStore
   let compendium: Compendium
+  let sessionRegistry: SessionRegistry
 
   private var partyCount: Int? {
     let count = playerStore.activePartyPlayers.count
     return count > 0 ? count : nil
   }
 
+  private var pausedDefinitionIDs: Set<UUID> {
+    Set(
+      sessionRegistry.sessions.values
+        .filter { $0.phase == .paused }
+        .compactMap { $0.definitionID }
+    )
+  }
+
   var body: some View {
     List(definitions, selection: $selection) { definition in
       #if os(macOS)
-        EncounterLibraryRow(definition: definition, playerCount: partyCount, compendium: compendium)
-          .accessibilityIdentifier("library.row")
-          .accessibilityValue(definition.name)
-          .contextMenu {
-            Button {
-              onRename(definition)
-            } label: {
-              Label("Rename", systemImage: "pencil")
-            }
-            Divider()
-            Button(role: .destructive) {
-              onDelete(definition)
-            } label: {
-              Label("Delete", systemImage: "trash")
-            }
+        EncounterLibraryRow(
+          definition: definition, playerCount: partyCount, compendium: compendium,
+          isPaused: pausedDefinitionIDs.contains(definition.id)
+        )
+        .accessibilityIdentifier("library.row")
+        .accessibilityValue(definition.name)
+        .contextMenu {
+          Button {
+            onRename(definition)
+          } label: {
+            Label("Rename", systemImage: "pencil")
           }
+          Divider()
+          Button(role: .destructive) {
+            onDelete(definition)
+          } label: {
+            Label("Delete", systemImage: "trash")
+          }
+        }
       #else
         NavigationLink(value: definition) {
           EncounterLibraryRow(
-            definition: definition, playerCount: partyCount, compendium: compendium)
+            definition: definition, playerCount: partyCount, compendium: compendium,
+            isPaused: pausedDefinitionIDs.contains(definition.id)
+          )
         }
         .accessibilityIdentifier("library.row")
         .accessibilityValue(definition.name)
@@ -92,7 +106,8 @@ struct EncounterLibraryList: View {
       onRename: { _ in },
       onDelete: { _ in },
       playerStore: PreviewData.playerStore(),
-      compendium: PreviewData.compendium()
+      compendium: PreviewData.compendium(),
+      sessionRegistry: PreviewData.sessionRegistry()
     )
   }
 }

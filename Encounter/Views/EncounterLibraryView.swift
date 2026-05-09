@@ -44,7 +44,8 @@ struct EncounterLibraryView: View {
           onRename: beginRename,
           onDelete: beginDelete,
           playerStore: playerStore,
-          compendium: compendium
+          compendium: compendium,
+          sessionRegistry: sessionRegistry
         )
       }
     }
