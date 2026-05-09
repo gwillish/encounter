@@ -36,6 +36,7 @@ struct EncounterLibraryRow: View {
       HStack(spacing: 6) {
         Text(definition.name)
           .font(.body)
+          .lineLimit(1)
         if isPaused {
           Text("In Progress")
             .font(.caption2)
@@ -57,6 +58,9 @@ struct EncounterLibraryRow: View {
       }
     }
     .padding(.vertical, 2)
+    .accessibilityElement(children: .ignore)
+    .accessibilityLabel(isPaused ? "\(definition.name), in progress" : definition.name)
+    .accessibilityHint(isPaused ? "Resume" : "")
   }
 }
 
