@@ -378,6 +378,10 @@ Modal adversary selector opened from the encounter editor. Selection-only — no
 |---|---|
 | Sheet root | `compendium.selector-sheet` |
 | Filter bar | `compendium.filter-bar` |
+| Adversary row | `compendium.adversary-row.<adversary-id>` |
+| Empty state | `compendium.selector-sheet.empty-state` |
+| Done button | `compendium.selector-sheet.done-button` |
+| Import DHPack button | `compendium.selector-sheet.import-button` |
 
 ---
 
