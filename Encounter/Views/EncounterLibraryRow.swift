@@ -60,7 +60,7 @@ struct EncounterLibraryRow: View {
     .padding(.vertical, 2)
     .accessibilityElement(children: .ignore)
     .accessibilityLabel(isPaused ? "\(definition.name), in progress" : definition.name)
-    .accessibilityHint(isPaused ? "Resume" : "")
+    .accessibilityHint(isPaused ? "Resumes this encounter" : "")
   }
 }
 

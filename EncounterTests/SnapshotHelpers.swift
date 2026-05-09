@@ -14,13 +14,13 @@
 //
 
 #if os(iOS)
-import SnapshotTesting
-import SwiftUI
+  import SnapshotTesting
+  import SwiftUI
 
-// Named layout presets — 390pt width matches standard iPhone layout.
-enum SnapshotLayout {
-  static let row: SwiftUISnapshotLayout = .fixed(width: 390, height: 80)
-  static let card: SwiftUISnapshotLayout = .fixed(width: 390, height: 200)
-  static let badge: SwiftUISnapshotLayout = .fixed(width: 200, height: 44)
-}
+  // Named layout presets — 390pt width matches standard iPhone layout.
+  enum SnapshotLayout {
+    static let row: SwiftUISnapshotLayout = .fixed(width: 390, height: 80)
+    static let card: SwiftUISnapshotLayout = .fixed(width: 390, height: 200)
+    static let badge: SwiftUISnapshotLayout = .fixed(width: 200, height: 44)
+  }
 #endif

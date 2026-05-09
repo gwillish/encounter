@@ -104,7 +104,9 @@ struct PlayerRunnerCardTests {
 
     let buttons = try sut.inspect().findAll(ViewType.Button.self)
     let collapseButton = try #require(
-      buttons.first(where: { (try? $0.accessibilityIdentifier()) == "runner.player-card.collapse-button" }),
+      buttons.first(where: {
+        (try? $0.accessibilityIdentifier()) == "runner.player-card.collapse-button"
+      }),
       "Collapse button should be present"
     )
     try collapseButton.tap()

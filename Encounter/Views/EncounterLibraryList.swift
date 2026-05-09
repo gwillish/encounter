@@ -31,7 +31,6 @@ struct EncounterLibraryList: View {
           isPaused: pausedDefinitionIDs.contains(definition.id)
         )
         .accessibilityIdentifier("library.row")
-        .accessibilityValue(definition.name)
         .contextMenu {
           Button {
             onRename(definition)
@@ -53,7 +52,6 @@ struct EncounterLibraryList: View {
           )
         }
         .accessibilityIdentifier("library.row")
-        .accessibilityValue(definition.name)
         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
           Button(role: .destructive) {
             onDelete(definition)
