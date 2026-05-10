@@ -57,6 +57,12 @@ struct EncounterEditorView: View {
     sessionRegistry.sessions[draft.id] != nil
   }
 
+  var pausedSession: EncounterSession? {
+    guard let session = sessionRegistry.sessions[draft.id],
+      session.phase == .paused else { return nil }
+    return session
+  }
+
   // MARK: - Computed difficulty
 
   private var adversaryTypes: [AdversaryType] {
@@ -197,16 +203,24 @@ struct EncounterEditorView: View {
   @ToolbarContentBuilder
   private var toolbarContent: some ToolbarContent {
     ToolbarItem(placement: .primaryAction) {
-      Button("Run Encounter") {
-        // Snapshot the active party into the definition at run time.
-        // EncounterDefinition.playerConfigs is not persisted from the builder;
-        // it is populated here as a point-in-time copy for session creation only.
-        var defWithParty = draft
-        defWithParty.playerConfigs = playerStore.activePartyPlayers.map { $0.asConfig() }
-        runSession = sessionRegistry.session(for: defWithParty, compendium: compendium)
+      if let paused = pausedSession {
+        Button("Resume") {
+          paused.resume()
+          runSession = paused
+        }
+        .accessibilityIdentifier("builder.resume-button")
+      } else {
+        Button("Run") {
+          // Snapshot the active party into the definition at run time.
+          // EncounterDefinition.playerConfigs is not persisted from the builder;
+          // it is populated here as a point-in-time copy for session creation only.
+          var defWithParty = draft
+          defWithParty.playerConfigs = playerStore.activePartyPlayers.map { $0.asConfig() }
+          runSession = sessionRegistry.session(for: defWithParty, compendium: compendium)
+        }
+        .disabled(draft.adversaryIDs.isEmpty || playerStore.party.playerIDs.isEmpty)
+        .accessibilityIdentifier("builder.run-button")
       }
-      .disabled(draft.adversaryIDs.isEmpty || playerStore.party.playerIDs.isEmpty)
-      .accessibilityIdentifier("builder.run-button")
     }
     ToolbarItem(placement: .primaryAction) {
       Button("Browse Compendium", systemImage: "books.vertical") {
