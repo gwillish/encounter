@@ -7,7 +7,7 @@
       "location" : "https://github.com/gwillish/DHModels",
       "state" : {
         "branch" : "main",
-        "revision" : "5be6afb5d732bf87aa787775afe966116373c8e1"
+        "revision" : "0b7d284ec1096dda4f3d9a012c053a0039179709"
       }
     },
     {
@@ -33,8 +33,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-log",
       "state" : {
-        "revision" : "bbd81b6725ae874c69e9b8c8804d462356b55523",
-        "version" : "1.10.1"
+        "revision" : "5073617dac96330a486245e4c0179cb0a6fd2256",
+        "version" : "1.12.0"
       }
     },
     {
