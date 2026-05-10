@@ -85,8 +85,8 @@ struct CompendiumSelectorSheet: View {
         guard case .success(let url) = result else { return }
         guard url.startAccessingSecurityScopedResource() else { return }
         Task { @MainActor in
-          defer { url.stopAccessingSecurityScopedResource() }
           await contentStore.importPack(from: url)
+          url.stopAccessingSecurityScopedResource()
         }
       }
     }

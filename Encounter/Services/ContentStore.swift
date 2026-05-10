@@ -304,6 +304,9 @@ public final class ContentStore {
   ///
   /// The file at `url` is a security-scoped resource; the caller must start
   /// access before calling this method and stop it after it returns.
+  // Source IDs that collide with reserved on-disk subdirectory names or section logic.
+  private static let reservedSourceIDs: Set<String> = ["srd", "sources", "homebrew"]
+
   public func importPack(from url: URL) async {
     let displayName = url.deletingPathExtension().lastPathComponent
     let sourceID =
@@ -312,6 +315,14 @@ public final class ContentStore {
       .components(separatedBy: CharacterSet.alphanumerics.inverted)
       .filter { !$0.isEmpty }
       .joined(separator: "-")
+
+    guard !Self.reservedSourceIDs.contains(sourceID) else {
+      lastError = ContentStoreError.invalidContent(
+        sourceID: sourceID,
+        reason: "'\(sourceID)' is a reserved source name and cannot be used for a DHPack.")
+      logger.error("ContentStore: import rejected — '\(sourceID)' is a reserved source ID")
+      return
+    }
 
     do {
       // Read, decode, and write — nonisolated, runs on cooperative thread pool when awaited.

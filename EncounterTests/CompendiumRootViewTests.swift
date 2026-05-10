@@ -38,9 +38,7 @@
       localAdversaries: [Adversary] = []
     ) -> CompendiumRootView {
       let compendium = Compendium()
-      if !srdAdversaries.isEmpty {
-        compendium.replaceSRDContent(adversaries: srdAdversaries, environments: [])
-      }
+      compendium.replaceSRDContent(adversaries: srdAdversaries, environments: [])
       for (sourceID, adversaries) in packAdversaries {
         compendium.replaceSourceContent(
           sourceID: sourceID, adversaries: adversaries, environments: [])
@@ -48,8 +46,9 @@
       for adversary in localAdversaries {
         compendium.addAdversary(adversary)
       }
-      let contentStore = ContentStore(contentDirectory: .temporaryDirectory, compendium: compendium)
-      return CompendiumRootView(compendium: compendium, contentStore: contentStore)
+      return CompendiumRootView(
+        compendium: compendium,
+        contentStore: PreviewData.contentStore(compendium: compendium))
     }
 
     // MARK: - Filter bar
@@ -78,6 +77,12 @@
       #expect(texts.contains("SRD"))
     }
 
+    @Test func srdSectionHiddenWhenNoSrdAdversaries() throws {
+      let sut = makeSUT()
+      let texts = try sut.inspect().findAll(ViewType.Text.self).compactMap { try? $0.string() }
+      #expect(!texts.contains("SRD"), "SRD section header must not render when SRD list is empty")
+    }
+
     @Test func packSectionHeaderPresent() throws {
       // Pack adversaries use replaceSourceContent — their source field must match
       // the sourceID for the fallback section title to capitalise correctly.
@@ -85,62 +90,88 @@
       let sut = makeSUT(packAdversaries: [("my-pack", [packAdversary])])
       let texts = try sut.inspect().findAll(ViewType.Text.self).compactMap { try? $0.string() }
       // No ContentSource registered → fallback capitalises "my-pack" → "My Pack"
-      #expect(texts.contains("My Pack"), "Pack section header should appear for loaded pack adversaries")
+      #expect(
+        texts.contains("My Pack"), "Pack section header should appear for loaded pack adversaries")
     }
 
-    @Test func localSectionHeaderPresentWhenLocalAdversariesExist() throws {
-      let custom = Self.makeAdversary(id: "custom", name: "Custom Adversary")
+    @Test func multiplePackSectionsEachShowHeader() throws {
+      let fireDrake = Self.makeAdversary(id: "fire-drake", name: "Fire Drake", source: "fire-pack")
+      let iceTroll = Self.makeAdversary(id: "ice-troll", name: "Ice Troll", source: "ice-pack")
+      let sut = makeSUT(packAdversaries: [("fire-pack", [fireDrake]), ("ice-pack", [iceTroll])])
+      let texts = try sut.inspect().findAll(ViewType.Text.self).compactMap { try? $0.string() }
+      #expect(texts.contains("Fire Pack"), "First pack section header should be present")
+      #expect(texts.contains("Ice Pack"), "Second pack section header should be present")
+    }
+
+    @Test func localSectionHeaderPresent() throws {
+      let custom = Self.makeAdversary(id: "custom", name: "Custom Adversary", source: "local")
       let sut = makeSUT(localAdversaries: [custom])
       let texts = try sut.inspect().findAll(ViewType.Text.self).compactMap { try? $0.string() }
       #expect(texts.contains("Local"))
+    }
+
+    @Test func localSectionHiddenWhenNoLocalAdversaries() throws {
+      let sut = makeSUT()
+      let texts = try sut.inspect().findAll(ViewType.Text.self).compactMap { try? $0.string() }
+      #expect(
+        !texts.contains("Local"),
+        "Local section header must not render when no local adversaries exist")
     }
 
     // MARK: - Toolbar
 
     @Test func importButtonPresent() throws {
       let sut = makeSUT()
-      let texts = try sut.inspect().findAll(ViewType.Text.self).compactMap { try? $0.string() }
-      #expect(texts.contains("Import DHPack"))
+      let buttons = try sut.inspect().findAll(ViewType.Button.self)
+      #expect(
+        buttons.contains { (try? $0.accessibilityIdentifier()) == "compendium.root.import-button" },
+        "Import DHPack button should be present")
     }
 
     @Test func addAdversaryButtonPresent() throws {
       let sut = makeSUT()
-      let texts = try sut.inspect().findAll(ViewType.Text.self).compactMap { try? $0.string() }
-      #expect(texts.contains("Add Adversary"))
+      let buttons = try sut.inspect().findAll(ViewType.Button.self)
+      #expect(
+        buttons.contains {
+          (try? $0.accessibilityIdentifier()) == "compendium.root.add-adversary-button"
+        },
+        "Add Adversary button should be present")
     }
 
-    // These tests find the Export button and check its disabled state via ViewInspector.
+    @Test func addAdversaryButtonAlwaysDisabled() throws {
+      let sut = makeSUT()
+      let buttons = try sut.inspect().findAll(ViewType.Button.self)
+      let addButton = try #require(
+        buttons.first {
+          (try? $0.accessibilityIdentifier()) == "compendium.root.add-adversary-button"
+        },
+        "Add Adversary button should be present")
+      #expect(addButton.isDisabled(), "Add Adversary is disabled pending AdversaryCreatorForm")
+    }
+
+    // These tests find the Export button by AX identifier and check its disabled state.
     // Individual ToolbarItem(placement: .primaryAction) declarations are used (not
     // ToolbarItemGroup) which makes button traversal more reliable across ViewInspector versions.
     @Test func exportButtonPresentAndDisabledWhenNoLocalAdversaries() throws {
       let sut = makeSUT()
       let buttons = try sut.inspect().findAll(ViewType.Button.self)
       let exportButton = try #require(
-        buttons.first { btn in
-          let texts = (try? btn.findAll(ViewType.Text.self)) ?? []
-          return texts.contains { (try? $0.string()) == "Export Local" }
-        },
-        "Export Local button should be present"
-      )
+        buttons.first { (try? $0.accessibilityIdentifier()) == "compendium.root.export-button" },
+        "Export Local button should be present")
       #expect(
-        try exportButton.isDisabled(),
+        exportButton.isDisabled(),
         "Export button should be disabled when no local adversaries exist")
     }
 
     @Test func exportButtonEnabledWhenLocalAdversariesExist() throws {
-      let custom = Self.makeAdversary(id: "custom", name: "Custom")
+      let custom = Self.makeAdversary(id: "custom", name: "Custom", source: "local")
       let sut = makeSUT(localAdversaries: [custom])
       let buttons = try sut.inspect().findAll(ViewType.Button.self)
       let exportButton = try #require(
-        buttons.first { btn in
-          let texts = (try? btn.findAll(ViewType.Text.self)) ?? []
-          return texts.contains { (try? $0.string()) == "Export Local" }
-        },
-        "Export Local button should be present"
-      )
-      #expect(
-        try !exportButton.isDisabled(),
-        "Export button should be enabled when local adversaries exist")
+        buttons.first { (try? $0.accessibilityIdentifier()) == "compendium.root.export-button" },
+        "Export Local button should be present")
+      let isEnabled = !exportButton.isDisabled()
+      #expect(isEnabled, "Export button should be enabled when local adversaries exist")
     }
   }
 

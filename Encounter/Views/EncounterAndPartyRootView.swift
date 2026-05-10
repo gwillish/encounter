@@ -87,6 +87,9 @@
       }
       .navigationTitle(rootMode == .encounters ? "Encounters" : "Compendium")
       .navigationBarTitleDisplayMode(.inline)
+      .navigationDestination(for: Adversary.self) { adversary in
+        AdversaryDetailView(adversary: adversary)
+      }
       .toolbar { toolbarContent }
       .alert("New Encounter", isPresented: $isCreating) {
         TextField("Encounter name", text: $newName)
