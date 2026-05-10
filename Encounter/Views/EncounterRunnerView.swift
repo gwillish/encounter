@@ -60,15 +60,19 @@ struct EncounterRunnerView: View {
       }
       ToolbarItem(placement: .secondaryAction) {
         Button("Pause") {
-          session.pause()
-          Task { await sessionStore.save(session) }
-          dismiss()
+          Task {
+            session.pause()
+            await sessionStore.save(session)
+            dismiss()
+          }
         }
         .accessibilityIdentifier("runner.pause-button")
       }
       ToolbarItem(placement: .secondaryAction) {
-        Button("End Encounter") {
+        Button("End Encounter", role: .destructive) {
           let sessionID = session.id
+          // Clear registry first so the editor never shows a stale Resume prompt;
+          // the file delete completes asynchronously.
           sessionRegistry.clearSession(for: definition.id)
           Task { await sessionStore.delete(sessionID: sessionID) }
           dismiss()
