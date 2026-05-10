@@ -1,5 +1,5 @@
 //
-//  EncounterBuilderView.swift
+//  EncounterEditorView.swift
 //  Encounter
 //
 //  Full encounter preparation screen.
@@ -14,7 +14,7 @@ import DHKit
 import DHModels
 import SwiftUI
 
-struct EncounterBuilderView: View {
+struct EncounterEditorView: View {
   let definition: EncounterDefinition
   let store: EncounterStore
   let compendium: Compendium
@@ -161,8 +161,8 @@ struct EncounterBuilderView: View {
         )
       }
     #else
-      .fullScreenCover(item: $runSession) { session in
-        EncounterRunnerContainer(
+      .navigationDestination(item: $runSession) { session in
+        EncounterRunnerView(
           session: session, definition: draft,
           compendium: compendium, sessionRegistry: sessionRegistry, sessionStore: sessionStore
         )
@@ -279,7 +279,7 @@ struct EncounterBuilderView: View {
 }
 
 #Preview {
-  let store = EncounterStore(directory: URL.temporaryDirectory.appending(path: "preview-builder"))
+  let store = EncounterStore(directory: URL.temporaryDirectory.appending(path: "preview-editor"))
   let compendium = Compendium()
   compendium.addAdversary(
     Adversary(
@@ -301,7 +301,7 @@ struct EncounterBuilderView: View {
   let sessionRegistry = PreviewData.sessionRegistry()
   let sessionStore = PreviewData.sessionStore()
   return NavigationStack {
-    EncounterBuilderPreviewWrapper(
+    EncounterEditorPreviewWrapper(
       store: store, compendium: compendium,
       sessionRegistry: sessionRegistry, sessionStore: sessionStore,
       playerStore: playerStore
@@ -309,8 +309,8 @@ struct EncounterBuilderView: View {
   }
 }
 
-/// Preview wrapper that creates a definition in the store before showing the builder.
-private struct EncounterBuilderPreviewWrapper: View {
+/// Preview wrapper that creates a definition in the store before showing the editor.
+private struct EncounterEditorPreviewWrapper: View {
   let store: EncounterStore
   let compendium: Compendium
   let sessionRegistry: SessionRegistry
@@ -321,7 +321,7 @@ private struct EncounterBuilderPreviewWrapper: View {
   var body: some View {
     Group {
       if let definition {
-        EncounterBuilderView(
+        EncounterEditorView(
           definition: definition, store: store, compendium: compendium,
           sessionRegistry: sessionRegistry, sessionStore: sessionStore,
           playerStore: playerStore
