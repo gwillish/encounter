@@ -67,7 +67,7 @@ struct ContentView: View {
           let id = encounterSelection,
           let definition = store.definitions.first(where: { $0.id == id })
         {
-          EncounterBuilderView(
+          EncounterEditorView(
             definition: definition, store: store, compendium: compendium,
             contentStore: contentStore,
             sessionRegistry: sessionRegistry, sessionStore: sessionStore,

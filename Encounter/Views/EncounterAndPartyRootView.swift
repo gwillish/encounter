@@ -220,7 +220,7 @@
         }
       }
       .navigationDestination(for: EncounterDefinition.self) { definition in
-        EncounterBuilderView(
+        EncounterEditorView(
           definition: definition,
           store: store,
           compendium: compendium,

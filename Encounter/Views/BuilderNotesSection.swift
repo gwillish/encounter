@@ -2,7 +2,7 @@
 //  BuilderNotesSection.swift
 //  Encounter
 //
-//  Collapsible notes section inside EncounterBuilderView.
+//  Collapsible notes section inside EncounterEditorView.
 //  Collapsed by default; onChange fires save() on every keystroke.
 //
 

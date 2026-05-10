@@ -2,7 +2,7 @@
 //  PlayerRosterRow.swift
 //  Encounter
 //
-//  Single row in the player roster inside EncounterBuilderView.
+//  Single row in the player roster inside EncounterEditorView.
 //  Shows name, HP, Stress, and Evasion.
 //
 
