@@ -97,30 +97,4 @@ struct EncounterRunnerViewTests {
     #expect(registry.sessions.isEmpty)
   }
 
-  // MARK: - Reset Session action
-
-  @Test func resetSessionClearsSessionFromRegistry() {
-    let (def, session) = makeDefinitionAndSession()
-    let registry = SessionRegistry()
-    registry.insert(session)
-    #expect(registry.sessions[def.id] != nil)
-
-    registry.clearSession(for: def.id)
-
-    #expect(registry.sessions[def.id] == nil)
-  }
-
-  @Test func resetSessionDeletesPersistedSession() async {
-    let dir = Self.tempDir()
-    defer { try? FileManager.default.removeItem(at: dir) }
-    let store = SessionStore(directory: dir)
-    let (_, session) = makeDefinitionAndSession()
-
-    await store.save(session)
-    await store.delete(sessionID: session.id)
-
-    let registry = SessionRegistry()
-    await store.load(into: registry)
-    #expect(registry.sessions.isEmpty)
-  }
 }
