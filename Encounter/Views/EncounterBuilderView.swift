@@ -236,11 +236,6 @@ struct EncounterBuilderView: View {
     save()
   }
 
-  private func setEnvironment(_ environment: DaggerheartEnvironment) {
-    draft.environmentIDs = [environment.id]
-    save()
-  }
-
   private func removeEnvironment(at offsets: IndexSet) {
     draft.environmentIDs.remove(atOffsets: offsets)
     save()

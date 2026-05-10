@@ -2,8 +2,7 @@
 //  EnvironmentListView.swift
 //  Encounter
 //
-//  Filtered list of environments. Navigation destinations are registered
-//  on the parent CompendiumBrowserView so they persist across tab switches.
+//  Filtered list of environments.
 //
 
 import DHKit
