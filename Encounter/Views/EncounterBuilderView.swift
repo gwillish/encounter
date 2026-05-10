@@ -18,6 +18,7 @@ struct EncounterBuilderView: View {
   let definition: EncounterDefinition
   let store: EncounterStore
   let compendium: Compendium
+  let contentStore: ContentStore
   let sessionRegistry: SessionRegistry
   let sessionStore: SessionStore
   let playerStore: PlayerStore
@@ -35,6 +36,7 @@ struct EncounterBuilderView: View {
     definition: EncounterDefinition,
     store: EncounterStore,
     compendium: Compendium,
+    contentStore: ContentStore,
     sessionRegistry: SessionRegistry,
     sessionStore: SessionStore,
     playerStore: PlayerStore
@@ -42,6 +44,7 @@ struct EncounterBuilderView: View {
     self.definition = definition
     self.store = store
     self.compendium = compendium
+    self.contentStore = contentStore
     self.sessionRegistry = sessionRegistry
     self.sessionStore = sessionStore
     self.playerStore = playerStore
@@ -136,19 +139,11 @@ struct EncounterBuilderView: View {
       }
     }
     .sheet(isPresented: $showCompendium) {
-      NavigationStack {
-        CompendiumBrowserView(
-          compendium: compendium,
-          onSelect: { adversary in
-            addAdversary(adversary)
-            showCompendium = false
-          },
-          onSelectEnvironment: { environment in
-            setEnvironment(environment)
-            showCompendium = false
-          }
-        )
-      }
+      CompendiumSelectorSheet(
+        compendium: compendium,
+        contentStore: contentStore,
+        onSelect: addAdversary
+      )
       #if os(macOS)
         .frame(minWidth: 540, minHeight: 480)
       #endif
@@ -303,6 +298,7 @@ struct EncounterBuilderView: View {
   return NavigationStack {
     EncounterBuilderPreviewWrapper(
       store: store, compendium: compendium,
+      contentStore: PreviewData.contentStore(compendium: compendium),
       sessionRegistry: sessionRegistry, sessionStore: sessionStore,
       playerStore: playerStore
     )
@@ -313,6 +309,7 @@ struct EncounterBuilderView: View {
 private struct EncounterBuilderPreviewWrapper: View {
   let store: EncounterStore
   let compendium: Compendium
+  let contentStore: ContentStore
   let sessionRegistry: SessionRegistry
   let sessionStore: SessionStore
   let playerStore: PlayerStore
@@ -323,6 +320,7 @@ private struct EncounterBuilderPreviewWrapper: View {
       if let definition {
         EncounterBuilderView(
           definition: definition, store: store, compendium: compendium,
+          contentStore: contentStore,
           sessionRegistry: sessionRegistry, sessionStore: sessionStore,
           playerStore: playerStore
         )

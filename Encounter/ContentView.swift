@@ -69,6 +69,7 @@ struct ContentView: View {
         {
           EncounterBuilderView(
             definition: definition, store: store, compendium: compendium,
+            contentStore: contentStore,
             sessionRegistry: sessionRegistry, sessionStore: sessionStore,
             playerStore: playerStore
           )
