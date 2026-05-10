@@ -2,9 +2,12 @@
 //  EncounterRunnerViewTests.swift
 //  EncounterTests
 //
-//  Tests for EncounterRunnerView lifecycle actions: Pause and End Encounter.
-//  Tests verify the model-level behavior that each action triggers, and that
-//  the editor correctly reflects a paused session (Resume button visible).
+//  Tests for EncounterRunnerView lifecycle actions: Pause, Resume, End Encounter, Reset Session.
+//  Tests verify the model-level behavior each action triggers (phase transitions, registry
+//  mutations, persistence round-trips).
+//
+//  Button-tap verification (that the actual SwiftUI buttons invoke these operations and dismiss)
+//  lives in EncounterUITests/.
 //
 
 import DHKit
@@ -20,16 +23,6 @@ struct EncounterRunnerViewTests {
 
   // MARK: - Helpers
 
-  private func makeAdversary(id: String = "goblin") -> Adversary {
-    Adversary(
-      id: id, name: "Goblin", tier: 1, role: .minion,
-      flavorText: "", difficulty: 10,
-      thresholdMajor: 5, thresholdSevere: 10, hp: 3, stress: 2,
-      attackModifier: "+2", attackName: "Bite",
-      attackRange: .veryClose, damage: "1d4 phy"
-    )
-  }
-
   private func makeDefinitionAndSession() -> (EncounterDefinition, EncounterSession) {
     var def = EncounterDefinition(name: "Goblin Ambush")
     def.adversaryIDs = ["goblin"]
@@ -37,10 +30,10 @@ struct EncounterRunnerViewTests {
     return (def, session)
   }
 
-  private func tempDir() -> URL {
+  private static func tempDir() -> URL {
     let dir = FileManager.default.temporaryDirectory
       .appending(path: "EncounterRunnerViewTests-\(UUID())", directoryHint: .isDirectory)
-    try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+    try! FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
     return dir
   }
 
@@ -53,8 +46,15 @@ struct EncounterRunnerViewTests {
     #expect(session.phase == .paused)
   }
 
+  @Test func resumeActionChangesSessionPhaseToRunning() {
+    let (_, session) = makeDefinitionAndSession()
+    session.pause()
+    session.resume()
+    #expect(session.phase == .running)
+  }
+
   @Test func pausedSessionPersistedWithPausedPhase() async throws {
-    let dir = tempDir()
+    let dir = Self.tempDir()
     defer { try? FileManager.default.removeItem(at: dir) }
     let store = SessionStore(directory: dir)
     let (_, session) = makeDefinitionAndSession()
@@ -84,7 +84,7 @@ struct EncounterRunnerViewTests {
   }
 
   @Test func endEncounterDeletesPersistedSession() async {
-    let dir = tempDir()
+    let dir = Self.tempDir()
     defer { try? FileManager.default.removeItem(at: dir) }
     let store = SessionStore(directory: dir)
     let (_, session) = makeDefinitionAndSession()
@@ -97,28 +97,30 @@ struct EncounterRunnerViewTests {
     #expect(registry.sessions.isEmpty)
   }
 
-  // MARK: - Editor reflects paused session
+  // MARK: - Reset Session action
 
-  @Test func editorShowsResumeWhenSessionIsPaused() {
-    var def = EncounterDefinition(name: "Goblin Ambush")
-    def.adversaryIDs = ["goblin"]
+  @Test func resetSessionClearsSessionFromRegistry() {
+    let (def, session) = makeDefinitionAndSession()
     let registry = SessionRegistry()
-    let session = EncounterSession(name: def.name, phase: .paused, definitionID: def.id)
     registry.insert(session)
+    #expect(registry.sessions[def.id] != nil)
 
-    let compendium = Compendium()
-    compendium.addAdversary(makeAdversary())
-    let editor = EncounterEditorView(
-      definition: def,
-      store: EncounterStore(directory: .temporaryDirectory),
-      compendium: compendium,
-      contentStore: ContentStore(contentDirectory: .temporaryDirectory, compendium: compendium),
-      sessionRegistry: registry,
-      sessionStore: SessionStore(directory: .temporaryDirectory),
-      playerStore: PlayerStore(directory: .temporaryDirectory)
-    )
+    registry.clearSession(for: def.id)
 
-    #expect(
-      editor.pausedSession != nil, "Editor should expose paused session for the Resume button")
+    #expect(registry.sessions[def.id] == nil)
+  }
+
+  @Test func resetSessionDeletesPersistedSession() async {
+    let dir = Self.tempDir()
+    defer { try? FileManager.default.removeItem(at: dir) }
+    let store = SessionStore(directory: dir)
+    let (_, session) = makeDefinitionAndSession()
+
+    await store.save(session)
+    await store.delete(sessionID: session.id)
+
+    let registry = SessionRegistry()
+    await store.load(into: registry)
+    #expect(registry.sessions.isEmpty)
   }
 }
