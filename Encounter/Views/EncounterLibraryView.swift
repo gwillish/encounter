@@ -38,87 +38,89 @@ struct EncounterLibraryView: View {
     )
   }
 
+  @ViewBuilder
+  private var content: some View {
+    if store.isLoading {
+      ProgressView()
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    } else if store.definitions.isEmpty {
+      EncounterLibraryEmptyState(onCreateTapped: beginCreate)
+    } else {
+      EncounterLibraryList(
+        definitions: store.definitions,
+        selection: $selection,
+        onRename: beginRename,
+        onDelete: beginDelete,
+        playerStore: playerStore,
+        compendium: compendium,
+        pausedDefinitionIDs: pausedDefinitionIDs
+      )
+    }
+  }
+
+  private var alertsContent: some View {
+    content
+      .navigationTitle("Encounters")
+      .toolbar { toolbarContent }
+      .alert("New Encounter", isPresented: $isCreating) {
+        TextField("Encounter name", text: $newName)
+          .accessibilityIdentifier("library.new-name-field")
+        Button("Create") { createEncounter() }
+        Button("Cancel", role: .cancel) { newName = "" }
+      }
+      .alert("Rename Encounter", isPresented: $isRenaming, presenting: renameTarget) { _ in
+        TextField("Name", text: $renameText)
+          .accessibilityIdentifier("library.rename-field")
+        Button("Rename") { commitRename() }
+        Button("Cancel", role: .cancel) {}
+      }
+      .confirmationDialog(
+        "Delete Encounter?",
+        isPresented: $isConfirmingDelete,
+        presenting: deleteTarget
+      ) { target in
+        Button("Delete \"\(target.name)\"", role: .destructive) { commitDelete() }
+        Button("Cancel", role: .cancel) {}
+      } message: { _ in
+        Text("This action cannot be undone.")
+      }
+  }
+
   var body: some View {
-    Group {
-      if store.isLoading {
-        ProgressView()
-          .frame(maxWidth: .infinity, maxHeight: .infinity)
-      } else if store.definitions.isEmpty {
-        EncounterLibraryEmptyState(onCreateTapped: beginCreate)
-      } else {
-        EncounterLibraryList(
-          definitions: store.definitions,
-          selection: $selection,
-          onRename: beginRename,
-          onDelete: beginDelete,
-          playerStore: playerStore,
-          compendium: compendium,
-          pausedDefinitionIDs: pausedDefinitionIDs
-        )
+    alertsContent
+      .onChange(of: store.loadError?.localizedDescription) { _, newDescription in
+        if newDescription != nil { loadErrorDismissed = false }
       }
-    }
-    .navigationTitle("Encounters")
-    .toolbar { toolbarContent }
-    // Create alert
-    .alert("New Encounter", isPresented: $isCreating) {
-      TextField("Encounter name", text: $newName)
-        .accessibilityIdentifier("library.new-name-field")
-      Button("Create") { createEncounter() }
-      Button("Cancel", role: .cancel) { newName = "" }
-    }
-    // Rename alert — uses presenting: to avoid Binding(get:set:)
-    .alert("Rename Encounter", isPresented: $isRenaming, presenting: renameTarget) { _ in
-      TextField("Name", text: $renameText)
-        .accessibilityIdentifier("library.rename-field")
-      Button("Rename") { commitRename() }
-      Button("Cancel", role: .cancel) {}
-    }
-    // Delete confirmation — uses presenting: to avoid Binding(get:set:)
-    .confirmationDialog(
-      "Delete Encounter?",
-      isPresented: $isConfirmingDelete,
-      presenting: deleteTarget
-    ) { target in
-      Button("Delete \"\(target.name)\"", role: .destructive) { commitDelete() }
-      Button("Cancel", role: .cancel) {}
-    } message: { _ in
-      Text("This action cannot be undone.")
-    }
-    // Reset dismissed flag whenever a new distinct error appears, so fresh errors surface.
-    .onChange(of: store.loadError?.localizedDescription) { _, newDescription in
-      if newDescription != nil { loadErrorDismissed = false }
-    }
-    .sheet(isPresented: $isShowingSources) {
-      NavigationStack {
-        ContentSourcesView(contentStore: contentStore)
+      .sheet(isPresented: $isShowingSources) {
+        NavigationStack {
+          ContentSourcesView(contentStore: contentStore)
+        }
       }
-    }
-    #if !os(macOS)
-      .navigationDestination(for: EncounterDefinition.self) { definition in
-        EncounterEditorView(
-          definition: definition, store: store, compendium: compendium,
-          sessionRegistry: sessionRegistry, sessionStore: sessionStore,
-          playerStore: playerStore
-        )
+      #if !os(macOS)
+        .navigationDestination(for: EncounterDefinition.self) { definition in
+          EncounterEditorView(
+            definition: definition, store: store, compendium: compendium,
+            contentStore: contentStore, sessionRegistry: sessionRegistry,
+            sessionStore: sessionStore, playerStore: playerStore
+          )
+        }
+      #endif
+      .sheet(isPresented: $isShowingAbout) {
+        AboutView()
       }
-    #endif
-    .sheet(isPresented: $isShowingAbout) {
-      AboutView()
-    }
-    // Error banners
-    .safeAreaInset(edge: .top) {
-      if let error = store.loadError, !loadErrorDismissed {
-        EncounterErrorBanner(
-          message: error.localizedDescription,
-          onDismiss: { loadErrorDismissed = true }
-        )
-      } else if let error = actionError {
-        EncounterErrorBanner(
-          message: error,
-          onDismiss: { actionError = nil }
-        )
+      .safeAreaInset(edge: .top) {
+        if let error = store.loadError, !loadErrorDismissed {
+          EncounterErrorBanner(
+            message: error.localizedDescription,
+            onDismiss: { loadErrorDismissed = true }
+          )
+        } else if let error = actionError {
+          EncounterErrorBanner(
+            message: error,
+            onDismiss: { actionError = nil }
+          )
+        }
       }
-    }
   }
 
   @ToolbarContentBuilder
