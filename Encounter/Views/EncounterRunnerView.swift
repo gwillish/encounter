@@ -59,7 +59,18 @@ struct EncounterRunnerView: View {
           .accessibilityIdentifier("runner.fear-tracker-button")
       }
       ToolbarItem(placement: .secondaryAction) {
+        Button("Pause") {
+          session.pause()
+          Task { await sessionStore.save(session) }
+          dismiss()
+        }
+        .accessibilityIdentifier("runner.pause-button")
+      }
+      ToolbarItem(placement: .secondaryAction) {
         Button("End Encounter") {
+          let sessionID = session.id
+          sessionRegistry.clearSession(for: definition.id)
+          Task { await sessionStore.delete(sessionID: sessionID) }
           dismiss()
         }
         .accessibilityIdentifier("runner.end-button")
