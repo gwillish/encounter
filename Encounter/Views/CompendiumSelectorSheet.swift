@@ -12,12 +12,6 @@ import DHModels
 import SwiftUI
 import UniformTypeIdentifiers
 
-extension UTType {
-  // Force-unwrap is intentional: type is declared in this app's Info.plist.
-  // A nil result means the identifier was mistyped — crash loudly at dev time.
-  fileprivate static let dhpack = UTType("gwillish.Encounter.dhpack")!
-}
-
 struct CompendiumSelectorSheet: View {
   let compendium: Compendium
   let contentStore: ContentStore

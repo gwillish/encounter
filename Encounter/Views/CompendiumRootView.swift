@@ -13,12 +13,6 @@
   import SwiftUI
   import UniformTypeIdentifiers
 
-  extension UTType {
-    // Force-unwrap is intentional: type is declared in this app's Info.plist.
-    // A nil result means the identifier was mistyped — crash loudly at dev time.
-    fileprivate static let dhpack = UTType("gwillish.Encounter.dhpack")!
-  }
-
   struct CompendiumRootView: View {
     let compendium: Compendium
     let contentStore: ContentStore
@@ -27,8 +21,6 @@
     @State private var selectedTier: Int?
     @State private var selectedType: AdversaryType?
     @State private var isImporting = false
-    @State private var isAddingAdversary = false
-    @State private var isExporting = false
 
     // MARK: - Derived sections
 
@@ -38,7 +30,11 @@
         .filtered(searchText: searchText, tier: selectedTier, type: selectedType)
     }
 
-    // Groups non-SRD, non-homebrew adversaries by their source tag.
+    // Groups non-SRD, non-homebrew adversaries by their `source` tag.
+    // ASSUMPTION: pack adversaries never use "srd" or "homebrew" as their source value.
+    // If they do, they silently appear in the wrong section.
+    // TODO: enforce this in DHPackContent validation or add a per-sourceID Compendium API.
+    //
     // Looks up ContentStore.sources[sourceKey] for a display name; falls back
     // to capitalising the raw source value if no registered source matches.
     private var sourcePackSections: [(id: String, title: String, adversaries: [Adversary])] {
@@ -70,22 +66,21 @@
         .filtered(searchText: searchText, tier: selectedTier, type: selectedType)
     }
 
-    private var hasLocalAdversaries: Bool {
-      !compendium.homebrewAdversaries.isEmpty
-    }
-
     // MARK: - Body
 
     var body: some View {
       List {
         if !srdAdversaries.isEmpty {
-          Section("SRD") {
+          Section {
             ForEach(srdAdversaries) { adversary in
               NavigationLink(value: adversary) {
                 AdversaryRow(adversary: adversary)
               }
               .accessibilityIdentifier("compendium.adversary-row.\(adversary.id)")
             }
+          } header: {
+            Text("SRD")
+              .accessibilityLabel("System Reference Document")
           }
         }
 
@@ -111,6 +106,7 @@
           }
         }
       }
+      // Registers with the parent NavigationStack owned by EncounterAndPartyRootView.
       .navigationDestination(for: Adversary.self) { adversary in
         AdversaryDetailView(adversary: adversary)
       }
@@ -119,21 +115,28 @@
       }
       .accessibilityIdentifier("compendium.root")
       .toolbar {
-        ToolbarItemGroup(placement: .primaryAction) {
+        // Add Adversary — disabled until AdversaryCreatorForm is implemented.
+        ToolbarItem(placement: .primaryAction) {
           Button("Add Adversary", systemImage: "plus") {
-            isAddingAdversary = true
+            // TODO: present AdversaryCreatorForm
           }
+          .disabled(true)
           .accessibilityIdentifier("compendium.root.add-adversary-button")
-
+        }
+        ToolbarItem(placement: .primaryAction) {
           Button("Import DHPack", systemImage: "square.and.arrow.down") {
             isImporting = true
           }
           .accessibilityIdentifier("compendium.root.import-button")
-
+        }
+        // Export enabled only when local adversaries exist (respects active filters).
+        // Disabled until DHPackExportSheet is implemented.
+        ToolbarItem(placement: .primaryAction) {
           Button("Export Local", systemImage: "square.and.arrow.up") {
-            isExporting = true
+            // TODO: present DHPackExportSheet
           }
-          .disabled(!hasLocalAdversaries)
+          .disabled(localAdversaries.isEmpty)
+          .accessibilityHint(localAdversaries.isEmpty ? "No local adversaries to export" : "")
           .accessibilityIdentifier("compendium.root.export-button")
         }
       }
