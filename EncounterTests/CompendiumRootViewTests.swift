@@ -163,15 +163,14 @@
         "Export button should be disabled when no local adversaries exist")
     }
 
-    @Test func exportButtonEnabledWhenLocalAdversariesExist() throws {
+    @Test func exportButtonAlwaysDisabled() throws {
       let custom = Self.makeAdversary(id: "custom", name: "Custom", source: "local")
       let sut = makeSUT(localAdversaries: [custom])
       let buttons = try sut.inspect().findAll(ViewType.Button.self)
       let exportButton = try #require(
         buttons.first { (try? $0.accessibilityIdentifier()) == "compendium.root.export-button" },
         "Export Local button should be present")
-      let isEnabled = !exportButton.isDisabled()
-      #expect(isEnabled, "Export button should be enabled when local adversaries exist")
+      #expect(exportButton.isDisabled(), "Export button is disabled pending DHPackExportSheet")
     }
   }
 
