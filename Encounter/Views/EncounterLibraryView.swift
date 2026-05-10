@@ -95,7 +95,7 @@ struct EncounterLibraryView: View {
     }
     #if !os(macOS)
       .navigationDestination(for: EncounterDefinition.self) { definition in
-        EncounterBuilderView(
+        EncounterEditorView(
           definition: definition, store: store, compendium: compendium,
           sessionRegistry: sessionRegistry, sessionStore: sessionStore,
           playerStore: playerStore

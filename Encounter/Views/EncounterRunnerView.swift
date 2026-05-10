@@ -2,8 +2,8 @@
 //  EncounterRunnerView.swift
 //  Encounter
 //
-//  Live encounter running screen. Presented via fullScreenCover (iOS) /
-//  sheet (macOS) from EncounterBuilderView.
+//  Live encounter running screen. Pushed onto the NavigationStack (iOS) /
+//  presented as a sheet (macOS) from EncounterEditorView.
 //
 //  Layout:
 //   - Nav bar: encounter name + FearTrackerButton (trailing)
