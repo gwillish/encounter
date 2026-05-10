@@ -31,9 +31,8 @@
     }
 
     // Groups non-SRD, non-homebrew adversaries by their `source` tag.
-    // ASSUMPTION: pack adversaries never use "srd" or "homebrew" as their source value.
-    // If they do, they silently appear in the wrong section.
-    // TODO: enforce this in DHPackContent validation or add a per-sourceID Compendium API.
+    // importPack rejects sourceIDs in the reserved set {"srd","sources","homebrew"}, so
+    // correctly-imported packs cannot collide with the SRD or Local sections here.
     //
     // Looks up ContentStore.sources[sourceKey] for a display name; falls back
     // to capitalising the raw source value if no registered source matches.
@@ -85,12 +84,14 @@
         }
 
         ForEach(sourcePackSections, id: \.id) { section in
-          Section(section.title) {
-            ForEach(section.adversaries) { adversary in
-              NavigationLink(value: adversary) {
-                AdversaryRow(adversary: adversary)
+          if !section.adversaries.isEmpty {
+            Section(section.title) {
+              ForEach(section.adversaries) { adversary in
+                NavigationLink(value: adversary) {
+                  AdversaryRow(adversary: adversary)
+                }
+                .accessibilityIdentifier("compendium.adversary-row.\(adversary.id)")
               }
-              .accessibilityIdentifier("compendium.adversary-row.\(adversary.id)")
             }
           }
         }
@@ -106,10 +107,6 @@
           }
         }
       }
-      // Registers with the parent NavigationStack owned by EncounterAndPartyRootView.
-      .navigationDestination(for: Adversary.self) { adversary in
-        AdversaryDetailView(adversary: adversary)
-      }
       .safeAreaInset(edge: .top, spacing: 0) {
         filterBarHeader
       }
@@ -121,6 +118,7 @@
             // TODO: present AdversaryCreatorForm
           }
           .disabled(true)
+          .accessibilityHint("Coming soon")
           .accessibilityIdentifier("compendium.root.add-adversary-button")
         }
         ToolbarItem(placement: .primaryAction) {
@@ -129,14 +127,16 @@
           }
           .accessibilityIdentifier("compendium.root.import-button")
         }
-        // Export enabled only when local adversaries exist (respects active filters).
+        // Export enabled when any local adversaries exist, regardless of active filters.
         // Disabled until DHPackExportSheet is implemented.
         ToolbarItem(placement: .primaryAction) {
           Button("Export Local", systemImage: "square.and.arrow.up") {
             // TODO: present DHPackExportSheet
           }
-          .disabled(localAdversaries.isEmpty)
-          .accessibilityHint(localAdversaries.isEmpty ? "No local adversaries to export" : "")
+          .disabled(compendium.homebrewAdversaries.isEmpty)
+          .accessibilityHint(
+            compendium.homebrewAdversaries.isEmpty ? "No local adversaries to export" : ""
+          )
           .accessibilityIdentifier("compendium.root.export-button")
         }
       }
@@ -147,8 +147,8 @@
         guard case .success(let url) = result else { return }
         guard url.startAccessingSecurityScopedResource() else { return }
         Task { @MainActor in
-          defer { url.stopAccessingSecurityScopedResource() }
           await contentStore.importPack(from: url)
+          url.stopAccessingSecurityScopedResource()
         }
       }
     }
