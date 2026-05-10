@@ -155,6 +155,7 @@
         }
         .pickerStyle(.segmented)
         .frame(maxWidth: 240)
+        .accessibilityLabel("View mode")
         .accessibilityIdentifier("root.mode-toggle")
       }
       if rootMode == .encounters {

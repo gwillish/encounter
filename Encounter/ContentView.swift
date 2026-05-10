@@ -63,21 +63,19 @@ struct ContentView: View {
           PartyOverviewView(playerStore: playerStore)
         }
       } detail: {
-        NavigationStack {
-          if case .encounters = sidebarItem,
-            let id = encounterSelection,
-            let definition = store.definitions.first(where: { $0.id == id })
-          {
-            EncounterBuilderView(
-              definition: definition, store: store, compendium: compendium,
-              sessionRegistry: sessionRegistry, sessionStore: sessionStore,
-              playerStore: playerStore
-            )
-            .id(id)
-          } else {
-            Text("Select an encounter")
-              .foregroundStyle(.secondary)
-          }
+        if case .encounters = sidebarItem,
+          let id = encounterSelection,
+          let definition = store.definitions.first(where: { $0.id == id })
+        {
+          EncounterBuilderView(
+            definition: definition, store: store, compendium: compendium,
+            sessionRegistry: sessionRegistry, sessionStore: sessionStore,
+            playerStore: playerStore
+          )
+          .id(id)
+        } else {
+          Text("Select an encounter")
+            .foregroundStyle(.secondary)
         }
       }
     }
@@ -96,26 +94,8 @@ struct ContentView: View {
           sessionRegistry: sessionRegistry,
           sessionStore: sessionStore
         )
-        .navigationDestination(for: EncounterSession.self) { session in
-          if let defID = session.definitionID,
-            let definition = store.definitions.first(where: { $0.id == defID })
-          {
-            EncounterRunnerView(
-              session: session,
-              definition: definition,
-              compendium: compendium,
-              sessionRegistry: sessionRegistry,
-              sessionStore: sessionStore
-            )
-          } else {
-            ContentUnavailableView(
-              "Session Unavailable",
-              systemImage: "exclamationmark.triangle",
-              description: Text("The encounter for this session could not be found.")
-            )
-          }
-        }
       }
+      .accessibilityIdentifier("root.navigation-stack")
     }
   #endif
 }
