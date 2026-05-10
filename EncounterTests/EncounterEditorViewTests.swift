@@ -76,8 +76,6 @@ struct EncounterEditorViewTests {
 
   @Test func runButtonShownWhenSessionIsRunning() {
     let def = makeDefinition()
-    let compendium = Compendium()
-    compendium.addAdversary(Self.makeAdversary())
     let registry = SessionRegistry()
     let session = EncounterSession(name: def.name, phase: .running, definitionID: def.id)
     registry.insert(session)
