@@ -4,7 +4,7 @@
 //
 //  Read-only section in EncounterBuilderView showing the active party
 //  members that will be snapshotted when the encounter is started.
-//  Players are managed in the Party tab via PartyOverviewView.
+//  Players are managed via PartyOverviewView (macOS) or EncounterAndPartyRootView (iOS).
 //
 
 import DHModels
