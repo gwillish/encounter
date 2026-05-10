@@ -127,16 +127,13 @@
           }
           .accessibilityIdentifier("compendium.root.import-button")
         }
-        // Export enabled when any local adversaries exist, regardless of active filters.
-        // Disabled until DHPackExportSheet is implemented.
+        // Export — disabled until DHPackExportSheet is implemented.
         ToolbarItem(placement: .primaryAction) {
           Button("Export Local", systemImage: "square.and.arrow.up") {
             // TODO: present DHPackExportSheet
           }
-          .disabled(compendium.homebrewAdversaries.isEmpty)
-          .accessibilityHint(
-            compendium.homebrewAdversaries.isEmpty ? "No local adversaries to export" : ""
-          )
+          .disabled(true)
+          .accessibilityHint("Coming soon")
           .accessibilityIdentifier("compendium.root.export-button")
         }
       }
