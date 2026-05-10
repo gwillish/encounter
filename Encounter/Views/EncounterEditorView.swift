@@ -18,6 +18,7 @@ struct EncounterEditorView: View {
   let definition: EncounterDefinition
   let store: EncounterStore
   let compendium: Compendium
+  let contentStore: ContentStore
   let sessionRegistry: SessionRegistry
   let sessionStore: SessionStore
   let playerStore: PlayerStore
@@ -35,6 +36,7 @@ struct EncounterEditorView: View {
     definition: EncounterDefinition,
     store: EncounterStore,
     compendium: Compendium,
+    contentStore: ContentStore,
     sessionRegistry: SessionRegistry,
     sessionStore: SessionStore,
     playerStore: PlayerStore
@@ -42,6 +44,7 @@ struct EncounterEditorView: View {
     self.definition = definition
     self.store = store
     self.compendium = compendium
+    self.contentStore = contentStore
     self.sessionRegistry = sessionRegistry
     self.sessionStore = sessionStore
     self.playerStore = playerStore
@@ -136,19 +139,11 @@ struct EncounterEditorView: View {
       }
     }
     .sheet(isPresented: $showCompendium) {
-      NavigationStack {
-        CompendiumBrowserView(
-          compendium: compendium,
-          onSelect: { adversary in
-            addAdversary(adversary)
-            showCompendium = false
-          },
-          onSelectEnvironment: { environment in
-            setEnvironment(environment)
-            showCompendium = false
-          }
-        )
-      }
+      CompendiumSelectorSheet(
+        compendium: compendium,
+        contentStore: contentStore,
+        onSelect: addAdversary
+      )
       #if os(macOS)
         .frame(minWidth: 540, minHeight: 480)
       #endif
@@ -241,11 +236,6 @@ struct EncounterEditorView: View {
     save()
   }
 
-  private func setEnvironment(_ environment: DaggerheartEnvironment) {
-    draft.environmentIDs = [environment.id]
-    save()
-  }
-
   private func removeEnvironment(at offsets: IndexSet) {
     draft.environmentIDs.remove(atOffsets: offsets)
     save()
@@ -303,6 +293,7 @@ struct EncounterEditorView: View {
   return NavigationStack {
     EncounterEditorPreviewWrapper(
       store: store, compendium: compendium,
+      contentStore: PreviewData.contentStore(compendium: compendium),
       sessionRegistry: sessionRegistry, sessionStore: sessionStore,
       playerStore: playerStore
     )
@@ -313,6 +304,7 @@ struct EncounterEditorView: View {
 private struct EncounterEditorPreviewWrapper: View {
   let store: EncounterStore
   let compendium: Compendium
+  let contentStore: ContentStore
   let sessionRegistry: SessionRegistry
   let sessionStore: SessionStore
   let playerStore: PlayerStore
@@ -323,6 +315,7 @@ private struct EncounterEditorPreviewWrapper: View {
       if let definition {
         EncounterEditorView(
           definition: definition, store: store, compendium: compendium,
+          contentStore: contentStore,
           sessionRegistry: sessionRegistry, sessionStore: sessionStore,
           playerStore: playerStore
         )

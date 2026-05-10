@@ -2,8 +2,7 @@
 //  AdversaryListView.swift
 //  Encounter
 //
-//  Filtered list of adversaries. Navigation destinations are registered
-//  on the parent CompendiumBrowserView so they persist across tab switches.
+//  Filtered list of adversaries.
 //
 
 import DHKit
