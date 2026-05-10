@@ -5,7 +5,7 @@
 //  Root screen for browsing the adversary and environment compendium.
 //
 //  The optional onSelect / onSelectEnvironment closures establish the
-//  Step 3 seam: when non-nil (called from EncounterBuilderView),
+//  Step 3 seam: when non-nil (called from EncounterEditorView),
 //  detail views show an "Add to Encounter" button that calls the closure
 //  and dismisses the sheet.
 //

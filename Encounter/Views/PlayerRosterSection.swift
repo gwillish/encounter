@@ -2,7 +2,7 @@
 //  PlayerRosterSection.swift
 //  Encounter
 //
-//  Read-only section in EncounterBuilderView showing the active party
+//  Read-only section in EncounterEditorView showing the active party
 //  members that will be snapshotted when the encounter is started.
 //  Players are managed via PartyOverviewView (macOS) or EncounterAndPartyRootView (iOS).
 //

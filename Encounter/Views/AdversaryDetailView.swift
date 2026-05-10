@@ -3,7 +3,7 @@
 //  Encounter
 //
 //  Full stat card for a single adversary.
-//  When onSelect is provided (e.g. called from EncounterBuilderView),
+//  When onSelect is provided (e.g. called from EncounterEditorView),
 //  an "Add to Encounter" toolbar button is shown.
 //
 

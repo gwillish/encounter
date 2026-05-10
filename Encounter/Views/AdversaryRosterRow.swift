@@ -2,7 +2,7 @@
 //  AdversaryRosterRow.swift
 //  Encounter
 //
-//  Single row in the adversary roster inside EncounterBuilderView.
+//  Single row in the adversary roster inside EncounterEditorView.
 //  Looks up the adversary by ID for display; shows a fallback if unresolvable.
 //  When partyTier is provided, off-tier adversaries show a TierBadgeView.
 //
