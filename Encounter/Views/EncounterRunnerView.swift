@@ -70,12 +70,7 @@ struct EncounterRunnerView: View {
       }
       ToolbarItem(placement: .secondaryAction) {
         Button("End Encounter", role: .destructive) {
-          let sessionID = session.id
-          // Clear registry first so the editor never shows a stale Resume prompt;
-          // the file delete completes asynchronously.
-          sessionRegistry.clearSession(for: definition.id)
-          Task { await sessionStore.delete(sessionID: sessionID) }
-          dismiss()
+          endSession()
         }
         .accessibilityIdentifier("runner.end-button")
       }
@@ -92,14 +87,24 @@ struct EncounterRunnerView: View {
       titleVisibility: .visible
     ) {
       Button("Reset Session", role: .destructive) {
-        let sessionID = session.id
-        sessionRegistry.clearSession(for: definition.id)
-        Task { await sessionStore.delete(sessionID: sessionID) }
-        dismiss()
+        endSession()
       }
       .accessibilityIdentifier("runner.reset-confirm-button")
     } message: {
       Text("The current session will be cleared. The encounter definition is not changed.")
+    }
+  }
+
+  // MARK: - Actions
+
+  private func endSession() {
+    let sessionID = session.id
+    // Clear registry first so the editor never shows a stale Resume prompt;
+    // the file delete completes asynchronously.
+    sessionRegistry.clearSession(for: definition.id)
+    Task {
+      await sessionStore.delete(sessionID: sessionID)
+      dismiss()
     }
   }
 }
